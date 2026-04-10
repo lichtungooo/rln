@@ -1,0 +1,4 @@
+packages:
+  - '../../real-life-stack/packages/toolkit'
+  - '../../real-life-stack/packages/data-interface'
+  - '../../web-of-trust/packages/wot-core'

@@ -1,0 +1,28 @@
+import { defineConfig } from 'vite'
+import react from '@vitejs/plugin-react'
+import tailwindcss from '@tailwindcss/vite'
+import path from 'node:path'
+
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+  base: '/rln/',
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      // Wir nutzen die gebauten dist/-Versionen der Pakete direkt,
+      // sodass deren interne @/-Aliase uns nicht stören.
+      '@real-life-stack/toolkit/styles/globals.css': path.resolve(
+        __dirname,
+        '../../real-life-stack/packages/toolkit/src/styles/globals.css'
+      ),
+      '@real-life-stack/toolkit': path.resolve(
+        __dirname,
+        '../../real-life-stack/packages/toolkit/dist/index.js'
+      ),
+      '@real-life/wot-core': path.resolve(
+        __dirname,
+        '../../web-of-trust/packages/wot-core/dist/index.js'
+      ),
+    },
+  },
+})
