@@ -1,43 +1,27 @@
 import { useEffect, useState } from 'react'
-import { Map as MapIcon, Calendar as CalendarIcon } from 'lucide-react'
 import type { Item } from '@real-life-stack/data-interface'
-import {
-  Navbar,
-  NavbarStart,
-  NavbarCenter,
-  NavbarEnd,
-  WorkspaceSwitcher,
-  UserMenu,
-  ModuleTabs,
-  ConnectorProvider,
-} from '@real-life-stack/toolkit'
+import { ConnectorProvider } from '@real-life-stack/toolkit'
 import { MapView } from './views/MapView'
 import { CalendarPanel } from './views/CalendarPanel'
 import { EventDetailPanel } from './views/EventDetailPanel'
-import { demoSpaces } from './data/demo'
+import { EventCreateDialog } from './views/EventCreateDialog'
+import { SpacesPanel } from './views/map/SpacesPanel'
+import { SearchBar } from './views/map/SearchBar'
+import { ModuleCarousel } from './views/map/ModuleCarousel'
+import { ProfileCluster } from './views/map/ProfileCluster'
+import { LayerSwitcher } from './views/map/LayerSwitcher'
+import { FilterButton } from './views/map/FilterButton'
+import { HudBar } from './views/map/HudBar'
+import { ActionButton } from './views/map/ActionButton'
 import { connector, initConnector } from './lib/connector'
 import { ErrorBoundary } from './components/ErrorBoundary'
 
-const workspaces = demoSpaces.map((s) => ({
-  id: s.id,
-  name: s.name,
-}))
-
-const modules = [
-  { id: 'map', label: 'Karte', icon: MapIcon },
-  { id: 'calendar', label: 'Kalender', icon: CalendarIcon },
-]
-
-const currentUser = {
-  id: 'timo',
-  name: 'Timo',
-}
-
 export function App() {
   const [ready, setReady] = useState(false)
-  const [activeWorkspace, setActiveWorkspace] = useState(workspaces[0])
+  const [activeSpaceId, setActiveSpaceId] = useState('adventure-de')
   const [activeModule, setActiveModule] = useState('map')
   const [selectedEvent, setSelectedEvent] = useState<Item | null>(null)
+  const [createEventOpen, setCreateEventOpen] = useState(false)
 
   const showCalendarPanel = activeModule === 'calendar'
 
@@ -57,45 +41,52 @@ export function App() {
     <ErrorBoundary label="App">
       <ConnectorProvider connector={connector}>
         <div className="relative h-dvh w-dvw overflow-hidden">
-          {/* Karte: immer präsent als Vollbild-Ebene hinter allem */}
+          {/* Die Karte ist immer präsent, als Vollbild-Ebene hinter allem */}
           <div className="absolute inset-0 z-0">
             <ErrorBoundary label="Karte">
               <MapView />
             </ErrorBoundary>
           </div>
 
-          {/* Navbar schwebt oben */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-30">
+          {/* Modul-Karussell: absolut mittig oben, über allem */}
+          <div className="pointer-events-none absolute left-1/2 top-4 z-30 -translate-x-1/2">
             <div className="pointer-events-auto">
-              <Navbar>
-                <NavbarStart>
-                  <WorkspaceSwitcher
-                    workspaces={workspaces}
-                    activeWorkspace={activeWorkspace}
-                    onWorkspaceChange={setActiveWorkspace}
-                  />
-                </NavbarStart>
-                <NavbarCenter>
-                  <ModuleTabs
-                    modules={modules}
-                    activeModule={activeModule}
-                    onModuleChange={setActiveModule}
-                  />
-                </NavbarCenter>
-                <NavbarEnd>
-                  <UserMenu user={currentUser} />
-                </NavbarEnd>
-              </Navbar>
+              <ModuleCarousel
+                activeModule={activeModule}
+                onModuleChange={setActiveModule}
+              />
             </div>
           </div>
 
-          {/* Schwebende Panels über der Karte, unter der Navbar.
-              Die Panels leben in der oberen Hälfte, damit unten Platz
-              für das HUD und links/rechts Platz für Karten-Controls bleibt. */}
-          <div className="pointer-events-none absolute inset-0 z-20 flex items-start gap-4 px-16 pt-[4.5rem]">
-            {/* Kalender-Liste links */}
+          {/* Oben links: Spaces */}
+          <div className="pointer-events-none absolute left-4 top-4 z-30">
+            <div className="pointer-events-auto">
+              <SpacesPanel
+                activeSpaceId={activeSpaceId}
+                onSpaceChange={setActiveSpaceId}
+              />
+            </div>
+          </div>
+
+          {/* Oben rechts: Suche + Profil-Cluster */}
+          <div className="pointer-events-none absolute right-4 top-4 z-30">
+            <div className="pointer-events-auto flex items-center gap-2">
+              <SearchBar />
+              <ProfileCluster userName="Timo" />
+            </div>
+          </div>
+
+          {/* Rechte Seite mittig: Karten-Layer-Wähler */}
+          <div className="pointer-events-none absolute right-4 top-1/2 z-20 -translate-y-1/2">
+            <div className="pointer-events-auto">
+              <LayerSwitcher />
+            </div>
+          </div>
+
+          {/* Schwebende Modul-Panels (Kalender, Event-Detail) */}
+          <div className="pointer-events-none absolute inset-0 z-20 flex items-start gap-4 px-4 pt-20">
             {showCalendarPanel && (
-              <div className="pointer-events-auto flex-shrink-0">
+              <div className="pointer-events-auto ml-20 flex-shrink-0">
                 <ErrorBoundary label="Kalender">
                   <CalendarPanel
                     onSelectEvent={setSelectedEvent}
@@ -106,12 +97,10 @@ export function App() {
               </div>
             )}
 
-            {/* Mittelraum bleibt für die Karte frei */}
             <div className="flex-1" />
 
-            {/* Event-Detail rechts */}
             {selectedEvent && (
-              <div className="pointer-events-auto flex-shrink-0">
+              <div className="pointer-events-auto mr-24 flex-shrink-0">
                 <ErrorBoundary label="Event-Detail">
                   <EventDetailPanel
                     event={selectedEvent}
@@ -121,6 +110,25 @@ export function App() {
               </div>
             )}
           </div>
+
+          {/* Unterer Rand: Filter links, HUD mittig, Aktions-Knopf rechts */}
+          <div className="pointer-events-none absolute inset-x-0 bottom-4 z-30 flex items-end justify-between gap-4 px-4">
+            <div className="pointer-events-auto">
+              <FilterButton />
+            </div>
+            <div className="pointer-events-auto">
+              <HudBar />
+            </div>
+            <div className="pointer-events-auto">
+              <ActionButton onNewEvent={() => setCreateEventOpen(true)} />
+            </div>
+          </div>
+
+          {/* Dialog für neues Event (vom Aktions-Knopf) */}
+          <EventCreateDialog
+            open={createEventOpen}
+            onOpenChange={setCreateEventOpen}
+          />
         </div>
       </ConnectorProvider>
     </ErrorBoundary>

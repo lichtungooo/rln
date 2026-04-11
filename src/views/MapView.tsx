@@ -37,6 +37,10 @@ export function MapView() {
         height="100%"
         width="100%"
         showZoomControl
+        showFilterControl={false}
+        showLayerControl={false}
+        showGratitudeControl={false}
+        showThemeControl={false}
       >
         <Layer
           name="Veranstaltungen"
