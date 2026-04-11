@@ -37,6 +37,105 @@ body {
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
 }
 
+/* react-grid-layout: Platzhalter und Handles in unserem Stil */
+.react-grid-layout {
+  position: relative;
+  height: 100%;
+}
+
+.react-grid-item {
+  transition: all 200ms ease;
+  transition-property: left, top, width, height;
+}
+
+.react-grid-item.cssTransforms {
+  transition-property: transform, width, height;
+}
+
+.react-grid-item.resizing {
+  z-index: 50;
+  opacity: 0.95;
+}
+
+.react-grid-item.react-draggable-dragging {
+  z-index: 50;
+  cursor: move;
+}
+
+.react-grid-item.react-grid-placeholder {
+  background: oklch(from var(--primary) l c h / 0.15);
+  border: 2px dashed oklch(from var(--primary) l c h / 0.4);
+  border-radius: 1rem;
+  transition-duration: 100ms;
+  z-index: 2;
+  user-select: none;
+}
+
+/* Resize-Handles: unsichtbar, aber greifbar */
+.react-resizable-handle {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  background: transparent;
+}
+
+.react-resizable-handle::after {
+  display: none;
+}
+
+.react-resizable-handle-se {
+  bottom: 0;
+  right: 0;
+  cursor: se-resize;
+}
+.react-resizable-handle-sw {
+  bottom: 0;
+  left: 0;
+  cursor: sw-resize;
+}
+.react-resizable-handle-ne {
+  top: 0;
+  right: 0;
+  cursor: ne-resize;
+}
+.react-resizable-handle-nw {
+  top: 0;
+  left: 0;
+  cursor: nw-resize;
+}
+.react-resizable-handle-e {
+  top: 50%;
+  right: 0;
+  width: 8px;
+  height: 40px;
+  margin-top: -20px;
+  cursor: e-resize;
+}
+.react-resizable-handle-w {
+  top: 50%;
+  left: 0;
+  width: 8px;
+  height: 40px;
+  margin-top: -20px;
+  cursor: w-resize;
+}
+.react-resizable-handle-n {
+  top: 0;
+  left: 50%;
+  width: 40px;
+  height: 8px;
+  margin-left: -20px;
+  cursor: n-resize;
+}
+.react-resizable-handle-s {
+  bottom: 0;
+  left: 50%;
+  width: 40px;
+  height: 8px;
+  margin-left: -20px;
+  cursor: s-resize;
+}
+
 /* utopia-ui interne Controls und Sidebar verbergen,
    damit nur unsere eigenen schwebenden Elemente sichtbar sind.
    Hohe Spezifität durch :is() + body-Prefix, damit wir Antons eigene

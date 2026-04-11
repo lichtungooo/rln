@@ -55,9 +55,9 @@ export function CalendarPanel({
 
   return (
     <>
-      <div className="flex max-h-[70vh] w-[22rem] flex-col overflow-hidden rounded-2xl border border-border/60 bg-background/90 shadow-xl backdrop-blur-md">
-        {/* Kopf */}
-        <div className="flex items-center justify-between border-b border-border/40 px-4 py-3">
+      <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-background/90 shadow-xl backdrop-blur-md">
+        {/* Kopf — dient als Drag-Handle für das Raster */}
+        <div className="panel-drag-handle flex cursor-move items-center justify-between border-b border-border/40 px-4 py-3">
           <div>
             <h2 className="text-base font-semibold text-foreground">Veranstaltungen</h2>
             <p className="text-xs text-muted-foreground">

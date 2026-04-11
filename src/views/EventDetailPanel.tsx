@@ -43,9 +43,9 @@ export function EventDetailPanel({ event, onClose }: EventDetailPanelProps) {
     : undefined
 
   return (
-    <div className="flex max-h-[80vh] w-[26rem] flex-col overflow-hidden rounded-2xl border border-border/60 bg-background/90 shadow-xl backdrop-blur-md">
+    <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-background/90 shadow-xl backdrop-blur-md">
       {/* Coverbild oder Gradient-Platzhalter */}
-      <div className="relative aspect-[16/9] w-full shrink-0 overflow-hidden">
+      <div className="panel-drag-handle relative aspect-[16/9] w-full shrink-0 cursor-move overflow-hidden">
         {coverImage ? (
           <img src={coverImage} alt={title} className="h-full w-full object-cover" />
         ) : (
