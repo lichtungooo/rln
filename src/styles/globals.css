@@ -1,9 +1,10 @@
 @import "tailwindcss";
-@import "@real-life-stack/toolkit/styles/globals.css";
+@source "../../../../real-life-stack/packages/toolkit/dist";
+@source "../../../../real-life-stack/packages/toolkit/src";
+@import "./toolkit-globals.css";
 
 body {
   margin: 0;
   min-height: 100vh;
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  line-height: 1.6;
 }

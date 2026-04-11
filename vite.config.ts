@@ -11,10 +11,6 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
       // Wir nutzen die gebauten dist/-Versionen der Pakete direkt,
       // sodass deren interne @/-Aliase uns nicht stören.
-      '@real-life-stack/toolkit/styles/globals.css': path.resolve(
-        __dirname,
-        '../../real-life-stack/packages/toolkit/src/styles/globals.css'
-      ),
       '@real-life-stack/toolkit': path.resolve(
         __dirname,
         '../../real-life-stack/packages/toolkit/dist/index.js'
