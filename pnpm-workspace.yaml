@@ -1,4 +1,5 @@
 packages:
   - '../../real-life-stack/packages/toolkit'
   - '../../real-life-stack/packages/data-interface'
+  - '../../real-life-stack/packages/mock-connector'
   - '../../web-of-trust/packages/wot-core'

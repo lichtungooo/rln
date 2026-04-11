@@ -8,3 +8,16 @@ body {
   min-height: 100vh;
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
+
+/* Leaflet: Zoom-Knöpfe nach unten links verschieben,
+   damit sie nicht mit der Navbar kollidieren. */
+.leaflet-top.leaflet-left {
+  top: auto !important;
+  bottom: 5rem !important;
+}
+
+/* Leaflet-Popup im Stil des Real Life Network */
+.leaflet-popup-content-wrapper {
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+}
