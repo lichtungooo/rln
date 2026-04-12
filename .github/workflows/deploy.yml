@@ -45,13 +45,14 @@ jobs:
           cd _deps/real-life-stack && pnpm install --no-frozen-lockfile --ignore-scripts && pnpm -r build || true
           cd ../../_deps/web-of-trust && pnpm install --no-frozen-lockfile --ignore-scripts && pnpm -r build || true
 
-      # Symlinks für die Vite-Aliase (../../real-life-stack → _deps/real-life-stack)
+      # Symlinks: ../../real-life-stack von /home/runner/work/rln/rln/ = /home/runner/work/real-life-stack
       - name: Symlinks anlegen
         run: |
-          ln -s "$(pwd)/_deps/real-life-stack" ../real-life-stack
-          ln -s "$(pwd)/_deps/web-of-trust" ../web-of-trust
+          ln -s "$(pwd)/_deps/real-life-stack" ../../real-life-stack
+          ln -s "$(pwd)/_deps/web-of-trust" ../../web-of-trust
+          ls -la ../../real-life-stack/packages/toolkit/dist/ || echo "toolkit dist missing"
 
-      # RLN bauen
+      # RLN bauen — nur Vite, kein tsc
       - name: RLN bauen
         run: |
           pnpm install --no-frozen-lockfile --ignore-scripts
