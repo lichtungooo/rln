@@ -3,33 +3,31 @@ FROM node:22-alpine AS build
 
 RUN corepack enable && corepack prepare pnpm@9.15.4 --activate
 
-WORKDIR /workspace
+# Die Vite-Config nutzt path.resolve(__dirname, '../../real-life-stack/...')
+# __dirname = /home/build/rln → ../../ = /home/ → /home/real-life-stack/
+# Deshalb: /home/build/rln/ und /home/real-life-stack/ nebeneinander
+WORKDIR /home
 
-# Abhängigkeiten: Real Life Stack und Web of Trust
+# Abhängigkeiten auf die richtige Ebene legen
 COPY real-life-stack/packages/toolkit/         real-life-stack/packages/toolkit/
 COPY real-life-stack/packages/data-interface/  real-life-stack/packages/data-interface/
 COPY real-life-stack/packages/mock-connector/  real-life-stack/packages/mock-connector/
 COPY web-of-trust/packages/wot-core/          web-of-trust/packages/wot-core/
 
-# RLN-Quellcode
-COPY rln/ rln/
+# RLN-Quellcode — eine Ebene tiefer
+COPY rln/ build/rln/
 
-WORKDIR /workspace/rln
+WORKDIR /home/build/rln
 
-# pnpm-workspace zeigt auf ../../real-life-stack/... — das passt jetzt,
-# weil die Verzeichnisstruktur im Container /workspace/ spiegelt.
-
-# Installieren und bauen (base=/ für eigene Domain)
+# Installieren und bauen
 RUN pnpm install --frozen-lockfile --ignore-scripts || pnpm install --no-frozen-lockfile --ignore-scripts
 ENV VITE_BASE_PATH=/
-# Nur Vite-Build, ohne tsc — die Typen werden lokal geprüft
 RUN npx vite build
 
 # ── Serve-Stage ──
 FROM nginx:alpine
 
-# Statische Dateien aus dem Build kopieren
-COPY --from=build /workspace/rln/dist/ /usr/share/nginx/html/
+COPY --from=build /home/build/rln/dist/ /usr/share/nginx/html/
 
 # SPA-Routing: alle Pfade auf index.html umleiten
 RUN printf 'server {\n\
