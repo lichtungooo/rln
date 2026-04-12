@@ -17,19 +17,45 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          path: rln
 
-      # Die Abhängigkeiten auschecken — beide sind öffentlich
+      # Abhängigkeiten auschecken (für den Vite-Build)
       - uses: actions/checkout@v4
         with:
           repository: real-life-org/real-life-stack
-          path: real-life-stack
+          path: _deps/real-life-stack
 
       - uses: actions/checkout@v4
         with:
           repository: real-life-org/web-of-trust
-          path: web-of-trust
+          path: _deps/web-of-trust
+
+      # Abhängigkeitspakete bauen
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: _deps/real-life-stack/pnpm-lock.yaml
+
+      - name: Abhängigkeiten bauen
+        run: |
+          cd _deps/real-life-stack && pnpm install --no-frozen-lockfile --ignore-scripts && pnpm -r build || true
+          cd ../../_deps/web-of-trust && pnpm install --no-frozen-lockfile --ignore-scripts && pnpm -r build || true
+
+      # Symlinks für die Vite-Aliase (../../real-life-stack → _deps/real-life-stack)
+      - name: Symlinks anlegen
+        run: |
+          ln -s "$(pwd)/_deps/real-life-stack" ../real-life-stack
+          ln -s "$(pwd)/_deps/web-of-trust" ../web-of-trust
+
+      # RLN bauen
+      - name: RLN bauen
+        run: |
+          pnpm install --no-frozen-lockfile --ignore-scripts
+          VITE_BASE_PATH=/ npx vite build
 
       - uses: docker/login-action@v3
         with:
@@ -40,6 +66,5 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
-          file: rln/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
