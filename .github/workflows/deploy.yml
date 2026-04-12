@@ -52,9 +52,11 @@ jobs:
           ln -s "$(pwd)/_deps/web-of-trust" ../../web-of-trust
           ls -la ../../real-life-stack/packages/toolkit/dist/ || echo "toolkit dist missing"
 
-      # RLN bauen — nur Vite, kein tsc
+      # RLN bauen — Workspace-Datei entfernen, da Vite die Aliase selbst auflöst
       - name: RLN bauen
         run: |
+          rm -f pnpm-workspace.yaml
+          cat package.json | sed 's/"workspace:\*"/"*"/g' > package.tmp && mv package.tmp package.json
           pnpm install --no-frozen-lockfile --ignore-scripts
           VITE_BASE_PATH=/ npx vite build
 
