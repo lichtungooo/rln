@@ -63,7 +63,11 @@ jobs:
             require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));
           "
           pnpm install --no-frozen-lockfile --ignore-scripts
-          VITE_BASE_PATH=/ npx vite build
+          VITE_BASE_PATH=/ npx vite build || {
+            echo "Build fehlgeschlagen — versuche mit aktualisierten tiptap-Versionen"
+            pnpm update @tiptap/core @tiptap/react @tiptap/starter-kit --no-frozen-lockfile
+            VITE_BASE_PATH=/ npx vite build
+          }
 
       - uses: docker/login-action@v3
         with:

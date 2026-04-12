@@ -44,6 +44,10 @@
         "react": "19",
         "react-dom": "19"
       }
+    },
+    "overrides": {
+      "@tiptap/core": "3.22.3",
+      "@tiptap/pm": "3.22.3"
     }
   }
 }
