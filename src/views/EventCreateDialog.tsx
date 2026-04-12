@@ -182,7 +182,7 @@ export function EventCreateDialog({ open, onOpenChange }: EventCreateDialogProps
             <MarkdownEditor
               value={description}
               onChange={setDescription}
-              placeholder="Was erwartet die Teilnehmenden? Markdown ist möglich."
+              placeholder="Was erwartet die Teilnehmer? Markdown ist möglich."
             />
           </div>
 

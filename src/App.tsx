@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { Item } from '@real-life-stack/data-interface'
 import { ConnectorProvider } from '@real-life-stack/toolkit'
 import { MapView } from './views/MapView'
@@ -55,6 +55,34 @@ function AppInner() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
 
+  // Lock-Status pro Panel: gelockte Panels bleiben beim Karten-Klick offen
+  const [lockedPanels, setLockedPanels] = useState<Set<string>>(new Set())
+
+  const toggleLock = useCallback((panelId: string) => {
+    setLockedPanels((prev) => {
+      const next = new Set(prev)
+      if (next.has(panelId)) {
+        next.delete(panelId)
+      } else {
+        next.add(panelId)
+      }
+      return next
+    })
+  }, [])
+
+  // Karten-Klick: alle ungelockten Panels schließen
+  const handleMapClick = useCallback(() => {
+    if (!lockedPanels.has('calendar')) {
+      setActiveModule('map')
+    }
+    if (!lockedPanels.has('event-detail')) {
+      setSelectedEvent(null)
+    }
+    if (!lockedPanels.has('profile')) {
+      setProfileOpen(false)
+    }
+  }, [lockedPanels])
+
   const showCalendarPanel = activeModule === 'calendar'
 
   return (
@@ -62,7 +90,7 @@ function AppInner() {
       {/* Die Karte ist immer präsent, als Vollbild-Ebene hinter allem */}
       <div className="absolute inset-0 z-0">
         <ErrorBoundary label="Karte">
-          <MapView />
+          <MapView onMapClick={handleMapClick} />
         </ErrorBoundary>
       </div>
 
@@ -116,11 +144,17 @@ function AppInner() {
                     layout: settings.panels.calendar,
                     content: (
                       <ErrorBoundary label="Kalender">
-                        <CalendarPanel
-                          onSelectEvent={setSelectedEvent}
-                          onClose={() => setActiveModule('map')}
-                          selectedEventId={selectedEvent?.id}
-                        />
+                        <PanelWithLock
+                          panelId="calendar"
+                          locked={lockedPanels.has('calendar')}
+                          onToggleLock={toggleLock}
+                        >
+                          <CalendarPanel
+                            onSelectEvent={setSelectedEvent}
+                            onClose={() => setActiveModule('map')}
+                            selectedEventId={selectedEvent?.id}
+                          />
+                        </PanelWithLock>
                       </ErrorBoundary>
                     ),
                   },
@@ -133,10 +167,16 @@ function AppInner() {
                     layout: settings.panels.eventDetail,
                     content: (
                       <ErrorBoundary label="Event-Detail">
-                        <EventDetailPanel
-                          event={selectedEvent}
-                          onClose={() => setSelectedEvent(null)}
-                        />
+                        <PanelWithLock
+                          panelId="event-detail"
+                          locked={lockedPanels.has('event-detail')}
+                          onToggleLock={toggleLock}
+                        >
+                          <EventDetailPanel
+                            event={selectedEvent}
+                            onClose={() => setSelectedEvent(null)}
+                          />
+                        </PanelWithLock>
                       </ErrorBoundary>
                     ),
                   },
@@ -149,7 +189,13 @@ function AppInner() {
                     layout: settings.panels.profile,
                     content: (
                       <ErrorBoundary label="Profil">
-                        <ProfilePanel onClose={() => setProfileOpen(false)} />
+                        <PanelWithLock
+                          panelId="profile"
+                          locked={lockedPanels.has('profile')}
+                          onToggleLock={toggleLock}
+                        >
+                          <ProfilePanel onClose={() => setProfileOpen(false)} />
+                        </PanelWithLock>
                       </ErrorBoundary>
                     ),
                   },
@@ -183,6 +229,46 @@ function AppInner() {
         open={createEventOpen}
         onOpenChange={setCreateEventOpen}
       />
+    </div>
+  )
+}
+
+// Wrapper: zeigt ein kleines Schloss-Icon oben rechts im Panel
+import { Lock, Unlock } from 'lucide-react'
+
+function PanelWithLock({
+  panelId,
+  locked,
+  onToggleLock,
+  children,
+}: {
+  panelId: string
+  locked: boolean
+  onToggleLock: (id: string) => void
+  children: React.ReactNode
+}) {
+  return (
+    <div className="relative h-full w-full">
+      {children}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation()
+          onToggleLock(panelId)
+        }}
+        className={`absolute right-10 top-1 z-10 flex h-6 w-6 items-center justify-center rounded-full transition ${
+          locked
+            ? 'bg-primary text-primary-foreground shadow-sm'
+            : 'bg-black/20 text-white/80 hover:bg-black/40'
+        }`}
+        title={locked ? 'Fenster lösen' : 'Fenster festhalten'}
+      >
+        {locked ? (
+          <Lock className="h-3 w-3" />
+        ) : (
+          <Unlock className="h-3 w-3" />
+        )}
+      </button>
     </div>
   )
 }

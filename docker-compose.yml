@@ -1,0 +1,9 @@
+services:
+  rln:
+    image: ghcr.io/real-life-network/rln:latest
+    network_mode: bridge
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.rln.rule=Host(`h2980589.stratoserver.net`)"
+      - "traefik.http.routers.rln.entrypoints=websecure"
+      - "traefik.http.routers.rln.tls.certresolver=letsencrypt"

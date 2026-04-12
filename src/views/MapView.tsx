@@ -1,10 +1,10 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { UtopiaMap, Layer, type Item as UtopiaItem } from 'utopia-ui'
 import { useItems } from '@real-life-stack/toolkit'
 import { getLocationCoords, getLocationText } from '@/lib/event-helpers'
+import { getLeafletMap } from '@/lib/map-access'
 
 // Die Events aus unserem Connector ins Format der utopia-ui übersetzen.
-// utopia-ui erwartet Items mit position: { type: 'Point', coordinates: [lng, lat] }
 function toUtopiaItem(event: import('@real-life-stack/data-interface').Item): UtopiaItem | null {
   const coords = getLocationCoords(event)
   if (!coords) return null
@@ -20,14 +20,40 @@ function toUtopiaItem(event: import('@real-life-stack/data-interface').Item): Ut
   } as UtopiaItem
 }
 
-export function MapView() {
+interface MapViewProps {
+  onMapClick?: () => void
+}
+
+export function MapView({ onMapClick }: MapViewProps) {
   const { data: events } = useItems({ type: 'event' })
+  const callbackRef = useRef(onMapClick)
+  callbackRef.current = onMapClick
 
   const eventMarkers = useMemo(() => {
     return events
       .map(toUtopiaItem)
       .filter((item): item is UtopiaItem => item !== null)
   }, [events])
+
+  // Leaflet-Map-Klick abfangen
+  useEffect(() => {
+    // Kurz warten, bis die Map initialisiert ist
+    const timer = setTimeout(() => {
+      const map = getLeafletMap()
+      if (!map) return
+
+      const handler = () => {
+        callbackRef.current?.()
+      }
+
+      map.on('click', handler)
+      return () => {
+        map.off('click', handler)
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
     <div className="h-full w-full">

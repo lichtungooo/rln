@@ -10,7 +10,7 @@ import {
 
 // Das Raster hat 6 Spalten × 4 Reihen = 24 Zellen.
 // Das gibt feine Abstufungen für Panel-Größen und -Positionen.
-export const GRID_COLS = 6
+export const GRID_COLS = 12
 export const GRID_ROWS = 4
 
 // Eine Panel-Konfiguration: wo und wie groß soll das Panel beim Öffnen sein.
@@ -31,17 +31,22 @@ export const panelTypeLabels: Record<PanelTypeKey, string> = {
 
 export interface Settings {
   panels: Record<PanelTypeKey, PanelLayout>
+  // Dieser Counter wird bei "Anwenden" hochgezählt. Der PanelWorkspace
+  // beobachtet ihn und verwirft bei Änderung alle benutzerdefinierten
+  // Layout-Anpassungen, sodass die Settings-Werte frisch greifen.
+  layoutVersion: number
 }
 
 const DEFAULT_SETTINGS: Settings = {
   panels: {
-    // Kalender: linkes Drittel, volle Höhe (2 Spalten × 4 Reihen = 8 Zellen)
-    calendar: { x: 0, y: 0, w: 2, h: 4 },
+    // Kalender: linkes Drittel, volle Höhe (4 Spalten × 4 Reihen)
+    calendar: { x: 0, y: 0, w: 4, h: 4 },
     // Event-Detail: mittleres Drittel, volle Höhe
-    eventDetail: { x: 2, y: 0, w: 2, h: 4 },
+    eventDetail: { x: 4, y: 0, w: 4, h: 4 },
     // Profil: rechtes Drittel, volle Höhe
-    profile: { x: 4, y: 0, w: 2, h: 4 },
+    profile: { x: 8, y: 0, w: 4, h: 4 },
   },
+  layoutVersion: 0,
 }
 
 const STORAGE_KEY = 'rln-settings-v3'
@@ -49,6 +54,7 @@ const STORAGE_KEY = 'rln-settings-v3'
 interface SettingsContextValue {
   settings: Settings
   setPanelLayout: (panel: PanelTypeKey, layout: Partial<PanelLayout>) => void
+  applySettings: () => void
   resetSettings: () => void
 }
 
@@ -113,13 +119,20 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     [],
   )
 
+  const applySettings = useCallback(() => {
+    setSettings((prev) => ({
+      ...prev,
+      layoutVersion: prev.layoutVersion + 1,
+    }))
+  }, [])
+
   const resetSettings = useCallback(() => {
-    setSettings(DEFAULT_SETTINGS)
+    setSettings({ ...DEFAULT_SETTINGS, layoutVersion: Date.now() })
   }, [])
 
   const value = useMemo(
-    () => ({ settings, setPanelLayout, resetSettings }),
-    [settings, setPanelLayout, resetSettings],
+    () => ({ settings, setPanelLayout, applySettings, resetSettings }),
+    [settings, setPanelLayout, applySettings, resetSettings],
   )
 
   return (

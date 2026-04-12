@@ -8,10 +8,12 @@ import {
   Navigation,
   Video,
   UserPlus,
+  Users,
 } from 'lucide-react'
 import { MarkdownContent } from '@/components/MarkdownContent'
+import { MiniMap } from '@/components/MiniMap'
 import { calendars } from '@/lib/connector'
-import { getLocationText } from '@/lib/event-helpers'
+import { getLocationText, getLocationCoords } from '@/lib/event-helpers'
 
 interface EventDetailPanelProps {
   event: Item
@@ -24,6 +26,7 @@ export function EventDetailPanel({ event, onClose }: EventDetailPanelProps) {
   const title = String(event.data.title ?? 'Ohne Titel')
   const description = String(event.data.description ?? '')
   const location = getLocationText(event)
+  const coords = getLocationCoords(event)
   const coverImage = event.data.coverImage as string | undefined
   const videoUrl = event.data.videoUrl as string | undefined
   const calendarId = String(event.data.calendar ?? 'privat')
@@ -44,31 +47,28 @@ export function EventDetailPanel({ event, onClose }: EventDetailPanelProps) {
 
   return (
     <div className="flex h-full w-full flex-col overflow-hidden rounded-2xl border border-border/60 bg-background/90 shadow-xl backdrop-blur-md">
-      {/* Coverbild oder Gradient-Platzhalter */}
-      <div className="panel-drag-handle relative aspect-[16/9] w-full shrink-0 cursor-move overflow-hidden">
+      {/* Kopfbereich: kompaktes Cover + Drag-Handle */}
+      <div className="panel-drag-handle relative h-24 w-full shrink-0 cursor-move overflow-hidden">
         {coverImage ? (
           <img src={coverImage} alt={title} className="h-full w-full object-cover" />
         ) : (
           <div
-            className="flex h-full w-full items-center justify-center"
+            className="h-full w-full"
             style={{
               background: `linear-gradient(135deg, ${cal?.color ?? 'oklch(0.63 0.16 55)'} 0%, oklch(0.95 0.03 55) 100%)`,
             }}
-          >
-            <span className="text-5xl font-light text-white/80 drop-shadow-lg">
-              {title.charAt(0).toUpperCase()}
-            </span>
-          </div>
+          />
         )}
 
+        {/* Kalender-Badge */}
         {cal && (
-          <div className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 shadow-sm backdrop-blur-sm">
-            <div className="flex items-center gap-1.5">
+          <div className="absolute left-3 top-3 rounded-full bg-white/90 px-2 py-0.5 shadow-sm backdrop-blur-sm">
+            <div className="flex items-center gap-1">
               <span
                 className="h-2 w-2 rounded-full"
                 style={{ backgroundColor: cal.color }}
               />
-              <span className="text-[11px] font-medium text-foreground">
+              <span className="text-[10px] font-medium text-foreground">
                 {cal.name}
               </span>
             </div>
@@ -78,57 +78,106 @@ export function EventDetailPanel({ event, onClose }: EventDetailPanelProps) {
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white"
+          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-white/90 text-foreground shadow-sm backdrop-blur-sm transition hover:bg-white"
           title="Schließen"
         >
-          <X className="h-4 w-4" />
+          <X className="h-3.5 w-3.5" />
         </button>
       </div>
 
       {/* Scrollbarer Inhalt */}
-      <div className="flex-1 overflow-y-auto px-5 py-4 space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold leading-tight text-foreground">
+      <div className="flex-1 overflow-y-auto">
+        {/* Titel + Meta */}
+        <div className="border-b border-border/30 px-4 py-3">
+          <h2 className="text-base font-semibold leading-tight text-foreground">
             {title}
           </h2>
-        </div>
 
-        {/* Meta-Zeile */}
-        <div className="space-y-2 text-sm">
-          <div className="flex items-start gap-2.5">
-            <CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-            <span className="text-foreground">{formatDate(start)}</span>
-          </div>
-          <div className="flex items-start gap-2.5">
-            <Clock className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-            <span className="text-foreground">
-              {formatTime(start)}
-              {end && <> bis {formatTime(end)}</>}
-            </span>
-          </div>
-          {location && (
-            <div className="flex items-start gap-2.5">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
-              <span className="text-foreground">{location}</span>
+          <div className="mt-2 space-y-1">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <CalendarDays className="h-3.5 w-3.5 shrink-0" />
+              <span>{formatDate(start)}</span>
             </div>
-          )}
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <Clock className="h-3.5 w-3.5 shrink-0" />
+              <span>
+                {formatTime(start)}
+                {end && <> bis {formatTime(end)}</>}
+              </span>
+            </div>
+            {location && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <MapPin className="h-3.5 w-3.5 shrink-0" />
+                <span>{location}</span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Beschreibung */}
         {description && (
-          <div className="border-t border-border/40 pt-4">
-            <MarkdownContent markdown={description} />
+          <div className="border-b border-border/30 bg-muted/25 px-4 py-3">
+            <div className="text-sm leading-relaxed">
+              <MarkdownContent markdown={description} />
+            </div>
           </div>
         )}
 
+        {/* Ort mit Mini-Karte */}
+        {(location || coords) && (
+          <div className="border-b border-border/30 px-4 py-3">
+            <div className="flex items-center gap-1.5 mb-2">
+              <MapPin className="h-3.5 w-3.5 text-primary" />
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground">
+                Ort
+              </h3>
+            </div>
+            {coords ? (
+              <div className="overflow-hidden rounded-xl border border-border/40">
+                <MiniMap
+                  lat={coords.lat}
+                  lng={coords.lng}
+                  zoom={14}
+                  className="h-36 w-full"
+                />
+              </div>
+            ) : (
+              <div className="flex h-28 items-center justify-center rounded-xl border border-border/40 bg-muted/30">
+                <div className="text-center">
+                  <MapPin className="mx-auto h-5 w-5 text-muted-foreground" />
+                  <p className="mt-1 text-[11px] text-muted-foreground">{location}</p>
+                </div>
+              </div>
+            )}
+            {location && (
+              <p className="mt-1.5 text-[11px] text-muted-foreground">{location}</p>
+            )}
+          </div>
+        )}
+
+        {/* Teilnehmer */}
+        <div className="border-b border-border/30 bg-muted/25 px-4 py-3">
+          <div className="flex items-center gap-1.5 mb-2">
+            <Users className="h-3.5 w-3.5 text-primary" />
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground">
+              Teilnehmer
+            </h3>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Hier erscheinen bald die Menschen, die teilnehmen.
+          </p>
+        </div>
+
         {/* Video-Einbettung */}
         {videoUrl && (
-          <div className="border-t border-border/40 pt-4">
-            <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-              <Video className="h-3.5 w-3.5" />
-              <span>Video</span>
+          <div className="px-4 py-3">
+            <div className="mb-2 flex items-center gap-1.5">
+              <Video className="h-3.5 w-3.5 text-primary" />
+              <h3 className="text-xs font-semibold uppercase tracking-wide text-foreground">
+                Video
+              </h3>
             </div>
-            <div className="aspect-video overflow-hidden rounded-lg bg-muted">
+            <div className="aspect-video overflow-hidden rounded-xl bg-muted">
               <VideoEmbed url={videoUrl} />
             </div>
           </div>
@@ -136,7 +185,7 @@ export function EventDetailPanel({ event, onClose }: EventDetailPanelProps) {
       </div>
 
       {/* Aktions-Leiste unten */}
-      <div className="flex shrink-0 items-center gap-2 border-t border-border/40 bg-muted/20 p-3">
+      <div className="flex shrink-0 items-center gap-2 border-t border-border/40 bg-muted/20 px-3 py-2">
         <Button variant="default" size="sm" className="flex-1">
           <UserPlus className="mr-1.5 h-3.5 w-3.5" />
           Teilnehmen

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import GridLayout, { type Layout } from 'react-grid-layout'
 import 'react-grid-layout/css/styles.css'
-import { GRID_COLS, GRID_ROWS, type PanelLayout } from '@/lib/settings'
+import { GRID_COLS, GRID_ROWS, useSettings, type PanelLayout } from '@/lib/settings'
 
 // Der Panel-Workspace ist ein 6×4-Raster über der Karte (24 Zellen).
 // Jedes Panel trägt seine gewünschte Position und Größe mit sich.
@@ -82,12 +82,24 @@ function findFreePlace(
 }
 
 export function PanelWorkspace({ panels }: PanelWorkspaceProps) {
+  const { settings } = useSettings()
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerWidth, setContainerWidth] = useState(0)
   const [containerHeight, setContainerHeight] = useState(0)
 
   // Layout pro Panel-ID. Benutzer-Anpassungen (Drag/Resize) bleiben erhalten.
   const [layouts, setLayouts] = useState<Record<string, Layout>>({})
+
+  // Wenn layoutVersion sich ändert (User hat "Anwenden" geklickt),
+  // verwerfen wir alle gespeicherten Layouts. Die nächsten Panels
+  // laden dann frisch aus den Settings.
+  const lastVersionRef = useRef(settings.layoutVersion)
+  useEffect(() => {
+    if (settings.layoutVersion !== lastVersionRef.current) {
+      lastVersionRef.current = settings.layoutVersion
+      setLayouts({})
+    }
+  }, [settings.layoutVersion])
 
   useEffect(() => {
     setLayouts((prev) => {
@@ -175,7 +187,7 @@ export function PanelWorkspace({ panels }: PanelWorkspaceProps) {
   return (
     <div
       ref={containerRef}
-      className="pointer-events-none absolute inset-x-4 top-20 bottom-20 z-20"
+      className="pointer-events-none absolute inset-x-4 top-20 bottom-20 z-40"
     >
       {containerWidth > 0 &&
         panels.length > 0 &&

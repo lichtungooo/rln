@@ -25,20 +25,20 @@ export async function initConnector() {
       bio: 'Visionär des Real Life Network. Baue Brücken zwischen Menschen, Technologie und gelebter Gemeinschaft.',
       avatar:
         'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=200&fit=crop&crop=face',
-      cover:
-        'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=1200&h=400&fit=crop',
       aboutMe:
-        '## Über mich\n\nIch bin **Timo** — Visionär, Pionier, Narr.\n\nIch trage die Idee des Real Life Network in mir seit vielen Jahren. Es soll ein Werkzeug werden, das Menschen hilft, einander **im wirklichen Leben** zu begegnen — nicht im digitalen Rauschen.\n\n### Was mich bewegt\n\n- Gemeinschaft, die vor Ort wurzelt\n- Werkzeuge, die dem Leben dienen\n- Vertrauen, das durch echte Begegnung wächst\n- Heilung der Welt durch kleine, gelebte Schritte',
+        '## Über mich\n\nIch bin **Timo** — Visionär, Pionier, Narr.\n\nIch trage die Idee des Real Life Network in mir seit vielen Jahren. Es soll ein Werkzeug werden, das Menschen hilft, einander **im wirklichen Leben** zu begegnen.\n\n### Was mich bewegt\n\nGemeinschaft, die vor Ort wurzelt. Werkzeuge, die dem Leben dienen. Vertrauen, das durch echte Begegnung wächst. Heilung der Welt durch kleine, gelebte Schritte.',
       offers: [
-        'Vision und Ideen für dein Projekt',
-        'Verknüpfungen zwischen Menschen',
-        'Strategische Beratung für nachhaltige Gemeinschaften',
-        'Geschichten erzählen aus dem Herzen',
+        'Vision',
+        'Vernetzung',
+        'Beratung',
+        'Geschichten',
+        'Gemeinschaft',
       ],
       needs: [
-        'Entwickler:innen, die an das Vorhaben glauben',
-        'Menschen, die gemeinsam Veranstaltungen tragen',
-        'Einen sicheren Ort zum Arbeiten',
+        'Entwickler',
+        'Mitstreiter',
+        'Veranstaltungen',
+        'Arbeitsort',
       ],
       skills: ['Vision', 'Verknüpfung', 'Kommunikation', 'Gemeinschaftsbildung'],
       location: 'Gudensberg',
@@ -65,8 +65,8 @@ export async function initConnector() {
         'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&h=200&fit=crop&crop=face',
       aboutMe:
         'Ich entwickle seit vielen Jahren Werkzeuge für lokale Vernetzung. Der **Real Life Stack** ist mein Lebensprojekt — eine offene Grundlage für Gemeinschafts-Apps.',
-      offers: ['Technische Architektur', 'Backend-Entwicklung', 'Open-Source-Beratung'],
-      needs: ['Mitstreiter:innen im Real Life Stack'],
+      offers: ['Architektur', 'Backend', 'OpenSource'],
+      needs: ['Mitstreiter'],
       skills: ['TypeScript', 'React', 'Leaflet', 'CRDT'],
       location: 'Berlin',
     },
@@ -83,12 +83,8 @@ export async function initConnector() {
         'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=200&h=200&fit=crop&crop=face',
       aboutMe:
         'Seit zehn Jahren kümmere ich mich um einen Gemeinschaftsgarten. Ich liebe es, Menschen die **alte Kenntnis der Kräuter** zu zeigen und gemeinsam mit ihnen zu pflanzen, zu ernten und zu kochen.',
-      offers: [
-        'Wildkräuter-Workshops',
-        'Pflanzen-Ableger für deinen Balkon',
-        'Gemeinsames Ernten',
-      ],
-      needs: ['Werkzeuge zum Teilen', 'Hände für den großen Erntetag'],
+      offers: ['Kräuter', 'Workshops', 'Ableger', 'Ernte'],
+      needs: ['Werkzeuge', 'Helfer', 'Saatgut'],
       skills: ['Kräuterkunde', 'Permakultur', 'Saatgut-Tausch'],
       location: 'Gudensberg',
     },
