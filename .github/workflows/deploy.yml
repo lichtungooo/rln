@@ -52,11 +52,16 @@ jobs:
           ln -s "$(pwd)/_deps/web-of-trust" ../../web-of-trust
           ls -la ../../real-life-stack/packages/toolkit/dist/ || echo "toolkit dist missing"
 
-      # RLN bauen — Workspace-Datei entfernen, da Vite die Aliase selbst auflöst
+      # RLN bauen — Workspace und lokale Deps entfernen, Vite löst über Aliase
       - name: RLN bauen
         run: |
           rm -f pnpm-workspace.yaml
-          cat package.json | sed 's/"workspace:\*"/"*"/g' > package.tmp && mv package.tmp package.json
+          node -e "
+            const pkg = require('./package.json');
+            const local = ['@real-life-stack/data-interface','@real-life-stack/mock-connector','@real-life-stack/toolkit','@real-life/wot-core'];
+            local.forEach(n => delete pkg.dependencies[n]);
+            require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+          "
           pnpm install --no-frozen-lockfile --ignore-scripts
           VITE_BASE_PATH=/ npx vite build
 
