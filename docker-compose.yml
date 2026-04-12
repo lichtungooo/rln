@@ -1,6 +1,6 @@
 services:
   rln:
-    image: ghcr.io/real-life-network/rln:latest
+    image: ghcr.io/lichtungooo/rln:latest
     network_mode: bridge
     labels:
       - "traefik.enable=true"

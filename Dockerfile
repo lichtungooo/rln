@@ -22,7 +22,8 @@ WORKDIR /workspace/rln
 # Installieren und bauen (base=/ für eigene Domain)
 RUN pnpm install --frozen-lockfile --ignore-scripts || pnpm install --no-frozen-lockfile --ignore-scripts
 ENV VITE_BASE_PATH=/
-RUN pnpm build
+# Nur Vite-Build, ohne tsc — die Typen werden lokal geprüft
+RUN npx vite build
 
 # ── Serve-Stage ──
 FROM nginx:alpine

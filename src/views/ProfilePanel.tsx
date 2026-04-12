@@ -315,7 +315,7 @@ export function ProfilePanel({ profileId, onClose }: ProfilePanelProps) {
 
             {/* Verbindungs-Vorschau */}
             <div className="space-y-2">
-              {profiles.filter((p) => p.id !== profile.id).map((p) => {
+              {profiles.filter((p: { id: string }) => p.id !== profile.id).map((p: { id: string; data: Record<string, unknown> }) => {
                 const pName = String(p.data.name ?? 'Unbekannt')
                 const pAvatar = p.data.avatar as string | undefined
                 const pBio = p.data.bio as string | undefined
@@ -346,7 +346,7 @@ export function ProfilePanel({ profileId, onClose }: ProfilePanelProps) {
                         </div>
                       )}
                     </div>
-                    <Shield className="h-4 w-4 shrink-0 text-green-600" title="Verifiziert" />
+                    <Shield className="h-4 w-4 shrink-0 text-green-600" />
                   </div>
                 )
               })}
