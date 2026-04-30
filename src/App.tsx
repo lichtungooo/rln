@@ -19,13 +19,34 @@ import { HudBar } from './views/map/HudBar'
 import { ActionButton } from './views/map/ActionButton'
 import { connector, initConnector } from './lib/connector'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { LandingPage } from '@real-life-network/forge-ui'
+import { MACHER_MAP } from '@real-life-network/forge'
+
+function useHashRoute() {
+  const [hash, setHash] = useState(window.location.hash)
+  useEffect(() => {
+    const onHash = () => setHash(window.location.hash)
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+  return hash
+}
 
 export function App() {
+  const hash = useHashRoute()
   const [ready, setReady] = useState(false)
 
+  const isLanding = hash === '#/landing' || hash === '#/landing/'
+
   useEffect(() => {
-    initConnector().then(() => setReady(true))
-  }, [])
+    if (!isLanding) {
+      initConnector().then(() => setReady(true))
+    }
+  }, [isLanding])
+
+  if (isLanding) {
+    return <LandingPage space={MACHER_MAP} />
+  }
 
   if (!ready) {
     return (

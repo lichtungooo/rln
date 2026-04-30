@@ -31,6 +31,14 @@ export default defineConfig({
         __dirname,
         '../../web-of-trust/packages/wot-core/dist/index.js'
       ),
+      '@real-life-network/forge': path.resolve(
+        __dirname,
+        'packages/forge/src/index.ts'
+      ),
+      '@real-life-network/forge-ui': path.resolve(
+        __dirname,
+        'packages/forge-ui/src/index.ts'
+      ),
     },
   },
 })

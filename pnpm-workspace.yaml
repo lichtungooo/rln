@@ -1,4 +1,6 @@
 packages:
+  - 'packages/forge'
+  - 'packages/forge-ui'
   - '../../real-life-stack/packages/toolkit'
   - '../../real-life-stack/packages/data-interface'
   - '../../real-life-stack/packages/mock-connector'
