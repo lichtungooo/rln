@@ -1,4 +1,31 @@
-import { ArrowDown, Map, TreePine, Shield, GraduationCap, Wrench, Hammer, Users, Heart } from 'lucide-react'
+import {
+  Map,
+  Calendar,
+  Users,
+  TreePine,
+  Compass,
+  Shield,
+  Heart,
+  ScrollText,
+  MessageSquare,
+  Sparkles,
+  ArrowRight,
+  Hammer,
+  Sun,
+} from 'lucide-react'
+
+/**
+ * RLN-Landing — was lebt auf real-life.network/.
+ *
+ * Vorbild: Antons Web-of-Trust-Landing. Aufbau:
+ *   1. Header mit Logo + Nav
+ *   2. Hero (Claim + Sub + 2 CTAs)
+ *   3. Was ist RLN (drei Saeulen)
+ *   4. Module-Uebersicht (9 Module)
+ *   5. Spaces-Showcase (Macher, Lichtung)
+ *   6. CTA-Block
+ *   7. Footer
+ */
 
 function GitHubIcon({ size = 16 }: { size?: number }) {
   return (
@@ -7,25 +34,58 @@ function GitHubIcon({ size = 16 }: { size?: number }) {
     </svg>
   )
 }
-import { Logo } from '../components/Logo'
+
+const MODULES = [
+  { icon: Shield, label: 'Trust', desc: 'Identitaet im echten Leben — 12 Worte, dezentral, in deiner Hand' },
+  { icon: Users, label: 'Profile', desc: 'Kuratierter Raum, Sichtbarkeit pro Inhalt waehlbar' },
+  { icon: Compass, label: 'Dashboard', desc: 'Privater Spiegel mit Widgets und Puls' },
+  { icon: Map, label: 'Karte', desc: 'Orte, Menschen, Events — raeumlicher Anker' },
+  { icon: Calendar, label: 'Kalender', desc: 'Persoenlich, Space, Quest — eine Zeit, drei Sichten' },
+  { icon: TreePine, label: 'Gamification', desc: 'Faehigkeitenbaum, Avatar, Quests — wachsen, was waechst' },
+  { icon: ScrollText, label: 'Log', desc: 'Spiegel der Reise, chronologisch und gefiltert' },
+  { icon: MessageSquare, label: 'Notifications', desc: 'Stimmen zwischen Menschen, mehrkanalig' },
+  { icon: Heart, label: 'Wertschoepfung', desc: 'Begabung × Beduerfnis × Begegnung' },
+]
+
+const SPACES = [
+  {
+    slug: 'macher',
+    name: 'Macher',
+    color: '#E8751A',
+    tagline: 'Werkzeugkasten fuer Handwerk und Community',
+    desc: 'Werkstaetten, Macher und Abenteuer auf einer Karte. Skill-Tree, Gamification, echte Begegnungen.',
+    inApp: '/macher',
+  },
+  {
+    slug: 'lichtung',
+    name: 'Lichtung',
+    color: '#D4AF37',
+    tagline: 'Globale Friedensbewegung',
+    desc: 'Licht-Pins auf der Weltkarte, Lichtungen als physische Orte, Verbindungskunst und Meditation.',
+    inApp: '/lichtung',
+  },
+]
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-warm-bg text-ink font-sans">
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 border-b border-ink-ghost" style={{ background: 'rgba(250,248,245,0.8)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
-        <nav className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-ink-ghost" style={{ background: 'rgba(250,248,245,0.85)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)' }}>
+        <nav className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <a href="/" className="flex items-center gap-2.5">
-              <Logo size={32} />
-              <span className="font-bold text-lg">Macher-Map</span>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: '#E8751A' }}>
+                <Sparkles className="h-4 w-4 text-white" />
+              </div>
+              <span className="font-bold text-lg">Real Life Network</span>
             </a>
-            <div className="flex items-center gap-6">
-              <a href="#werkzeugkasten" className="hidden sm:block text-sm font-medium text-ink-soft hover:text-gold transition-colors">Werkzeugkasten</a>
-              <a href="#bildung" className="hidden sm:block text-sm font-medium text-ink-soft hover:text-gold transition-colors">Bildung</a>
-              <a href="https://github.com/lichtungooo/macher-map" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium border border-ink-faint rounded-lg hover:border-gold hover:text-gold transition-colors">
+            <div className="flex items-center gap-4 sm:gap-6">
+              <a href="#was-ist" className="hidden md:block text-sm font-medium text-ink-soft hover:text-gold transition-colors">Vision</a>
+              <a href="#module" className="hidden md:block text-sm font-medium text-ink-soft hover:text-gold transition-colors">Module</a>
+              <a href="#spaces" className="hidden md:block text-sm font-medium text-ink-soft hover:text-gold transition-colors">Spaces</a>
+              <a href="https://github.com/lichtungooo/rln" target="_blank" rel="noopener noreferrer" className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm font-medium border border-ink-faint rounded-lg hover:border-gold hover:text-gold transition-colors">
                 <GitHubIcon size={16} />
-                <span className="hidden sm:inline">GitHub</span>
+                <span>GitHub</span>
               </a>
             </div>
           </div>
@@ -34,252 +94,260 @@ export default function LandingPage() {
 
       <main>
         {/* Hero */}
-        <section className="min-h-screen flex items-center pt-16" style={{ background: 'linear-gradient(to bottom, rgba(232,117,26,0.06), rgba(250,248,245,1) 60%)' }}>
+        <section className="min-h-screen flex items-center pt-16 relative overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(232,117,26,0.08) 0%, rgba(250,248,245,1) 50%, rgba(212,175,55,0.06) 100%)' }}>
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
             <div className="max-w-3xl mx-auto text-center">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-8" style={{ background: 'rgba(232,117,26,0.1)', color: '#E8751A' }}>
-                Open Source — MIT-Lizenz
+                <Sparkles className="h-3.5 w-3.5" />
+                Open Source — MIT — Web of Trust
               </div>
 
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6" style={{ fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.03em' }}>
-                Werkzeugkasten fuer{' '}
-                <span style={{ color: '#E8751A' }}>Handwerk und Community</span>
+              <h1 className="text-4xl md:text-5xl lg:text-7xl font-bold tracking-tight mb-6" style={{ fontFamily: "'Space Grotesk', sans-serif", letterSpacing: '-0.03em' }}>
+                Werkzeuge fuer{' '}
+                <span style={{ color: '#E8751A' }}>echte Begegnung</span>
               </h1>
 
-              <p className="text-lg text-ink-soft leading-relaxed max-w-2xl mx-auto mb-10">
-                Die Macher-Map verbindet Werkstaetten, Macher und Abenteuer auf einer Karte — mit Skill-Tree, Gamification und Community. Fuer Handwerker, Schulen und alle, die anpacken.
+              <p className="text-xl text-ink-soft leading-relaxed max-w-2xl mx-auto mb-10">
+                Das Real Life Network ist der digitale Werkzeugkasten, der Menschen
+                in die Realitaet fuehrt. Identitaet beim Menschen, Vertrauen aus
+                Begegnung, Spaces fuer eigene Welten.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
-                <a href="#werkzeugkasten" className="px-6 py-3 text-white font-medium rounded-lg transition-colors" style={{ background: '#E8751A' }} onMouseEnter={e => e.currentTarget.style.background = '#C4620A'} onMouseLeave={e => e.currentTarget.style.background = '#E8751A'}>
-                  Werkzeugkasten entdecken
+                <a
+                  href="/macher"
+                  className="px-8 py-4 text-white font-semibold rounded-lg transition-colors text-lg shadow-lg"
+                  style={{ background: '#E8751A' }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#C4620A'}
+                  onMouseLeave={e => e.currentTarget.style.background = '#E8751A'}
+                >
+                  Macher-Space erleben →
                 </a>
-                <a href="#bildung" className="px-6 py-3 border border-ink-faint font-medium rounded-lg hover:border-gold hover:text-gold transition-colors">
-                  Bildung und Schulen
+                <a href="#was-ist" className="px-6 py-3 border border-ink-faint font-medium rounded-lg hover:border-gold hover:text-gold transition-colors">
+                  Was ist das
                 </a>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl mx-auto">
                 {[
-                  { icon: Map, label: 'Community-Karte' },
-                  { icon: TreePine, label: 'Skill-Tree & Gamification' },
-                  { icon: Shield, label: 'Dezentrale Identitaet' },
+                  { icon: Shield, label: 'Identitaet beim Menschen' },
+                  { icon: Heart, label: 'Begegnung im echten Leben' },
+                  { icon: Compass, label: 'Spaces fuer eigene Welten' },
                 ].map((item) => (
-                  <div key={item.label} className="flex items-center justify-center gap-3 text-ink-soft">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgba(232,117,26,0.1)' }}>
-                      <item.icon size={20} style={{ color: '#E8751A' }} />
+                  <div key={item.label} className="flex flex-col items-center gap-2 text-ink-soft">
+                    <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'rgba(232,117,26,0.1)' }}>
+                      <item.icon size={22} style={{ color: '#E8751A' }} />
                     </div>
-                    <span className="font-medium">{item.label}</span>
+                    <span className="font-medium text-sm">{item.label}</span>
                   </div>
                 ))}
               </div>
             </div>
+          </div>
+        </section>
 
-            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 animate-bounce hidden md:block">
-              <a href="#was-ist" className="text-ink-faint hover:text-gold transition-colors">
-                <ArrowDown size={24} />
+        {/* Was ist RLN */}
+        <section id="was-ist" className="py-24 bg-warm-section">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mx-auto text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                Drei Wege, eine Bewegung
+              </h2>
+              <p className="text-lg text-ink-soft">
+                Das Real Life Network steht auf drei tragenden Saeulen. Sie machen
+                aus einer App ein Werkzeug, aus dem Werkzeug eine Bewegung.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                {
+                  icon: Shield,
+                  title: 'Identitaet beim Menschen',
+                  text: '12 Worte, dezentral, kein Konzern dazwischen. Du traegst dein Leben — niemand nimmt es dir.',
+                },
+                {
+                  icon: Heart,
+                  title: 'Vertrauen aus Begegnung',
+                  text: 'Wer dich kennt, bestaetigt dich. Im echten Leben, mit echten Menschen, ohne Algorithmen.',
+                },
+                {
+                  icon: Compass,
+                  title: 'Spaces fuer eigene Welten',
+                  text: 'Jede Gemeinschaft baut ihren eigenen Raum. Eigene Sprache, eigene Wertformen, gemeinsamer Werkzeugkasten.',
+                },
+              ].map((p) => (
+                <div key={p.title} className="bg-white rounded-2xl p-8 border border-ink-ghost hover:border-gold/40 transition-colors">
+                  <div className="w-14 h-14 rounded-xl flex items-center justify-center mb-5" style={{ background: 'rgba(232,117,26,0.08)' }}>
+                    <p.icon className="h-7 w-7" style={{ color: '#E8751A' }} />
+                  </div>
+                  <h3 className="text-xl font-semibold mb-3" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                    {p.title}
+                  </h3>
+                  <p className="text-ink-soft leading-relaxed">{p.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Module */}
+        <section id="module" className="py-24">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mx-auto text-center mb-16">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium mb-4" style={{ background: 'rgba(232,117,26,0.1)', color: '#E8751A' }}>
+                Neun Module
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                Der Werkzeugkasten
+              </h2>
+              <p className="text-lg text-ink-soft">
+                Jeder Space waehlt seine Module. Manche brauchen nur Karte und
+                Kalender, andere die volle Welt.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {MODULES.map((m) => (
+                <div key={m.label} className="flex items-start gap-4 p-5 rounded-xl border border-ink-ghost hover:border-gold/40 hover:bg-gold-bright/30 transition-all">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(232,117,26,0.08)' }}>
+                    <m.icon className="h-5 w-5" style={{ color: '#E8751A' }} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold mb-1">{m.label}</h3>
+                    <p className="text-sm text-ink-soft leading-relaxed">{m.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Spaces */}
+        <section id="spaces" className="py-24 bg-warm-section">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="max-w-3xl mx-auto text-center mb-16">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                Lebende Spaces
+              </h2>
+              <p className="text-lg text-ink-soft">
+                Jeder Space ist sein eigenes Universum auf demselben Werkzeug-Boden.
+                Schau rein und erlebe es.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {SPACES.map((s) => (
+                <a
+                  key={s.slug}
+                  href={s.inApp}
+                  className="group block bg-white rounded-2xl p-8 border-2 hover:scale-[1.02] hover:shadow-xl transition-all"
+                  style={{ borderColor: 'transparent' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = s.color }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'transparent' }}
+                >
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-xl shrink-0" style={{ background: s.color }} />
+                    <div>
+                      <div className="text-2xl font-bold" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+                        {s.name}
+                      </div>
+                      <div className="text-sm text-ink-soft">{s.tagline}</div>
+                    </div>
+                  </div>
+                  <p className="text-ink-soft leading-relaxed mb-6">{s.desc}</p>
+                  <div className="flex items-center gap-2 font-semibold group-hover:gap-3 transition-all" style={{ color: s.color }}>
+                    Reinschauen
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                </a>
+              ))}
+
+              <a
+                href="/macher"
+                className="group flex items-center justify-center gap-3 bg-white rounded-2xl p-8 border-2 border-dashed border-ink-faint hover:border-gold hover:bg-gold-bright/20 transition-colors min-h-[200px] md:col-span-2"
+              >
+                <Hammer className="h-6 w-6 text-ink-soft group-hover:text-gold transition-colors" />
+                <div>
+                  <div className="font-semibold text-lg group-hover:text-gold transition-colors">
+                    Eigenen Space gruenden
+                  </div>
+                  <div className="text-sm text-ink-soft">
+                    Mit der Forge in Stunden statt Wochen — nicht in Jahren.
+                  </div>
+                </div>
               </a>
             </div>
           </div>
         </section>
 
-        {/* Was ist die Macher-Map */}
-        <section id="was-ist" className="py-20 bg-warm-section">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl mx-auto">
-              <h2 className="text-3xl font-bold mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Was ist die Macher-Map?</h2>
-              <p className="text-lg text-ink-soft leading-relaxed mb-8">
-                Eine Community-Plattform, die Werkstaetten, Workshops und Handwerker auf einer Karte sichtbar macht. Jeder Macher baut einen Skill-Tree auf — Holz, Metall, Elektro. Jeder Workshop gibt Erfahrung. Skills leveln sichtbar. Duolingo fuer Handwerk.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {[
-                  { icon: Map, title: 'Karte', desc: 'Werkstaetten, Makerspaces und Abenteuer in der Naehe' },
-                  { icon: TreePine, title: 'Skill-Tree', desc: 'Holz, Metall, Elektro — jeder Workshop gibt XP' },
-                  { icon: Users, title: 'Gilden', desc: 'Holzgilde, Schweissergilde — Gemeinschaft, die traegt' },
-                  { icon: Hammer, title: 'Quests', desc: 'Bau-Wochenenden, Repair-Cafes, Workshops auf der Karte' },
-                ].map((f) => (
-                  <div key={f.title} className="flex gap-4 p-4 bg-white rounded-xl">
-                    <div className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0" style={{ background: 'rgba(232,117,26,0.1)' }}>
-                      <f.icon size={20} style={{ color: '#E8751A' }} />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold mb-1">{f.title}</h3>
-                      <p className="text-sm text-ink-soft">{f.desc}</p>
-                    </div>
+        {/* CTA */}
+        <section className="py-24" style={{ background: '#1A1A1A', color: 'white' }}>
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <Sun className="h-12 w-12 mx-auto mb-6" style={{ color: '#E8751A' }} />
+            <h2 className="text-3xl md:text-5xl font-bold mb-6" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
+              Werkzeuge die zurueck ins Leben tragen
+            </h2>
+            <p className="text-lg text-white/70 mb-10 max-w-2xl mx-auto leading-relaxed">
+              Echte Menschen, echte Orte, echte Werte. Bau mit, bring deinen Space ein,
+              gestalte das Netz deiner Begegnungen — und nimm es mit dir, wohin du gehst.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <a
+                href="/macher"
+                className="inline-flex items-center gap-2 px-8 py-4 text-white font-semibold rounded-lg transition-colors text-lg"
+                style={{ background: '#E8751A' }}
+                onMouseEnter={e => e.currentTarget.style.background = '#C4620A'}
+                onMouseLeave={e => e.currentTarget.style.background = '#E8751A'}
+              >
+                Macher-Space oeffnen →
+              </a>
+              <a
+                href="https://github.com/lichtungooo/rln"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3 border border-white/30 font-medium rounded-lg hover:border-gold hover:text-gold transition-colors"
+              >
+                <GitHubIcon size={16} />
+                Auf GitHub
+              </a>
+            </div>
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="bg-ink text-white/70 py-12">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex flex-col sm:flex-row items-start justify-between gap-8 mb-8">
+              <div>
+                <div className="flex items-center gap-2.5 mb-3">
+                  <div className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: '#E8751A' }}>
+                    <Sparkles className="h-4 w-4 text-white" />
                   </div>
-                ))}
+                  <span className="font-bold text-white">Real Life Network</span>
+                </div>
+                <p className="text-sm text-white/50 max-w-xs leading-relaxed">
+                  Werkzeuge die Menschen in die Realitaet fuehren. Open Source.
+                  Fuer alle. Ohne Konzerne.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                <a href="https://web-of-trust.de" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Web of Trust</a>
+                <a href="https://real-life-stack.de" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">Real Life Stack</a>
+                <a href="https://github.com/lichtungooo/rln" target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">GitHub</a>
+                <a href="/datenschutz" className="hover:text-white transition-colors">Datenschutz</a>
+                <a href="/impressum" className="hover:text-white transition-colors">Impressum</a>
               </div>
             </div>
-          </div>
-        </section>
 
-        {/* Bildung */}
-        <section id="bildung" className="py-20">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl mx-auto">
-              <div className="flex items-start gap-4 mb-6">
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(232,117,26,0.1)' }}>
-                  <GraduationCap size={24} style={{ color: '#E8751A' }} />
-                </div>
-                <div>
-                  <h2 className="text-3xl font-bold mb-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Bildung und Schulen</h2>
-                  <p className="text-sm font-medium" style={{ color: '#E8751A' }}>Arbeitstitel: Wir sind wertvoll</p>
-                </div>
-              </div>
-              <p className="text-lg text-ink-soft leading-relaxed mb-6">
-                73.000 Ausbildungsplaetze im Handwerk bleiben jedes Jahr unbesetzt. Die Macher-Map baut die Bruecke: Schueler entdecken spielerisch ihre Begabungen, leveln Skills und finden ihren Weg ins Handwerk — mit Quests statt Noten und einem Skill-Tree, der zeigt, was in ihnen steckt.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="p-4 bg-warm-section rounded-xl">
-                  <h3 className="font-semibold mb-1">Potenzialentfaltung</h3>
-                  <p className="text-sm text-ink-soft">Begabungen sichtbar machen, Quests statt Noten, Wir-Prozess statt Einzelkaempfer</p>
-                </div>
-                <div className="p-4 bg-warm-section rounded-xl">
-                  <h3 className="font-semibold mb-1">Dezentrale Identitaet</h3>
-                  <p className="text-sm text-ink-soft">Kinder brauchen kein Handy — ein NFC-Ring reicht. Datenschutzkonform, kostenlos</p>
-                </div>
-                <div className="p-4 bg-warm-section rounded-xl">
-                  <h3 className="font-semibold mb-1">Handwerk erleben</h3>
-                  <p className="text-sm text-ink-soft">Workshops in Filialen, Werkstaetten, Schulen — jede Erfahrung zaehlt und wird sichtbar</p>
-                </div>
-              </div>
+            <div className="border-t border-white/10 pt-6 flex flex-wrap items-center justify-between gap-4 text-xs text-white/40">
+              <div>MIT-Lizenz · Frei und offen</div>
+              <div>Mit Liebe gemacht von Timo, Anton und Sebastian</div>
             </div>
           </div>
-        </section>
-
-        {/* Werkzeugkasten — Real Life Network */}
-        <section id="werkzeugkasten" className="py-20 bg-warm-section">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl mx-auto">
-              <h2 className="text-3xl font-bold mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Der Werkzeugkasten</h2>
-              <p className="text-lg text-ink-soft leading-relaxed mb-10">
-                Die Macher-Map baut auf dem Real Life Network — einem modularen Open-Source-Oekosystem mit zwei Fundamenten.
-              </p>
-
-              <div className="space-y-5">
-                {/* Web of Trust */}
-                <a href="https://web-of-trust.de" target="_blank" rel="noopener noreferrer" className="block p-6 bg-white border border-ink-ghost rounded-xl hover:border-gold/40 transition-colors group">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(37,99,235,0.1)' }}>
-                      <Shield size={24} style={{ color: '#2563eb' }} />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold mb-2 group-hover:text-gold transition-colors">Web of Trust</h3>
-                      <p className="text-ink-soft leading-relaxed mb-3">
-                        Dezentrale Identitaet — jeder Mensch traegt seine Identitaet selbst. 12 Worte, die nur er kennt. Kein zentraler Server sieht Klardaten. Ed25519 Signaturen, AES-256-GCM Verschluesselung, offline-faehig.
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {['BIP39', 'Ed25519', 'did:key', 'CRDT', 'Offline-First'].map((tag) => (
-                          <span key={tag} className="px-2.5 py-1 text-xs font-medium bg-ink-ghost rounded-md">{tag}</span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </a>
-
-                {/* Real Life Stack */}
-                <a href="https://real-life-stack.de" target="_blank" rel="noopener noreferrer" className="block p-6 bg-white border border-ink-ghost rounded-xl hover:border-gold/40 transition-colors group">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ background: 'rgba(34,197,94,0.1)' }}>
-                      <Wrench size={24} style={{ color: '#22c55e' }} />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-bold mb-2 group-hover:text-gold transition-colors">Real Life Stack</h3>
-                      <p className="text-ink-soft leading-relaxed mb-3">
-                        Modulares UI-Toolkit mit 9 Bausteinen: Karte, Profile, Kalender, Gamification, Dashboard, Community, Marktplatz, Log, Benachrichtigungen. React, TypeScript, Tailwind.
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {['React 19', 'TypeScript', 'Tailwind v4', '9 Module', 'MIT-Lizenz'].map((tag) => (
-                          <span key={tag} className="px-2.5 py-1 text-xs font-medium bg-ink-ghost rounded-md">{tag}</span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </a>
-
-                {/* Architektur-Diagramm */}
-                <div className="p-6 rounded-xl text-white font-mono text-sm leading-relaxed" style={{ background: '#1A1A1A' }}>
-                  <pre className="overflow-x-auto">{`┌─────────────────────────────────────────┐
-│            Die Macher-Map               │
-│  Karte · Skill-Tree · Gilden · Quests   │
-├─────────────────────────────────────────┤
-│          Real Life Network              │
-│  9 Module · Open Source · MIT-Lizenz    │
-├──────────────────┬──────────────────────┤
-│  Real Life Stack │     Web of Trust     │
-│  UI · Module     │  Identitaet · CRDT  │
-└──────────────────┴──────────────────────┘`}</pre>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Partner + CTA */}
-        <section className="py-20">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="max-w-3xl mx-auto text-center">
-              <h2 className="text-3xl font-bold mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Wir suchen Partner</h2>
-              <p className="text-lg text-ink-soft leading-relaxed mb-6">
-                Die Macher-Map ist der erste Space im Real Life Network. Der Code steht. Die Architektur traegt. Was fehlt: Partner, die Reichweite, Filialen und die Macher-Marke mitbringen. Handwerk hat den goldenen Boden — wir bauen die digitale Bruecke.
-              </p>
-              <div className="flex flex-wrap items-center justify-center gap-3 mb-10">
-                {['Open Source', 'MIT-Lizenz', 'Dezentral', 'Offline-faehig', 'DSGVO-konform', 'Kein Tracking'].map((tag) => (
-                  <span key={tag} className="px-3 py-1.5 text-sm font-medium border border-ink-faint rounded-full">{tag}</span>
-                ))}
-              </div>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a href="https://github.com/lichtungooo/macher-map" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 text-white font-medium rounded-lg transition-colors" style={{ background: '#1A1A1A' }}>
-                  <GitHubIcon size={18} />
-                  GitHub
-                </a>
-                <a href="https://real-life-stack.de/app" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 border border-ink-faint font-medium rounded-lg hover:border-gold hover:text-gold transition-colors">
-                  Real Life Stack Demo
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
+        </footer>
       </main>
-
-      {/* Footer */}
-      <footer className="py-12 text-white" style={{ background: '#1A1A1A' }}>
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-3 gap-8 mb-8">
-            <div>
-              <div className="flex items-center gap-2.5 mb-3">
-                <Logo size={26} />
-                <span className="font-bold">Macher-Map</span>
-              </div>
-              <p className="text-sm" style={{ color: 'rgba(255,255,255,0.4)' }}>
-                Ein Space im Real Life Network.
-                <br />Gebaut mit Herz und Saegemehl.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>Projekt</h3>
-              <div className="flex flex-col gap-1.5">
-                <a href="https://web-of-trust.de" target="_blank" rel="noopener noreferrer" className="text-sm transition-colors" style={{ color: 'rgba(255,255,255,0.4)' }} onMouseEnter={e => e.currentTarget.style.color = '#fff'} onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}>Web of Trust</a>
-                <a href="https://real-life-stack.de" target="_blank" rel="noopener noreferrer" className="text-sm transition-colors" style={{ color: 'rgba(255,255,255,0.4)' }} onMouseEnter={e => e.currentTarget.style.color = '#fff'} onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}>Real Life Stack</a>
-                <a href="https://github.com/lichtungooo/macher-map" target="_blank" rel="noopener noreferrer" className="text-sm transition-colors" style={{ color: 'rgba(255,255,255,0.4)' }} onMouseEnter={e => e.currentTarget.style.color = '#fff'} onMouseLeave={e => e.currentTarget.style.color = 'rgba(255,255,255,0.4)'}>GitHub</a>
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xs font-bold uppercase tracking-widest mb-3" style={{ color: 'rgba(255,255,255,0.5)' }}>Rechtliches</h3>
-              <div className="flex flex-col gap-1.5">
-                <a href="/impressum" className="text-sm transition-colors" style={{ color: 'rgba(255,255,255,0.4)' }}>Impressum</a>
-                <a href="/datenschutz" className="text-sm transition-colors" style={{ color: 'rgba(255,255,255,0.4)' }}>Datenschutz</a>
-              </div>
-            </div>
-          </div>
-          <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3" style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-            <span className="text-xs" style={{ color: 'rgba(255,255,255,0.2)' }}>Open Source — MIT-Lizenz — Fuer immer frei</span>
-            <span className="text-xs flex items-center gap-1" style={{ color: 'rgba(255,255,255,0.2)' }}>
-              Gebaut mit <Heart size={11} style={{ color: '#E8751A' }} /> von Machern fuer Macher
-            </span>
-          </div>
-        </div>
-      </footer>
     </div>
   )
 }
