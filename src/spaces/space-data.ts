@@ -66,6 +66,26 @@ export function findGroupBySlug(groups: Group[], slug: string): Group | undefine
   return groups.find((g) => g.data?.slug === slug)
 }
 
+/**
+ * Findet einen Space anhand eines URL-Parameters — erst per Slug, dann per ID.
+ * Loest sowohl `/macher` (slug) als auch `/abc-123-uuid` (id) auf.
+ */
+export function findGroupBySlugOrId(
+  groups: Group[],
+  param: string | null | undefined
+): Group | undefined {
+  if (!param) return undefined
+  const bySlug = findGroupBySlug(groups, param)
+  if (bySlug) return bySlug
+  return groups.find((g) => g.id === param)
+}
+
+/** Liefert den URL-Path-Anfang fuer einen Space — Slug bevorzugt, sonst ID. */
+export function getSpacePathSegment(group: Group): string {
+  const meta = getSpaceMeta(group)
+  return meta.slug ?? group.id
+}
+
 /** Prueft ob ein Slug im Verbund noch frei ist (eigenen Space ausnehmen). */
 export function isSlugFree(
   groups: Group[],

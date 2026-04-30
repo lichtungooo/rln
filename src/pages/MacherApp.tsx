@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
-import { useNavigate, useParams, Routes, Route } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { Sun, Moon, Plus } from 'lucide-react'
 import { LocalConnector } from '@real-life-stack/local-connector'
 import { MockConnector } from '@real-life-stack/mock-connector'
@@ -64,6 +64,7 @@ import { themeModule } from '../modules/theme'
 import { useSpaceTheme } from '../themes/use-space-theme'
 import { SpaceSettings, type SpaceSettingsTab } from '../settings/SpaceSettings'
 import { MacherWorkspaceSwitcher } from '../spaces/MacherWorkspaceSwitcher'
+import { findGroupBySlugOrId, getSpacePathSegment, generateSlug, isSlugFree } from '../spaces/space-data'
 import { SpaceHierarchyBar } from '../spaces/SpaceHierarchyBar'
 
 registerModule(mapModule)
@@ -99,7 +100,7 @@ function IncomingEventDialogs({ onCloseVerifyDialog }: { onCloseVerifyDialog?: (
 
   const navigate = useNavigate()
   const handleOpenSpace = () => {
-    if (spaceInvite) navigate(`/app/spaces/${spaceInvite.spaceId}/feed`)
+    if (spaceInvite) navigate(`/${spaceInvite.spaceId}/feed`)
     dismiss()
   }
 
@@ -149,7 +150,9 @@ function RelayStatusBadgeWrapper() {
 function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorId: string; onConnectorChange: (id: string) => void; }) {
   const connector = useConnector()
   const navigate = useNavigate()
-  const { spaceId: urlSpaceId, module: urlModule } = useParams<{ spaceId?: string; module?: string }>()
+  // Slug-basierte URL: /<slug>/<modul>. Slug ist entweder group.data.slug
+  // oder (Backwards-Compat) die group.id.
+  const { slug: urlSlug, module: urlModule } = useParams<{ slug?: string; module?: string }>()
   const { data: groups } = useGroups()
   const createGroup = useCreateGroup()
   const updateGroup = useUpdateGroup()
@@ -185,9 +188,13 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
   )
 
   const activeWorkspace: Workspace | null = useMemo(() => {
-    if (urlSpaceId) {
-      const found = workspaces.find((w) => w.id === urlSpaceId)
-      if (found) return found
+    if (urlSlug) {
+      // Slug zuerst, dann ID-Fallback
+      const group = findGroupBySlugOrId(groups, urlSlug)
+      if (group) {
+        const found = workspaces.find((w) => w.id === group.id)
+        if (found) return found
+      }
     }
     const savedId = localStorage.getItem(STORAGE_KEY_GROUP)
     if (savedId) {
@@ -195,7 +202,7 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
       if (found) return found
     }
     return workspaces[0] ?? null
-  }, [urlSpaceId, workspaces])
+  }, [urlSlug, workspaces, groups])
 
   // Default-Module fuer Overview oder Spaces ohne eigene Konfig
   // Funktions-Module — diese erscheinen als Tabs in der Navbar.
@@ -247,12 +254,29 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
     return moduleDefs[0]?.id ?? 'map'
   }, [urlModule, moduleDefs])
 
+  // Helper: bevorzugte URL fuer einen Space + Modul
+  const buildSpacePath = useCallback((groupId: string, moduleId: string) => {
+    const group = groups.find((g) => g.id === groupId)
+    const segment = group ? getSpacePathSegment(group) : groupId
+    return `/${segment}/${moduleId}`
+  }, [groups])
+
   useEffect(() => {
     if (workspaces.length === 0) return
-    if (!urlSpaceId && activeWorkspace) {
-      navigate(`/app/spaces/${activeWorkspace.id}/${activeModule}`, { replace: true })
+    if (!urlSlug && activeWorkspace) {
+      navigate(buildSpacePath(activeWorkspace.id, activeModule), { replace: true })
+      return
     }
-  }, [workspaces.length, urlSpaceId, activeWorkspace, activeModule, navigate])
+    // Wenn URL eine ID enthaelt aber der Group einen Slug hat → auf Slug umleiten
+    if (urlSlug && activeWorkspace) {
+      const group = groups.find((g) => g.id === activeWorkspace.id)
+      const preferred = group ? getSpacePathSegment(group) : urlSlug
+      if (preferred !== urlSlug) {
+        const mod = urlModule ?? activeModule
+        navigate(`/${preferred}/${mod}`, { replace: true })
+      }
+    }
+  }, [workspaces.length, urlSlug, urlModule, activeWorkspace, activeModule, navigate, groups, buildSpacePath])
 
   useEffect(() => {
     if (activeWorkspace && hasGroups(connector)) {
@@ -285,11 +309,11 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
     const group = groups.find((g) => g.id === workspace.id)
     const mods = (group?.data?.modules as string[] | undefined) ?? ['map', 'kanban', 'marketplace']
     const mod = mods.includes(activeModule) ? activeModule : (mods[0] ?? 'map')
-    navigate(`/app/spaces/${workspace.id}/${mod}`)
-  }, [groups, activeModule, navigate])
+    navigate(buildSpacePath(workspace.id, mod))
+  }, [groups, activeModule, navigate, buildSpacePath])
 
   const handleModuleChange = (moduleId: string) => {
-    if (activeWorkspace) navigate(`/app/spaces/${activeWorkspace.id}/${moduleId}`)
+    if (activeWorkspace) navigate(buildSpacePath(activeWorkspace.id, moduleId))
   }
 
   const openCreateDialog = useCallback(() => {
@@ -466,6 +490,17 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
         contacts={allContacts}
         onCreateGroup={async (name) => {
           const group = await createGroup(name)
+          // Slug automatisch aus Name erzeugen, Konflikte mit Counter loesen
+          const baseSlug = generateSlug(name)
+          let slug = baseSlug
+          let counter = 2
+          while (!isSlugFree(groups, slug, group.id)) {
+            slug = `${baseSlug}-${counter}`
+            counter++
+          }
+          await updateGroup(group.id, {
+            data: { ...(group.data ?? {}), slug },
+          })
           handleWorkspaceChange({ id: group.id, name: group.name })
         }}
         onUpdateGroup={async (id, updates) => { await updateGroup(id, updates) }}
@@ -705,15 +740,13 @@ export default function MacherApp() {
     )
   }
 
+  // URL-Routes liegen in App.tsx (Top-Level: /<slug>/<modul>/<itemId>).
+  // Hier rendert MacherHome direkt — useParams im Inner liest slug + module.
   return (
     <ConnectorProvider connector={connector} key={connectorId}>
       <IncomingEventsProvider>
         <AuthGate connector={connector}>
-          <Routes>
-            <Route path="spaces/:spaceId/:module" element={<MacherHome activeConnectorId={connectorId} onConnectorChange={setConnectorId} />} />
-            <Route path="spaces/:spaceId" element={<MacherHome activeConnectorId={connectorId} onConnectorChange={setConnectorId} />} />
-            <Route path="*" element={<MacherHome activeConnectorId={connectorId} onConnectorChange={setConnectorId} />} />
-          </Routes>
+          <MacherHome activeConnectorId={connectorId} onConnectorChange={setConnectorId} />
         </AuthGate>
       </IncomingEventsProvider>
     </ConnectorProvider>
