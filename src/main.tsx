@@ -1,17 +1,31 @@
+import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './styles/globals.css'
-import { App } from './App'
-import { patchLeafletForMapAccess } from './lib/map-access'
-import { startHidingUtopiaUi } from './lib/hide-utopia-ui'
+import './index.css'
+import App from './App.tsx'
 
-// Leaflet einmal patchen, bevor utopia-ui seine Karte erzeugt.
-patchLeafletForMapAccess()
+// Service Worker: nur in Production registrieren.
+// Im Dev (vite dev) wuerde der SW Code aggressiv cachen und alte Versionen
+// von Komponenten ausliefern (z.B. Dialoge die nicht mehr richtig rendern).
+// Existierende SW-Registrierungen werden in Dev aktiv unregistriert + Caches geloescht.
+if ('serviceWorker' in navigator) {
+  if (import.meta.env.PROD) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+    })
+  } else {
+    navigator.serviceWorker.getRegistrations().then((regs) => {
+      for (const reg of regs) reg.unregister()
+    })
+    if ('caches' in window) {
+      caches.keys().then((keys) => {
+        for (const key of keys) caches.delete(key)
+      })
+    }
+  }
+}
 
-// utopia-ui's eigene Navbar und Controls werden dauerhaft aus dem DOM
-// entfernt, damit nur unsere schwebenden Elemente sichtbar sind.
-startHidingUtopiaUi()
-
-// StrictMode ist bewusst weggelassen, weil Leaflet (im utopia-ui) seine DOM-Container
-// nicht mehrfach initialisieren darf. React StrictMode ruft Effekte im Dev-Modus zweifach
-// auf und würde den Karten-Container verdoppeln — das bricht die Karte.
-createRoot(document.getElementById('root')!).render(<App />)
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+)

@@ -1,141 +1,279 @@
-# Architektur
+# Macher-Map — Architektur
 
-Das Real Life Network ruht auf einer klaren, geschichteten Ordnung. Jede Schicht hat ihren Zweck. Jede Schicht spricht mit der nächsten über ein festes, einfaches Interface. So bleibt das Ganze verständlich und wächst in Ruhe.
+**Stand:** 29. April 2026
+**Entscheidung:** All-WoT. Antons Real-Life-Stack + Web-of-Trust ist der Master.
+**Was rausfliegt:** komplette Lichtung-API + alle direkten REST-Calls aus der Macher-Map.
 
 ---
 
-## Das Bild
+## Warum All-WoT
 
-```text
-┌───────────────────────────────────────────────────────────┐
-│                         Module                           │
-│  ┌─────────┐ ┌───────────┐ ┌─────┐ ┌──────────┐           │
-│  │ Profile │ │ Dashboard │ │ Map │ │ Calendar │           │
-│  └─────────┘ └───────────┘ └─────┘ └──────────┘           │
-│  ┌──────────────┐ ┌─────┐ ┌───────────────┐ ┌───────────┐ │
-│  │ Gamification │ │ Log │ │ Notifications │ │ Value ... │ │
-│  └──────────────┘ └─────┘ └───────────────┘ └───────────┘ │
-├───────────────────────────────────────────────────────────┤
-│                        Toolkit                            │
-│   UI-Komponenten, Hooks, geteilte Bausteine               │
-├───────────────────────────────────────────────────────────┤
-│                     DataInterface                         │
-│   Der Vertrag zwischen Modulen und Daten                  │
-├───────────────────────────────────────────────────────────┤
-│                         Trust                             │
-│   Identität, Verschlüsselung, Vertrauens-Netzwerk         │
-└───────────────────────────────────────────────────────────┘
+- **Antons Vision:** Vertrauen ohne zentrale Autoritaet, E2E-verschluesselt, dezentral, self-hostable.
+- **Eine Sprache:** Macher-Map nutzt exakt die Bausteine die Anton + Sebastian bauen. Code laesst sich 1:1 ins RLN ueberfuehren.
+- **Sauberer Modul-Baukasten:** Module sprechen alle das gleiche `DataInterface` + Capabilities. Kein Daten-Schema-Bruch.
+- **Kein Doppel-Auth:** keine Email/Password parallel zu DID. Eine Identitaet, ueberall.
+
+## Was rausfliegt aus der Macher-Map
+
+| Was | Wo | Status |
+|-----|----|--------|
+| `src/api/client.ts` | komplettes REST-Client | **raus** |
+| `src/components/auth/AuthDialog.tsx` (Email/Password) | Login/Register | **raus** |
+| `src/components/auth/ProfileDialog.tsx` (Lichtung-Profil) | alte Profil-UI | **raus** |
+| `src/components/auth/MyConnections.tsx` | Lichtung-Connections | **raus** |
+| `src/pages/MapApp.tsx` | alte Lichtung-Karte | **raus** |
+| `src/pages/AdminPanel.tsx` | Admin-Panel | **raus** |
+| `src/pages/InvitePage.tsx` | Lichtung-Invite | **raus** |
+| `src/context/IdentityContext.tsx` | Lichtung-Auth | **raus** |
+| Routes `/legacy`, `/admin`, `/invite` | App.tsx | **raus** |
+| `macher-map-api-1` Container | Server-Backend (Lichtung-API) | **abschalten** sobald Frontend umgezogen |
+
+**Was bleibt:** alles unter `src/pages/MacherApp.tsx` + `src/modules/*` + Toolkit-Komponenten + WoT-Connector.
+
+---
+
+## Antons Stack (das Fundament)
+
+### Identitaets-Schicht: Web of Trust
+
+```
+@web_of_trust/core           ← CRDT-Doc, DID, Verifikation, SignedClaims
+@web_of_trust/adapter-yjs    ← Yjs-Adapter fuer Multi-Device-Sync
 ```
 
-Jede Schicht ruht auf der darunter. Module wissen von Modulen, Toolkit, DataInterface und Trust — und lassen den Rest in Ruhe.
+**Server-Komponenten** (alle unter utopia-lab.org, self-hostbar):
 
----
+| Service | URL | Aufgabe |
+|---------|-----|---------|
+| **Relay** | `wss://relay.utopia-lab.org` | E2E-verschluesselte Nachrichten-Weiterleitung |
+| **Profile-Discovery** | `https://profiles.utopia-lab.org` | oeffentliche Profile finden (DID → Profil-Daten) |
+| **Vault** | `https://vault.utopia-lab.org` | verschluesselte Backups |
 
-## Die Schichten im Einzelnen
+**Wichtig:** Relays/Profile/Vault koennen **selbst gehostet** werden. Macher-Map kann eigenen Relay betreiben — ohne Code-Aenderung.
 
-### Trust — die Wurzel des Vertrauens
+### Daten-Schicht: Real-Life-Stack
 
-Der Trust trägt Identität und Verschlüsselung. Jeder Mensch besitzt seine Identität selbst:
-
-- **Zwölf magische Worte** als Samen jeder Identität (BIP39-Mnemonic)
-- **Ed25519** für Signaturen, **X25519** für sicheren Schlüsselaustausch
-- **did:key** als dezentraler Bezeichner, offen und frei von zentralen Registern
-- **AES-256-GCM** für die Verschlüsselung aller geteilten Inhalte
-- **QR-Code-Verifikation** bei echter Begegnung — zwei Menschen, ein Moment, ein bestätigtes Band
-
-Vertrauen wächst aus Begegnung, Begegnung aus gelebtem Leben. Der Trust hält diesen Schatz im Gerät jedes Menschen, geschützt und unter seiner Kontrolle.
-
-### DataInterface — der gemeinsame Vertrag
-
-Alle Module sprechen mit den Daten über ein einheitliches Interface. Sie wissen, *wie* sie fragen, und lassen offen, *wer* antwortet. So bleiben die Module frei von Annahmen über das Backend, und das Backend lässt sich austauschen, ohne die Module zu berühren.
-
-Das zentrale Konzept ist einfach: **Alles ist ein Item.** Ein Item trägt eine Identität, einen Typ und seine Daten. Aus den Daten ergibt sich, in welchen Modulen das Item erscheint:
-
-- Trägt es `start` und `end`, erscheint es im Kalender.
-- Trägt es `location`, erscheint es auf der Karte.
-- Trägt es `type: "profile"`, erscheint es als Profil.
-- Trägt es `type: "quest"`, lebt es im Gamification-Stack.
-
-Ein Item kann in mehreren Modulen gleichzeitig sichtbar sein. Das erspart Doppelarbeit und hält die Welt einfach.
-
-### Toolkit — die geteilten Werkzeuge
-
-Das Toolkit enthält die UI-Bausteine, die alle Module gemeinsam nutzen: Karten, Knöpfe, Kacheln, Formular-Elemente, Hooks für reaktive Daten. Es sorgt dafür, dass das Real Life Network überall gleich klingt, gleich aussieht und gleich anmutet.
-
-### Module — die Türen ins Leben
-
-Jedes Modul öffnet eine eigene Tür. Im Folgenden die sechs ersten Module mit ihrem Herz-Gedanken.
-
----
-
-## Die Module
-
-### Profile
-
-Das Profil ist ein scrollbarer Raum, in dem jeder Mensch zeigt, was er mit anderen teilen möchte. Aus den anderen Modulen fließen Dinge hinein — erlebte Quests, gemeinsame Termine, Beiträge zur Gemeinschaft. Der Mensch wählt selbst, was sichtbar wird.
-
-Das Profil beantwortet die Frage: *Was möchte ich von mir zeigen?*
-
-### Dashboard
-
-Das Dashboard ist der ruhige Absprungpunkt für jeden Menschen. Es trägt **Widgets** — klare Fenster in die anderen Module, die zeigen, was gerade wichtig ist. Je nach Space passt sich das Dashboard an: im Arbeits-Space stehen andere Widgets als im Spiel-Space. So findet jeder Mensch seinen persönlichen Blick.
-
-### Map
-
-Die Karte ist der räumliche Anker. Sie zeigt Menschen, Orte, Ereignisse und Gelegenheiten in der Umgebung. Jeder Mensch öffnet sie, wenn er den Raum sehen möchte — sie steht gleichrangig neben den anderen Modulen und drängt sich keinem auf.
-
-### Calendar
-
-Der Kalender hält die Zeit. Er zeigt Termine, Quests, Einladungen und ihre Rhythmen. Da eine Quest ein Item mit `start` und `end` ist, erscheint sie hier automatisch — ohne doppelten Weg, ohne zusätzliche Pflege.
-
-### Gamification
-
-Die Gamification ist die Reise, die aus dem Tun wird. Sie besteht aus sechs Bereichen des Fähigkeitenbaums (Körper, Geist, Seele, Bewusstsein, Soziales, Gemeinschaft), aus Attributen darunter, aus Erfahrungspunkten, aus Quests, Titeln, Items und dem Avatar. Jeder Mensch trägt seinen Charakter mit sich, wenn er zwischen Spaces wandert. Der Charakter lebt bei ihm, die Welten empfangen ihn.
-
-### Log
-
-Das Log ist der Spiegel. Jede Handlung, jede Quest, jeder Termin, jede Begegnung findet hier ihren Eintrag. Das Log dient der Reflexion — es zeigt dem Menschen, was er getan hat, wo er stand, wie er gewachsen ist. Aus dem Log fließen Fragmente in das Profil, wenn der Mensch sie mit anderen teilen möchte.
-
-Das Log beantwortet die Frage: *Wer bin ich geworden?*
-
-### Notifications
-
-Die Notifications sind die Stimme zwischen den Menschen. Sie tragen, was andere mitteilen möchten: eine Einladung, eine Antwort, ein Gruß aus der Nähe, eine Quest, die ansteht. Jeder Mensch wählt selbst, welche Nachrichten ihn erreichen und in welcher Form.
-
-### Value Creation
-
-Die Wertschöpfung entsteht im Dreieck aus **Begabung, Bedürfnis und Begegnung**. Dieses Modul macht sichtbar, was gegeben und empfangen wird — jenseits der Zeitmessung, im Sinne echter, gelebter Kreisläufe.
-
----
-
-## Der Fluss der Daten
-
-```text
-Mensch → Modul → Hook → DataInterface → Connector → Daten
-                                              │
-                                              ▼
-                                           Trust-Schicht
-                                        (verschlüsselt,
-                                         im Gerät)
+```
+@real-life-stack/data-interface     ← Item-Modell, Capabilities, Type Guards
+@real-life-stack/wot-connector      ← WotConnector implementiert FullConnector + ProfileCapable + ContactManager + SignedClaimCapable + MessagingCapable
+@real-life-stack/local-connector    ← LocalConnector (IndexedDB) — fuer Dev/Tests
+@real-life-stack/mock-connector     ← MockConnector — fuer Stories/Tests
+@real-life-stack/toolkit            ← UI-Komponenten + Hooks + ConnectorProvider
 ```
 
-Ein Mensch handelt in einem Modul. Das Modul ruft einen Hook, der Hook spricht über das DataInterface mit einem Connector. Der Connector — im Fall des Trust-Bausteins — speichert die Daten verschlüsselt im Gerät des Menschen und teilt sie über sichere Kanäle mit den Menschen, denen vertraut wurde.
+**Datenfluss:**
+```
+UI-Modul → Hook → DataInterface (Connector) → WoT-Doc → Relay/IndexedDB
+```
 
-Nichts geht durch fremde Hände. Nichts landet in zentralen Registern. Der Mensch trägt seinen Schatz selbst.
+### Item-Modell (Antons universelles Datenobjekt)
+
+```ts
+interface Item {
+  id: string
+  type: string         // "post", "event", "task", "place", "profile", ...
+  data: Record<string, unknown>
+  relations?: Relation[]
+}
+```
+
+`type` bestimmt Bedeutung. Felder in `data` bestimmen wo das Item erscheint:
+- `status` → Kanban
+- `start`/`end` → Kalender
+- `location` → Karte
+- `content` → Feed
+
+Ein Item kann in **mehreren Modulen** gleichzeitig erscheinen.
+
+### Capabilities (ISP-Architektur)
+
+Connectors implementieren nur was sie koennen:
+
+| Capability | Was | WoT | Local | Mock |
+|------------|-----|-----|-------|------|
+| `DataInterface` | Read-only core | ✅ | ✅ | ✅ |
+| `ItemWriter` | CRUD | ✅ | ✅ | ✅ |
+| `GroupManager` | Spaces/Gruppen | ✅ | ✅ | ✅ |
+| `RelationCapable` | Relations | ✅ | ✅ | ✅ |
+| `Authenticatable` | DID-Auth | ✅ | ❌ | ❌ |
+| `ContactManager` | Kontakte | ✅ | ❌ | ❌ |
+| `MessagingCapable` | Relay-Messages | ✅ | ❌ | ❌ |
+| `SignedClaimCapable` | Attestations/Verifikation | ✅ | ❌ | ❌ |
+| `ProfileCapable` | Profile (name/bio/avatar) | ✅ | ❌ | ❌ |
+| `EventListenerCapable` | Incoming Events | ✅ | ❌ | ❌ |
+| `ItemGroupCapable` | Items↔Group | ✅ | ✅ | ✅ |
+
+UI prueft ueber Type Guards (`hasProfile(connector)`, `hasSignedClaims(connector)`, etc.).
 
 ---
 
-## Erweiterung
+## Modul-Baukasten
 
-Das Real Life Network wächst durch neue Module. Jedes neue Modul:
+### Konzept
 
-1. Spricht mit den Daten **ausschließlich** über das DataInterface.
-2. Nutzt das Toolkit für seine Oberfläche.
-3. Fügt sich in die bestehenden Module ein, ohne sie zu stören.
-4. Trägt seine eigene klare Sprache — verständlich, positiv, einladend.
+**Modul** = Funktionalitaet (Karte, Kalender, Feed, Kanban, Profil, Marktplatz, Gamification, Log).
+**Space** = Community waehlt + konfiguriert Module.
+**Theme** = Design-Schicht pro Space.
 
-So entsteht im Lauf der Zeit ein reiches, zusammenhängendes Ganzes, das seinen eigenen Charakter trägt und doch mit einer Stimme spricht.
+```
+Space (Macher) hat Module: [karte, kalender, marktplatz, profil, gamification]
+  ↓ jedes Modul liest seine Konfig aus group.data.moduleConfig[<modulId>]
+Module rendern UI gegen DataInterface
+```
+
+### Modul-Schnittstellen
+
+Module sprechen miteinander ueber **vier Wege**:
+
+#### 1. Item-Typen (geteilte Daten)
+```ts
+// Quest-Modul liest events mit type="quest"
+// Kalender-Modul liest events mit type="event" UND type="quest"
+// → Quest erscheint im Kalender, weil beide den gleichen Item-Typ verstehen
+```
+
+#### 2. Widgets (Modul rendert anderes Modul ein)
+```tsx
+<ProfileView>
+  <ProfileWidget moduleId="calendar" config={{ filter: { createdBy: userId } }} />
+  <ProfileWidget moduleId="marketplace" config={{ filter: { ownerId: userId } }} />
+</ProfileView>
+```
+Beispiele:
+- Profil zeigt Kalender-Widget mit eigenen Events
+- Lichtung zeigt Mitglieder-Widget mit Kontakten
+- Werkstatt zeigt Marktplatz-Widget mit eigenen Offers
+
+#### 3. Hooks (Module reagieren auf Item-Events)
+```ts
+// Gamification-Modul lauscht auf neue items, vergibt XP
+useItemHook("created", "post", (item) => awardXP(item.createdBy, "post:create", 10))
+```
+
+#### 4. Mobile Widgets (Capacitor Widget-Extensions)
+- `event_kalender` Modul → Home-Screen-Widget mit naechsten Events
+- `marktplatz` Modul → Widget mit neuen Angeboten in der Naehe
+- spaeter Phase 2
+
+### Modul-Konfig-Schema (additiv zu Antons Schema)
+
+```ts
+group.data.modules: string[]                            // welche Module aktiv (Anton hat das)
+group.data.moduleConfig: {                              // NEU: pro-Modul-Konfiguration
+  profile?: { fields: ModuleFieldConfig[] }
+  map?: { pinTypes, defaultZoom, layers, ... }
+  calendar?: { eventTypes, defaultView, ... }
+  marketplace?: { categories, currency, ... }
+  gamification?: { skillTree, xpRules, badges, ... }
+}
+```
+
+`group.data` ist offene `Record<string, unknown>` — wir brechen Antons Schema **nicht**, wir erweitern es additiv. Spaeter ggf. Type-Definition in `data-interface` nachziehen (mit Anton abstimmen).
+
+### Modul-Liste (Roadmap)
+
+| Modul | Item-Typen | Capabilities-Bedarf | Status |
+|-------|-----------|---------------------|--------|
+| **Profil** | `profile`, `profile-extension` | ProfileCapable, ItemWriter | in Arbeit |
+| **Karte** | `place`, `event` (mit location) | DataInterface | Platzhalter |
+| **Kalender** | `event` (mit start/end) | DataInterface | Platzhalter |
+| **Feed** | `post`, `event` | DataInterface, ItemWriter | im Toolkit |
+| **Kanban** | `task` | ItemWriter | im Toolkit (Sebastian) |
+| **Kontakte** | — | ContactManager, SignedClaimCapable | im Toolkit |
+| **Marktplatz** | `offer`, `need` | ItemWriter | offen |
+| **Gamification** | `xp-event`, `achievement`, `badge` | ItemWriter, ItemGroupCapable | offen |
+| **Log** | (aggregiert) | DataInterface | offen |
+| **Spaces-Browser** | `group` | GroupManager | offen |
+| **Quest** | `quest` (extends event) | ItemWriter | offen |
+| **Modulschmiede** | `module-template` | ItemWriter | spaeter |
 
 ---
 
-*Die Architektur des Real Life Network lebt aus Einfachheit und Klarheit. Jede Entscheidung darin dient dem Menschen, der das Werkzeug benutzt.*
+## Backend-Frage: was laeuft auf welchem Server
+
+### Macher-Map auf Strato (nach Cleanup)
+
+| Container | Image | Aufgabe |
+|-----------|-------|---------|
+| `macher-map-web` | `ghcr.io/lichtungooo/macher-map` | Frontend (statisch via nginx) |
+| ~~`macher-map-api`~~ | ~~`ghcr.io/lichtungooo/licht-fuer-frieden-api`~~ | **wird abgeschaltet** |
+
+→ Macher-Map ist nach Cleanup **rein statisches Frontend**. Alle Daten gehen ueber WoT.
+
+### WoT-Backend (utopia-lab.org)
+
+| Service | Was | Macher-Map nutzt? |
+|---------|-----|-------------------|
+| `relay.utopia-lab.org` | E2E-Messages | ✅ |
+| `profiles.utopia-lab.org` | Profile-Discovery | ✅ |
+| `vault.utopia-lab.org` | Verschluesselte Backups | ✅ |
+
+→ Macher-Map nutzt Antons Public-Relays. Spaeter eigene Relays moeglich (real-life-network.org/relay).
+
+### Admin-Sicht
+
+WoT ist E2E-verschluesselt — klassisches Admin-Panel "alle Daten sehen" geht **nicht**. Stattdessen:
+- **Group-Rollen** (admin/member) in `group.data.roles`
+- Admin-Funktionen pro Space, fuer Space-Admins sichtbar
+- Public-Daten (Werkstatt-Karte) sind sowieso oeffentlich
+- Moderation-Aktionen werden als Items festgehalten (`type: "moderation-action"`)
+
+→ Kein zentraler Admin, sondern **Space-spezifische Admin-Tools**.
+
+---
+
+## Reihenfolge (Cleanup + Aufbau)
+
+### Phase 1: Cleanup (jetzt)
+1. ARCHITEKTUR.md (✅ dieses Dokument)
+2. Lichtung-API raus aus Macher-Map (siehe Liste oben)
+3. Routes vereinfachen: nur `/` (Landing) + `/app/*` (MacherApp)
+4. Tests pruefen ob noch was bricht
+5. Container `macher-map-api` aus docker-compose entfernen (auf Server)
+
+### Phase 2: Profil sauber bauen
+1. Profile-Extension-Items (`type: "profile-extension"`, owned by DID)
+2. Erweiterte Felder (skills, offers, needs, address, phone) in extension speichern
+3. UI lest Master-Profil + Extension zusammen
+4. Visibility pro Feld (public/contacts/private) ueber `data.visibility`
+
+### Phase 3: Modul-Schnittstellen
+1. Modul-Registry definieren (welche Module gibts, welche Item-Typen)
+2. Widget-System (Module rendern andere Module ein)
+3. Item-Hooks (Module reagieren auf andere Items)
+
+### Phase 4: Module
+1. Karte (Leaflet, konfigurierbar) — Pin-Typen, Layer, Zoom
+2. Kalender (mit Quest-Schnittstelle)
+3. Marktplatz (Offers/Needs als Items)
+4. Gamification (XP global, Skill-Tree pro Space)
+5. Log (Aktivitaet ueber Spaces)
+6. Spaces-Browser (Karte + Liste)
+7. Modulschmiede (KI-gestuetzt)
+
+### Phase 5: Mobile
+1. Capacitor-Build pruefen
+2. Home-Screen-Widgets (iOS, Android)
+
+---
+
+## Was Anton mit Utopia-Map macht (zu pruefen)
+
+Timo erinnert sich an ein Backend-Tool das Anton bei der Utopia-Map verwendet. Verdaechtig: **react-admin** oder **Refine** oder **Directus**. → bei naechstem Anton-Kontakt nachfragen welcher Stack, ob wir das uebernehmen koennen.
+
+Vorlaeufig: Admin-Sicht in Macher-Map als Space-eigene UI bauen (kein separates Admin-Tool).
+
+---
+
+## Was wir Anton zurueckspielen wollen
+
+Wenn unsere Erweiterungen gut sind, gehoeren sie spaeter ins `real-life-stack` Repo:
+
+- Modul-Konfig-Schema (`SpaceModuleConfig` Type)
+- `getProfileConfig` Helper
+- TagInput-Komponente (gehoert in toolkit/primitives)
+- Schema-basierter Profile-Editor
+- Modul-Registry-Pattern
+- Widget-System
+
+Bis dahin: alles **lokal in macher-map**, nicht ins toolkit pushen.

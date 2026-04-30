@@ -1,85 +1,100 @@
-# Real Life Network
+# Macher-Map
 
-**Echte Begegnungen in deiner Realität.**
+> Finde Werkstaetten, Macher und Abenteuer in deiner Naehe.
+> Bau. Mach. Zeig es.
 
-Das Real Life Network verbindet Menschen vor Ort. Es ist ein lebendiges Werkzeug für gelebte Gemeinschaft — ein Raum, in dem Vertrauen wächst, Gaben geteilt werden und gemeinsames Schaffen seinen Anfang findet.
-
-Die Abkürzung **RLN** steht in Kurzform für dasselbe.
-
----
-
-## Die Idee
-
-Menschen sehnen sich nach echter Verbindung. Nach Nachbarn, die man kennt. Nach gemeinsamen Projekten, die etwas bewegen. Nach Treffen, aus denen Freundschaft wird. Das Leben vor Ort trägt diese Kraft in sich — das Real Life Network macht sie sichtbar und stärkt sie mit klaren, einfachen Werkzeugen.
-
-> *Wir vernetzen Menschen in ihrer realen Umgebung — damit das, was schon da ist, aufblüht.*
+Erster Showroom-Space des **Real Life Network**. Live auf [macher-map.org](https://macher-map.org).
 
 ---
 
-## Das Fundament
+## Was ist das
 
-Das Real Life Network ruht auf zwei Grundbausteinen. Aus ihnen wächst alles Weitere.
+Eine dezentrale, E2E-verschluesselte Web-App fuer Handwerks-Communities. Karte mit Werkstaetten, Marktplatz fuer Werkzeug + Material, Projekt-Boards, Profile mit Skills + Offers + Needs. Plus eine **Modulschmiede** in der Communities ihre eigenen Funktionen ohne Code zusammenklicken.
 
-### Trust
+Tech-Stack:
 
-Der **Trust** trägt die Vertrauens- und Identitätsschicht. Jeder Mensch besitzt seine Identität selbst — sicher verschlüsselt, im eigenen Gerät verankert. Vertrauen entsteht durch echte Begegnung: zwei Menschen treffen sich, bestätigen einander per QR-Code, und ihr Vertrauen wächst mit jeder gemeinsamen Erfahrung.
-
-### Toolkit
-
-Das **Toolkit** ist der Baukasten aus Modulen. Jedes Modul dient einem klaren Zweck: einen Ort finden, einen Termin planen, eine Quest beginnen, einen Wert tauschen. Die Module greifen ineinander und bleiben dabei schlank und verständlich.
-
----
-
-## Die Module
-
-| Modul              | Aufgabe                                                                |
-|--------------------|------------------------------------------------------------------------|
-| **Profile**        | Ein scrollbarer Raum zum Teilen dessen, was ich zeigen möchte          |
-| **Dashboard**      | Der persönliche Absprungpunkt mit Widgets, die sich dem Space anpassen |
-| **Map**            | Der Ort, an dem sichtbar wird, wer und was in der Nähe lebt            |
-| **Calendar**       | Die Zeit, in der Begegnung stattfindet                                 |
-| **Gamification**   | Wachstum und Erfahrung auf dem Weg — Tree, Quests, Avatar, Titel       |
-| **Log**            | Der Spiegel des eigenen Weges, Grundlage der Reflexion                 |
-| **Notifications**  | Die Stimme zwischen Menschen — Einladungen, Antworten, Grüße           |
-| **Value Creation** | Wertschöpfung aus Begabung, Bedürfnis und Begegnung                    |
-
-Jedes Modul wächst Schritt für Schritt. Zuerst entsteht das Profil als sichtbares Gesicht, danach folgen die anderen in der Reihenfolge, die das Leben vorgibt.
+- **Frontend:** React 19 + Vite 8 + TypeScript + Tailwind v4
+- **UI-Toolkit:** [Real Life Stack](https://github.com/real-life-org/real-life-stack) (shadcn/ui + Custom)
+- **Identitaet:** [Web of Trust](https://github.com/antontranelis/web-of-trust) (DID, E2E, Multi-Device, CRDT)
+- **Karte:** Leaflet + OSM
+- **Persistenz:** WoT-Doc in IndexedDB (Yjs/automerge), syncht ueber Relays
+- **Hosting:** macher-map.org als statisches Frontend (nginx in Docker), kein eigenes Backend mehr
 
 ---
 
-## Die Vision trägt
+## Schnellstart
 
-Das Real Life Network entsteht aus einer klaren Vision: Werkzeuge, die das Leben reicher machen, statt es an den Bildschirm zu binden. Jedes Modul öffnet eine Tür zurück in die Welt — zu Menschen, zu Orten, zu gemeinsamem Tun.
+```bash
+git clone git@github.com:lichtungooo/macher-map.git
+cd macher-map
+pnpm install
+pnpm dev
+```
 
-**Gestaltet von:**
-- **Timo** — Vision, Ideen, Verknüpfung, Sprache
-- **Eli** — Entwicklung, Umsetzung, technische Übersetzung
+Oeffnet auf **http://localhost:5173** (fester Port — siehe [CLAUDE.md](CLAUDE.md)).
 
-Gemeinschaftliches Schöpfen, im Flow, aus dem eigenen Wesen heraus.
-
----
-
-## Der Weg
-
-Das Projekt lebt in Schritten. Jeder Schritt trägt Frucht, noch während der nächste wächst.
-
-1. **Trust und Toolkit zum Zusammenspiel bringen** — das atmende Fundament
-2. **Dashboard** — der persönliche Absprungpunkt
-3. **Profile** — der scrollbare Raum zum Teilen
-4. **Map** — der Ort, an dem Begegnung sichtbar wird
-5. **Calendar** — die Zeit, die sie trägt
-6. **Notifications** — die Stimme zwischen Menschen
-7. **Gamification** — die Reise, die aus dem Tun wird
-8. **Log** — der Spiegel des eigenen Weges
-9. **Value Creation** — der Kreis schließt sich im gemeinsamen Schaffen
+Routes:
+- `/` — Landing-Page
+- `/app/spaces/__overview__/map` — die App, Default-Sicht
+- `/datenschutz`, `/impressum` — Legal
 
 ---
 
-## Mehr erfahren
+## Architektur in einem Satz
 
-- [**Architektur**](ARCHITEKTUR.md) — wie Trust, Toolkit und Module ineinandergreifen
-- [**Herkunft**](HERKUNFT.md) — auf welchen Bausteinen das Real Life Network wächst
+> Module + Modulschmiede + Web-of-Trust + statisches Frontend.
+
+Drei Doku-Ebenen, in dieser Reihenfolge lesen wenn du einsteigen willst:
+
+| | Datei | Was |
+|---|-------|-----|
+| 1 | [CLAUDE.md](CLAUDE.md) | Projekt-Struktur, Modul-System, Persistenz-Schichten, Stand pro Modul |
+| 2 | [ARCHITEKTUR.md](ARCHITEKTUR.md) | All-WoT-Entscheidung, was rausgeflogen ist, Antons Stack |
+| 3 | [MODULSCHMIEDE.md](MODULSCHMIEDE.md) | Vision: Module als Daten + Konfigurator + AI + Marktplatz |
+| 4 | [MODUL-DEV-GUIDE.md](MODUL-DEV-GUIDE.md) | Schritt-fuer-Schritt: neues Modul bauen (Code- oder Daten-Modul) |
 
 ---
 
-*Real Life Network — ein Werkzeug für lebendige Gemeinschaft, geboren aus Vision und Hingabe.*
+## Deployment
+
+Push auf `main` → GitHub Action baut Docker-Image (siehe [.github/workflows/deploy.yml](.github/workflows/deploy.yml)) und pusht es zu `ghcr.io/lichtungooo/macher-map:latest`. Auf dem Strato-Server pollt **Watchtower** alle 30 Sekunden auf neue Images und tauscht den Container automatisch.
+
+```
+git push origin main
+   ↓
+GitHub Actions (build + push)
+   ↓
+ghcr.io/lichtungooo/macher-map:latest
+   ↓
+Watchtower (auf Strato-Server)
+   ↓
+macher-map.org (live)
+```
+
+Container heisst `macher-map-web-1`. Es gibt keinen API-Container mehr — die App ist seit dem [Cleanup](ARCHITEKTUR.md) rein statisch.
+
+---
+
+## Mitarbeiten
+
+- **Timo**: Vision, Pitch, UX
+- **Eli**: Technische Implementierung
+- **Anton**: WoT-Stack
+- **Sebastian**: UX-Design, Mobile
+
+Issues + PRs auf GitHub willkommen.
+
+---
+
+## Lizenz
+
+MIT. Code gehoert niemandem und allen.
+
+---
+
+## Verwandt
+
+- [Real Life Network](https://github.com/real-life-network/rln) — der Kern, an dem wir alle bauen
+- [Real Life Stack](https://github.com/real-life-org/real-life-stack) — UI-Toolkit + DataInterface (Anton, Sebastian)
+- [Web of Trust](https://github.com/antontranelis/web-of-trust) — Identitaets-Schicht (Anton)
+- [Lichtung](https://lichtung.ooo) — Schwester-Projekt (Friedensnetzwerk)

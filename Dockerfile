@@ -1,16 +1,33 @@
-# Einfaches Dockerfile: serviert die vorgebaute App
-# Build passiert lokal oder in der GitHub Action nach dem Build-Schritt
+# Multi-Repo-Build: rln nutzt Sources aus real-life-stack + web-of-trust
+# als Sibling-Verzeichnisse (siehe vite.config.ts Aliase).
+# Build-Context muss auf das Parent-Verzeichnis zeigen, das alle drei Repos enthaelt.
+# Siehe .github/workflows/deploy.yml fuer Multi-Checkout.
+
+FROM node:22-alpine AS build
+WORKDIR /app
+RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN apk add --no-cache git python3 make g++
+
+# Web-of-Trust zuerst — pnpm-Workspace mit eigenen Deps.
+# --no-frozen-lockfile damit drift in der Workspace-Lockfile nicht blockt.
+COPY web-of-trust /app/web-of-trust
+WORKDIR /app/web-of-trust
+RUN pnpm install --no-frozen-lockfile --ignore-scripts
+
+# Real-Life-Stack — pnpm-Workspace, referenziert WoT via overrides
+COPY real-life-stack /app/real-life-stack
+WORKDIR /app/real-life-stack
+RUN pnpm install --no-frozen-lockfile --ignore-scripts
+
+# rln — eigentliche App (Real Life Network), nutzt beide via Vite-Aliase
+WORKDIR /app/rln
+COPY rln/package.json rln/pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+COPY rln/ ./
+RUN pnpm build
+
 FROM nginx:alpine
-
-COPY dist/ /usr/share/nginx/html/
-
-# SPA-Routing: alle Pfade auf index.html umleiten
-RUN printf 'server {\n\
-  listen 80;\n\
-  root /usr/share/nginx/html;\n\
-  location / {\n\
-    try_files $uri $uri/ /index.html;\n\
-  }\n\
-}\n' > /etc/nginx/conf.d/default.conf
-
+COPY --from=build /app/rln/dist /usr/share/nginx/html
+COPY --from=build /app/rln/nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

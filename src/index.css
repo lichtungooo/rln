@@ -1,0 +1,262 @@
+@import "tailwindcss";
+@import "@real-life-stack/toolkit/styles/globals.css";
+@import "leaflet/dist/leaflet.css";
+
+/* Tailwind v4: scan toolkit sources so Toolkit-Komponenten ihre CSS-Klassen
+   bekommen (Dialog/Card/Border etc. — sonst rendern Dialoge transparent). */
+@source "../../real-life-stack/packages/toolkit/src/**/*.tsx";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Cluster-Icon */
+.macher-cluster-wrap {
+  background: transparent !important;
+  border: none !important;
+}
+
+@theme {
+  --color-gold: #E8751A;
+  --color-gold-light: #FFAA54;
+  --color-gold-bright: #FFF3E0;
+  --color-gold-white: #FFFAF5;
+  --color-ink: #1A1A1A;
+  --color-ink-soft: rgba(26, 26, 26, 0.6);
+  --color-ink-faint: rgba(26, 26, 26, 0.22);
+  --color-ink-ghost: rgba(26, 26, 26, 0.08);
+  --color-warm-bg: #FAF8F5;
+  --color-warm-section: #F5F0E8;
+
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #FAF8F5;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: rgba(232, 117, 26, 0.2);
+  color: inherit;
+}
+
+/* ─── Animations ─── */
+
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(30px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float-up {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+  100% { transform: translateY(0px); }
+}
+
+.hero-light {
+  animation: fade-in-up 1s ease-out 0.2s both;
+}
+
+.hero-title {
+  animation: fade-in-up 1s ease-out 0.4s both;
+}
+
+.hero-subtitle {
+  animation: fade-in-up 1s ease-out 0.6s both;
+}
+
+.hero-ctas {
+  animation: fade-in-up 1s ease-out 0.8s both;
+}
+
+.scroll-hint {
+  animation: float-up 3s ease-in-out infinite;
+}
+
+/* ─── Section Reveal ─── */
+
+.section-reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 1s ease-out, transform 1s ease-out;
+}
+
+.section-reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─── Leaflet ─── */
+
+.leaflet-popup-content-wrapper {
+  background: rgba(255, 255, 255, 0.97) !important;
+  border: 1px solid rgba(26, 26, 26, 0.08) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+  padding: 4px !important;
+}
+
+.leaflet-popup-tip {
+  background: rgba(255, 255, 255, 0.97) !important;
+}
+
+.leaflet-popup-close-button {
+  color: rgba(26, 26, 26, 0.3) !important;
+  font-size: 18px !important;
+}
+
+.leaflet-container {
+  background: #F5F0E8 !important;
+  font-family: var(--font-sans);
+}
+
+/* Marker Animationen */
+.macher-pin-marker {
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+  animation: macher-pulse 4s ease-in-out infinite;
+}
+
+@keyframes macher-pulse {
+  0%, 100% { transform: translateZ(0) scale(1); }
+  50% { transform: translateZ(0) scale(1.08); }
+}
+
+.event-pin-marker {
+  animation: event-bounce 3s ease-in-out infinite;
+}
+
+@keyframes event-bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.werkstatt-marker {
+  animation: werkstatt-pulse 5s ease-in-out infinite;
+}
+
+@keyframes werkstatt-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.project-marker {
+  animation: project-glow 4s ease-in-out infinite;
+}
+
+@keyframes project-glow {
+  0%, 100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(69,183,100,0.3)); }
+  50% { transform: scale(1.06); filter: drop-shadow(0 0 10px rgba(69,183,100,0.5)); }
+}
+
+/* ─── Markdown-Prose ─── */
+
+.prose-macher {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  line-height: 1.7;
+  color: rgba(26, 26, 26, 0.65);
+}
+
+.prose-macher h1,
+.prose-macher h2,
+.prose-macher h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  color: #1A1A1A;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 1.4em 0 0.5em;
+}
+
+.prose-macher h1 { font-size: 1.55rem; line-height: 1.25; }
+.prose-macher h2 { font-size: 1.2rem; line-height: 1.3; margin-top: 1.6em; }
+.prose-macher h3 { font-size: 1rem; line-height: 1.35; margin-top: 1.4em; }
+
+.prose-macher h1:first-child,
+.prose-macher h2:first-child,
+.prose-macher h3:first-child { margin-top: 0; }
+
+.prose-macher p { margin: 0.8em 0; }
+.prose-macher strong { color: #1A1A1A; font-weight: 600; }
+.prose-macher em { color: rgba(26, 26, 26, 0.7); font-style: italic; }
+
+.prose-macher a {
+  color: #E8751A;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  text-decoration-color: rgba(232, 117, 26, 0.4);
+}
+
+.prose-macher hr {
+  border: none;
+  border-top: 1px solid rgba(26, 26, 26, 0.08);
+  margin: 1.6em auto;
+  width: 40%;
+}
+
+.prose-macher blockquote {
+  font-family: 'Inter', sans-serif;
+  font-style: italic;
+  font-size: 1rem;
+  color: rgba(26, 26, 26, 0.55);
+  border-left: 3px solid #E8751A;
+  padding: 0.1em 0 0.1em 1em;
+  margin: 1.2em 0;
+}
+
+.prose-macher blockquote p { margin: 0.4em 0; }
+
+.prose-macher ul, .prose-macher ol { margin: 0.9em 0; padding-left: 1.3em; }
+.prose-macher li { margin: 0.3em 0; }
+.prose-macher ul li::marker { color: #E8751A; }
+
+.prose-macher code {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.85em;
+  background: rgba(232, 117, 26, 0.08);
+  color: #1A1A1A;
+  padding: 0.12em 0.4em;
+  border-radius: 4px;
+}
+
+/* Navbar ueber Leaflet-Karte: z-index braucht position */
+.glass-navbar {
+  position: relative;
+}
+
+/* Dropdowns und Popovers: solider Hintergrund ueber der Karte */
+[data-slot="dropdown-menu-content"],
+[data-slot="dropdown-menu-sub-content"],
+[data-slot="dialog-content"] {
+  background-color: #fff !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+[data-slot="dialog-overlay"] {
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Zauberstab → ausblenden fuer Macher-Map */
+.cursor-wand, .cursor-wand *, .cursor-wand .leaflet-container { cursor: default !important; }
+
+/* ─── Custom scrollbar ─── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: #FAF8F5; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }

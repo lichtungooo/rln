@@ -3,6 +3,7 @@ name: Build and Push
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
@@ -16,67 +17,43 @@ jobs:
       packages: write
 
     steps:
-      - uses: actions/checkout@v4
-
-      # Abhängigkeiten auschecken (für den Vite-Build)
-      - uses: actions/checkout@v4
+      # rln (dieses Repo) — checken in Subdir damit Sibling-Repos daneben passen
+      - name: Checkout rln
+        uses: actions/checkout@v4
         with:
-          repository: real-life-org/real-life-stack
-          path: _deps/real-life-stack
+          path: rln
 
-      - uses: actions/checkout@v4
+      # Real-Life-Stack: lichtungooo-Fork (Timos eigener Stand). Antons
+      # real-life-org/master hat einen mid-flight Refactor (@real-life/wot-core)
+      # der noch nicht mit web-of-trust synchronisiert ist. Spaeter mit Anton
+      # abstimmen und ggf. wieder auf real-life-org/master umstellen.
+      - name: Checkout real-life-stack (Timo-Fork)
+        uses: actions/checkout@v4
         with:
-          repository: real-life-org/web-of-trust
-          path: _deps/web-of-trust
+          repository: lichtungooo/real-life-stack
+          ref: master
+          path: real-life-stack
 
-      # Abhängigkeitspakete bauen
-      - uses: pnpm/action-setup@v4
+      # Web-of-Trust (Antons Identitaets-Stack) — main-HEAD ist stabil
+      - name: Checkout web-of-trust
+        uses: actions/checkout@v4
         with:
-          version: 9.15.4
+          repository: antontranelis/web-of-trust
+          ref: main
+          path: web-of-trust
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: _deps/real-life-stack/pnpm-lock.yaml
-
-      - name: Abhängigkeiten bauen
-        run: |
-          cd _deps/real-life-stack && pnpm install --no-frozen-lockfile --ignore-scripts && pnpm -r build || true
-          cd ../../_deps/web-of-trust && pnpm install --no-frozen-lockfile --ignore-scripts && pnpm -r build || true
-
-      # Symlinks: ../../real-life-stack von /home/runner/work/rln/rln/ = /home/runner/work/real-life-stack
-      - name: Symlinks anlegen
-        run: |
-          ln -s "$(pwd)/_deps/real-life-stack" ../../real-life-stack
-          ln -s "$(pwd)/_deps/web-of-trust" ../../web-of-trust
-          ls -la ../../real-life-stack/packages/toolkit/dist/ || echo "toolkit dist missing"
-
-      # RLN bauen — Workspace und lokale Deps entfernen, Vite löst über Aliase
-      - name: RLN bauen
-        run: |
-          rm -f pnpm-workspace.yaml
-          node -e "
-            const pkg = require('./package.json');
-            const local = ['@real-life-stack/data-interface','@real-life-stack/mock-connector','@real-life-stack/toolkit','@real-life/wot-core'];
-            local.forEach(n => delete pkg.dependencies[n]);
-            require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2));
-          "
-          pnpm install --no-frozen-lockfile --ignore-scripts
-          VITE_BASE_PATH=/ npx vite build || {
-            echo "Build fehlgeschlagen — versuche mit aktualisierten tiptap-Versionen"
-            pnpm update @tiptap/core @tiptap/react @tiptap/starter-kit --no-frozen-lockfile
-            VITE_BASE_PATH=/ npx vite build
-          }
-
-      - uses: docker/login-action@v3
+      - name: Login to GHCR
+        uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - uses: docker/build-push-action@v6
+      - name: Build and Push
+        uses: docker/build-push-action@v6
         with:
+          # Build-Context = Parent-Verzeichnis mit allen drei Repos
           context: .
+          file: ./rln/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest

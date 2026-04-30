@@ -1,9 +1,29 @@
 services:
-  rln:
-    image: ghcr.io/lichtungooo/rln:latest
+  web:
+    image: ghcr.io/lichtungooo/macher-map:latest
+    restart: unless-stopped
     network_mode: bridge
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.rln.rule=Host(`h2980589.stratoserver.net`)"
-      - "traefik.http.routers.rln.entrypoints=websecure"
-      - "traefik.http.routers.rln.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.macher-map.rule=Host(`macher-map.org`)"
+      - "traefik.http.routers.macher-map.entrypoints=websecure"
+      - "traefik.http.routers.macher-map.tls.certresolver=letsencrypt"
+
+  api:
+    image: ghcr.io/lichtungooo/licht-fuer-frieden-api:latest
+    restart: unless-stopped
+    network_mode: bridge
+    volumes:
+      - macher-data:/data
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+      - BASE_URL=https://macher-map.org
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.macher-api.rule=Host(`macher-map.org`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.macher-api.entrypoints=websecure"
+      - "traefik.http.routers.macher-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.macher-api.loadbalancer.server.port=3001"
+
+volumes:
+  macher-data:

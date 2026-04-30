@@ -1,24 +1,33 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "useDefineForClassFields": true,
-    "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "module": "esnext",
+    "types": ["vite/client"],
     "skipLibCheck": true,
+
+    /* Bundler mode */
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
     "jsx": "react-jsx",
-    "strict": true,
+
+    /* Linting */
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "baseUrl": ".",
+
+    /* RLS Package Aliases */
     "paths": {
-      "@/*": ["./src/*"]
+      "@real-life-stack/data-interface": ["../real-life-stack/packages/data-interface/src/index.ts"],
+      "@real-life-stack/data-interface/demo-data": ["../real-life-stack/packages/data-interface/src/demo-data.ts"],
+      "@real-life-stack/toolkit": ["../real-life-stack/packages/toolkit/src/index.ts"],
+      "@real-life-stack/local-connector": ["../real-life-stack/packages/local-connector/src/index.ts"],
+      "@real-life-stack/mock-connector": ["../real-life-stack/packages/mock-connector/src/index.ts"]
     }
   },
   "include": ["src"]
