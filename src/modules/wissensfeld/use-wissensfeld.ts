@@ -17,6 +17,7 @@ import {
   type VorschlagSignale,
   type StimmungsbildData,
   type StimmungsbildSignale,
+  type ErkenntnisData,
 } from "./types"
 
 /**
@@ -38,6 +39,7 @@ export function useWissensfeld() {
   const { data: vorschlaege } = useItems({ type: WISSENSFELD_ITEM_TYPES.vorschlag })
   const { data: entscheidungen } = useItems({ type: WISSENSFELD_ITEM_TYPES.entscheidung })
   const { data: stimmungsbilder } = useItems({ type: WISSENSFELD_ITEM_TYPES.stimmungsbild })
+  const { data: erkenntnisse } = useItems({ type: WISSENSFELD_ITEM_TYPES.erkenntnis })
   const { data: currentUser } = useCurrentUser()
   const { mutate: createItem } = useCreateItem()
   const { mutate: updateItem } = useUpdateItem()
@@ -343,6 +345,65 @@ export function useWissensfeld() {
     [stimmungsbilder, currentUser?.id, deleteItem]
   )
 
+  // ============================================================
+  // Erkenntnisse (Phase W5b) — was Kreise erkannt haben
+  // ============================================================
+
+  const erkenntnisseSorted = useMemo<Item[]>(
+    () => [...erkenntnisse].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    [erkenntnisse]
+  )
+
+  /** Erkenntnis aus dem Kreis tragen */
+  const carryErkenntnis = useCallback(
+    async (input: {
+      content: string
+      circleOrigin: string
+      circleDate: string
+      tags?: string[]
+      frageId?: string
+      felder?: string[]
+    }): Promise<Item | null> => {
+      if (!currentUser?.id) throw new Error("Du bist noch nicht im Kreis angekommen.")
+      const data: ErkenntnisData = {
+        content: input.content.trim(),
+        circleOrigin: input.circleOrigin.trim(),
+        circleDate: input.circleDate,
+        tags: input.tags ?? [],
+        frageId: input.frageId,
+        felder: input.felder,
+      }
+      const created = await createItem({
+        type: WISSENSFELD_ITEM_TYPES.erkenntnis,
+        createdBy: currentUser.id,
+        data: data as unknown as Record<string, unknown>,
+      })
+      return created ?? null
+    },
+    [currentUser?.id, createItem]
+  )
+
+  const removeErkenntnis = useCallback(
+    async (erkenntnisId: string) => {
+      const e = erkenntnisse.find((it) => it.id === erkenntnisId)
+      if (!e || e.createdBy !== currentUser?.id) return
+      await deleteItem(erkenntnisId)
+    },
+    [erkenntnisse, currentUser?.id, deleteItem]
+  )
+
+  /** Erkenntnisse, die zu einer Frage gehoeren */
+  const erkenntnisseByFrage = useMemo<Record<string, Item[]>>(() => {
+    const map: Record<string, Item[]> = {}
+    for (const e of erkenntnisse) {
+      const fid = (e.data as ErkenntnisData).frageId
+      if (!fid) continue
+      if (!map[fid]) map[fid] = []
+      map[fid].push(e)
+    }
+    return map
+  }, [erkenntnisse])
+
   return {
     fragen: fragenSorted,
     antwortenByFrage,
@@ -364,5 +425,10 @@ export function useWissensfeld() {
     openStimmungsbild,
     signalStimmungsbild,
     removeStimmungsbild,
+    // Erkenntnisse
+    erkenntnisse: erkenntnisseSorted,
+    erkenntnisseByFrage,
+    carryErkenntnis,
+    removeErkenntnis,
   }
 }

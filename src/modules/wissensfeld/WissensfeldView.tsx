@@ -7,6 +7,8 @@ import {
   Trash2,
   Sparkles,
   Scale,
+  Lightbulb,
+  Link2,
   type LucideIcon,
 } from "lucide-react"
 import {
@@ -27,12 +29,14 @@ import {
   THEMEN_FELDER,
   type FrageData,
   type AntwortData,
+  type ErkenntnisData,
   type ThemenFeld,
 } from "./types"
 import { useWissensfeld } from "./use-wissensfeld"
 import { KonsentSection } from "./KonsentSection"
+import { ErkenntnisSection } from "./ErkenntnisSection"
 
-type WissensfeldTab = "fragen" | "konsent"
+type WissensfeldTab = "fragen" | "erkenntnisse" | "konsent"
 
 /**
  * WissensfeldView — Spiegel des kollektiven Bewusstseins.
@@ -87,6 +91,10 @@ export function WissensfeldView(_props: ModuleViewProps) {
     openStimmungsbild,
     signalStimmungsbild,
     removeStimmungsbild,
+    erkenntnisse,
+    erkenntnisseByFrage,
+    carryErkenntnis,
+    removeErkenntnis,
   } = useWissensfeld()
   const { data: currentUser } = useCurrentUser()
 
@@ -171,6 +179,7 @@ export function WissensfeldView(_props: ModuleViewProps) {
         <FrageDetail
           frage={activeFrage}
           antworten={antworten}
+          erkenntnisse={erkenntnisseByFrage[activeFrage.id] ?? []}
           isOwner={activeFrage.createdBy === currentUser?.id}
           currentUserId={currentUser?.id}
           onAntwort={(content, tags) =>
@@ -235,8 +244,8 @@ export function WissensfeldView(_props: ModuleViewProps) {
         )}
       </div>
 
-      {/* Tab-Switcher: Fragen / Konsent */}
-      <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-muted">
+      {/* Tab-Switcher: Fragen / Erkenntnisse / Konsent */}
+      <div className="grid grid-cols-3 gap-1 p-1 rounded-lg bg-muted">
         <button
           type="button"
           onClick={() => setActiveTab("fragen")}
@@ -246,7 +255,20 @@ export function WissensfeldView(_props: ModuleViewProps) {
           style={activeTab === "fragen" ? { color: "#E8751A" } : undefined}
         >
           <Flame className="h-4 w-4" />
-          Fragen <span className="text-[10px] opacity-70">({fragen.length})</span>
+          <span className="hidden sm:inline">Fragen</span>
+          <span className="text-[10px] opacity-70">({fragen.length})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("erkenntnisse")}
+          className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-semibold transition-all ${
+            activeTab === "erkenntnisse" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
+          }`}
+          style={activeTab === "erkenntnisse" ? { color: "#FBBF24" } : undefined}
+        >
+          <Lightbulb className="h-4 w-4" />
+          <span className="hidden sm:inline">Erkenntnisse</span>
+          <span className="text-[10px] opacity-70">({erkenntnisse.length})</span>
         </button>
         <button
           type="button"
@@ -257,9 +279,23 @@ export function WissensfeldView(_props: ModuleViewProps) {
           style={activeTab === "konsent" ? { color: "#10B981" } : undefined}
         >
           <Scale className="h-4 w-4" />
-          Konsent <span className="text-[10px] opacity-70">({vorschlaege.length})</span>
+          <span className="hidden sm:inline">Konsent</span>
+          <span className="text-[10px] opacity-70">({vorschlaege.length})</span>
         </button>
       </div>
+
+      {activeTab === "erkenntnisse" && (
+        <ErkenntnisSection
+          erkenntnisse={erkenntnisse}
+          fragen={fragen}
+          onCarry={carryErkenntnis}
+          onRemove={removeErkenntnis}
+          onSelectFrage={(id) => {
+            setActiveTab("fragen")
+            setActiveFrageId(id)
+          }}
+        />
+      )}
 
       {activeTab === "konsent" && (
         <KonsentSection
@@ -479,6 +515,7 @@ function FrageCard({
 function FrageDetail({
   frage,
   antworten,
+  erkenntnisse,
   isOwner,
   currentUserId,
   onAntwort,
@@ -488,6 +525,7 @@ function FrageDetail({
 }: {
   frage: Item
   antworten: Item[]
+  erkenntnisse: Item[]
   isOwner: boolean
   currentUserId: string | undefined
   onAntwort: (content: string, tags: string[]) => Promise<Item | null>
@@ -599,6 +637,38 @@ function FrageDetail({
           )}
         </CardContent>
       </Card>
+
+      {/* Erkenntnisse zu dieser Frage — Genealogie */}
+      {erkenntnisse.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+            <Lightbulb className="h-4 w-4" style={{ color: "#FBBF24" }} />
+            {erkenntnisse.length === 1
+              ? "Eine Erkenntnis aus dem Kreis"
+              : `${erkenntnisse.length} Erkenntnisse aus den Kreisen`}
+          </h2>
+          {erkenntnisse.map((e) => {
+            const ed = e.data as ErkenntnisData
+            return (
+              <Card key={e.id} className="border-amber-500/30 bg-amber-50/30 dark:bg-amber-950/10">
+                <CardContent className="p-3 space-y-1.5">
+                  <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider font-semibold text-amber-700 dark:text-amber-400">
+                    <Lightbulb className="h-3 w-3" />
+                    <span>{ed.circleOrigin}</span>
+                    <span className="text-muted-foreground/70 normal-case tracking-normal">
+                      {new Date(ed.circleDate).toLocaleDateString("de-DE", {
+                        day: "numeric",
+                        month: "short",
+                      })}
+                    </span>
+                  </div>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{ed.content}</p>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+      )}
 
       {/* Antworten */}
       {sortedAntworten.length > 0 && (
