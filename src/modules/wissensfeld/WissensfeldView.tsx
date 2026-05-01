@@ -61,6 +61,8 @@ const FELD_BY_ID: Record<string, ThemenFeld> = Object.fromEntries(
 export function WissensfeldView(_props: ModuleViewProps) {
   const [activeFrageId, setActiveFrageId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
+  const [activeFeldId, setActiveFeldId] = useState<string | null>(null)
+  const [activeTags, setActiveTags] = useState<Set<string>>(new Set())
   const {
     fragen,
     antwortenByFrage,
@@ -76,6 +78,65 @@ export function WissensfeldView(_props: ModuleViewProps) {
     if (!activeFrageId) return null
     return fragen.find((f) => f.id === activeFrageId) ?? null
   }, [activeFrageId, fragen])
+
+  // Felder mit Frage-Counter
+  const feldCounts = useMemo<Record<string, number>>(() => {
+    const counts: Record<string, number> = {}
+    for (const f of fragen) {
+      const felder = (f.data as FrageData).felder ?? []
+      for (const id of felder) counts[id] = (counts[id] ?? 0) + 1
+    }
+    return counts
+  }, [fragen])
+
+  // Tag-Wolke aus allen Fragen + Antworten
+  const tagCloud = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const f of fragen) {
+      for (const t of (f.data as FrageData).tags ?? []) {
+        counts.set(t, (counts.get(t) ?? 0) + 1)
+      }
+    }
+    for (const fid of Object.keys(antwortenByFrage)) {
+      for (const a of antwortenByFrage[fid]) {
+        for (const t of (a.data as AntwortData).tags ?? []) {
+          counts.set(t, (counts.get(t) ?? 0) + 1)
+        }
+      }
+    }
+    return Array.from(counts.entries())
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count)
+  }, [fragen, antwortenByFrage])
+
+  // Gefilterte Frage-Liste
+  const filteredFragen = useMemo(() => {
+    return fragen.filter((f) => {
+      const data = f.data as FrageData
+      if (activeFeldId) {
+        if (!(data.felder ?? []).includes(activeFeldId)) return false
+      }
+      if (activeTags.size > 0) {
+        const tags = data.tags ?? []
+        for (const t of activeTags) {
+          if (!tags.includes(t)) return false
+        }
+      }
+      return true
+    })
+  }, [fragen, activeFeldId, activeTags])
+
+  const toggleTag = (tag: string) => {
+    const next = new Set(activeTags)
+    if (next.has(tag)) next.delete(tag)
+    else next.add(tag)
+    setActiveTags(next)
+  }
+  const clearFilters = () => {
+    setActiveFeldId(null)
+    setActiveTags(new Set())
+  }
+  const hasFilter = activeFeldId !== null || activeTags.size > 0
 
   // Detail-Modus
   if (activeFrage) {
@@ -166,16 +227,110 @@ export function WissensfeldView(_props: ModuleViewProps) {
           </CardContent>
         </Card>
       ) : (
-        <div className="space-y-3">
-          {fragen.map((f) => (
-            <FrageCard
-              key={f.id}
-              frage={f}
-              antwortCount={(antwortenByFrage[f.id] ?? []).length}
-              onClick={() => setActiveFrageId(f.id)}
-            />
-          ))}
-        </div>
+        <>
+          {/* Themen-Felder als Filter — nur wo Fragen liegen */}
+          <div>
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+              Felder, in denen es lebt
+            </p>
+            <div className="flex flex-wrap gap-1.5">
+              {THEMEN_FELDER.filter((f) => (feldCounts[f.id] ?? 0) > 0).map((f) => {
+                const isOn = activeFeldId === f.id
+                const count = feldCounts[f.id] ?? 0
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setActiveFeldId(isOn ? null : f.id)}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border-2 transition-all"
+                    style={
+                      isOn
+                        ? { borderColor: f.color, background: `${f.color}15`, color: f.color }
+                        : { borderColor: "transparent", background: `${f.color}08`, color: "var(--muted-foreground)" }
+                    }
+                  >
+                    <FeldIcon iconName={f.icon} className="h-3 w-3" />
+                    {f.label}
+                    <span className="opacity-60 text-[10px]">{count}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
+          {/* Tag-Wolke */}
+          {tagCloud.length > 0 && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+                Tag-Netz
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {tagCloud.slice(0, 30).map(({ tag, count }) => {
+                  const isOn = activeTags.has(tag)
+                  // Schriftgroesse skaliert mit Haeufigkeit
+                  const fontSize = Math.min(1 + count * 0.15, 1.6)
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleTag(tag)}
+                      className={`px-1.5 py-0.5 rounded transition-colors ${
+                        isOn
+                          ? "bg-primary text-primary-foreground"
+                          : "text-primary/70 hover:text-primary hover:bg-primary/5"
+                      }`}
+                      style={{ fontSize: `${fontSize * 0.75}rem` }}
+                    >
+                      #{tag}
+                    </button>
+                  )
+                })}
+                {tagCloud.length > 30 && (
+                  <span className="text-[10px] text-muted-foreground self-end">
+                    + {tagCloud.length - 30} weitere
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
+          {hasFilter && (
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <span>
+                {filteredFragen.length}{" "}
+                {filteredFragen.length === 1 ? "Frage tragt das Licht" : "Fragen tragen das Licht"}
+              </span>
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="underline hover:text-foreground"
+              >
+                Alle zeigen
+              </button>
+            </div>
+          )}
+
+          {filteredFragen.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center text-muted-foreground">
+                <p className="text-sm italic">
+                  Hier ist Stille. Vielleicht bist du der erste, der hier saet.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3">
+              {filteredFragen.map((f) => (
+                <FrageCard
+                  key={f.id}
+                  frage={f}
+                  antwortCount={(antwortenByFrage[f.id] ?? []).length}
+                  onClick={() => setActiveFrageId(f.id)}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   )
