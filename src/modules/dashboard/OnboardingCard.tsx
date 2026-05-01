@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react"
-import { useNavigate } from "react-router-dom"
+import { useMemo, useState, useEffect, useRef } from "react"
+import { useNavigate, useSearchParams } from "react-router-dom"
 import { Sparkles, Zap, Trophy, User as UserIcon, X, Loader2 } from "lucide-react"
 import {
   Button,
@@ -25,6 +25,7 @@ const DISMISS_KEY = "macher-onboarding-dismissed"
 
 export function OnboardingCard({ spaceSlug }: { spaceSlug: string | null }) {
   const navigate = useNavigate()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { data: currentUser } = useCurrentUser()
   const { data: progress } = useUserProgress()
   const { data: quests } = useItems({ type: GAMIFICATION_ITEM_TYPES.quest })
@@ -37,6 +38,7 @@ export function OnboardingCard({ spaceSlug }: { spaceSlug: string | null }) {
     }
   })
   const [loading, setLoading] = useState(false)
+  const pitchTriggered = useRef(false)
 
   const isFresh = useMemo(() => {
     if (!currentUser?.id) return false
@@ -44,6 +46,29 @@ export function OnboardingCard({ spaceSlug }: { spaceSlug: string | null }) {
     const totalXp = Object.values(progress.bereichXp).reduce((a, b) => a + (b ?? 0), 0)
     return ownQuests === 0 && totalXp === 0 && demo.count === 0
   }, [currentUser?.id, quests, progress.bereichXp, demo.count])
+
+  // Pitch-Mode via URL-Parameter: /<slug>?pitch=1 laed Demo-Daten und springt
+  // direkt zur Quest-Liste. Fuer Festival-QR-Codes oder Stand-Tablets.
+  useEffect(() => {
+    if (!isFresh || !spaceSlug) return
+    if (pitchTriggered.current) return
+    if (searchParams.get("pitch") !== "1") return
+    pitchTriggered.current = true
+    ;(async () => {
+      setLoading(true)
+      try {
+        await demo.load()
+        setSearchParams((prev) => {
+          const next = new URLSearchParams(prev)
+          next.delete("pitch")
+          return next
+        })
+        navigate(`/${spaceSlug}/quest`, { replace: true })
+      } finally {
+        setLoading(false)
+      }
+    })()
+  }, [isFresh, spaceSlug, searchParams, setSearchParams, demo, navigate])
 
   if (!isFresh || dismissed) return null
 
