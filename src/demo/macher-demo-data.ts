@@ -142,54 +142,167 @@ export const MACHER_DEMO_ITEMS: DemoItem[] = [
   },
 
   // ============================================================
-  // Angebote
+  // Marktplatz — alle Preis-Typen + Kategorien
   // ============================================================
+
+  // VERLEIHEN
   {
     type: "offer",
     data: {
+      kind: "offer",
+      priceType: "lend",
       title: "Drechselbank zu verleihen",
-      address: "Koeln-Ehrenfeld",
+      description:
+        "Robust und wenig genutzt. Gerne fuer Wochen-Verleih. Eigenabholung. Pfand 100 EUR.",
+      category: "tool",
+      condition: "like_new",
+      priceText: "Pfand 100 EUR, 5 EUR/Tag",
       location: { lat: 50.9528, lng: 6.9171, address: "Koeln-Ehrenfeld" },
-      markdownBody: "Wenig genutzt, gerne fuer Wochen-Verleih. Eigenabholung.",
-      hashtags: ["drechseln", "verleih", "koeln"],
+      hashtags: ["drechseln", "holz", "verleih", "koeln"],
       isDemo: true,
     },
   },
   {
     type: "offer",
     data: {
+      kind: "offer",
+      priceType: "lend",
+      title: "Motorsaege Stihl MS 261",
+      description:
+        "Profi-Geraet, frisch geschaerft. Nur fuer erfahrene Saeger. Komplett mit Schutzkleidung.",
+      category: "tool",
+      condition: "used",
+      priceText: "Kostenlos im Rahmen der Holzaktion — sonst 15 EUR/Tag",
+      location: { lat: 53.55, lng: 9.965, address: "Hamburg-St.Pauli" },
+      hashtags: ["motorsaege", "holz", "verleih", "hamburg"],
+      isDemo: true,
+    },
+  },
+
+  // VERKAUFEN
+  {
+    type: "offer",
+    data: {
+      kind: "offer",
+      priceType: "sell",
+      title: "Akkuschrauber Bosch 18V mit 2 Akkus",
+      description:
+        "Starker Akkuschrauber, 2 Akkus, Ladegeraet, Koffer. 2 Jahre alt, gut gepflegt.",
+      category: "tool",
+      condition: "like_new",
+      priceAmount: 75,
+      priceText: "VHB",
+      location: { lat: 48.1351, lng: 11.582, address: "Muenchen-Schwabing" },
+      hashtags: ["akkuschrauber", "bosch", "muenchen"],
+      isDemo: true,
+    },
+  },
+  {
+    type: "offer",
+    data: {
+      kind: "offer",
+      priceType: "sell",
       title: "Schreiner-Workshop fuer 8 Personen",
-      address: "Stuttgart-West",
+      description: "8h, vom Brett zum Schemel. Inklusive Material und Mittagessen.",
+      category: "knowledge",
+      priceAmount: 90,
+      priceText: "pro Person, naechster Termin im Mai",
       location: { lat: 48.7758, lng: 9.1593, address: "Stuttgart-West" },
-      markdownBody: "8h, vom Brett zum Schemel. 90 EUR/Person inkl. Material.",
       hashtags: ["holz", "workshop", "stuttgart"],
       isDemo: true,
     },
   },
 
-  // ============================================================
-  // Suche
-  // ============================================================
+  // VERSCHENKEN
   {
-    type: "need",
+    type: "offer",
     data: {
-      title: "Mitstreiter fuer Lastenrad-Bau",
-      address: "Frankfurt-Bornheim",
+      kind: "offer",
+      priceType: "gift",
+      title: "200 kg Aepfel — Streuobstwiese-Ernte",
+      description:
+        "Reichliche Ernte vom Wochenende. Mostobst, gerne abholen. Kommt vor dem Frost!",
+      category: "produce",
+      condition: "new",
+      priceText: "Selbstabholung, eigene Kisten mitbringen",
+      location: { lat: 49.4521, lng: 11.0767, address: "Nuernberg-Steinbuehl" },
+      hashtags: ["aepfel", "ernte", "obst", "verschenken", "nuernberg"],
+      isDemo: true,
+    },
+  },
+  {
+    type: "offer",
+    data: {
+      kind: "offer",
+      priceType: "gift",
+      title: "Eichenholz-Reste vom Tischlern",
+      description:
+        "Stuecke 20-80cm, perfekt fuer Drechseln oder Loeffel-Schnitzen. Trocken gelagert.",
+      category: "material",
+      priceText: "Selbstabholung",
+      location: { lat: 51.0504, lng: 13.7373, address: "Dresden-Neustadt" },
+      hashtags: ["holz", "eiche", "reste", "verschenken", "dresden"],
+      isDemo: true,
+    },
+  },
+
+  // TAUSCHEN
+  {
+    type: "offer",
+    data: {
+      kind: "offer",
+      priceType: "exchange",
+      title: "Honig (Sommertracht) gegen Werkzeug",
+      description:
+        "Eigene Imkerei. Tausche 5 Glaeser gegen brauchbares Werkzeug oder Hilfe beim Schleudern.",
+      category: "produce",
+      priceText: "Tausch gegen Werkzeug oder Arbeitsstunden",
+      location: { lat: 52.3759, lng: 9.732, address: "Hannover-Linden" },
+      hashtags: ["honig", "imker", "tausch", "hannover"],
+      isDemo: true,
+    },
+  },
+
+  // SUCHEN
+  {
+    type: "offer",
+    data: {
+      kind: "need",
+      title: "Suche Mitstreiter fuer Lastenrad-Bau",
+      description:
+        "Schweissen + Bremsen-Anpassung. 2 Wochenenden, dann faehrt das Ding. Werkzeug + Material vorhanden.",
+      category: "service",
+      priceText: "Gemeinsam — am Ende fahren wir alle eins",
       location: { lat: 50.1306, lng: 8.705, address: "Frankfurt-Bornheim" },
-      markdownBody:
-        "Schweissen + Bremsen-Anpassung. 2 Wochenenden, dann faehrt das Ding.",
       hashtags: ["lastenrad", "schweissen", "frankfurt", "kollab"],
       isDemo: true,
     },
   },
   {
-    type: "need",
+    type: "offer",
     data: {
-      title: "Brennofen leihen oder kaufen",
-      address: "Leipzig",
+      kind: "need",
+      title: "Brennofen — leihen oder kaufen",
+      description:
+        "Mittlerer Brennofen, ca. 60L Innenvolumen. Bereit Reisekosten zu zahlen.",
+      category: "tool",
+      priceText: "bis 200 EUR / oder gegen Toepferarbeiten",
       location: { lat: 51.3397, lng: 12.3731, address: "Leipzig" },
-      markdownBody: "Mittlerer Brennofen, ca. 60L. Bereit Reisekosten zu zahlen.",
       hashtags: ["toepfern", "brennofen", "leipzig"],
+      isDemo: true,
+    },
+  },
+  {
+    type: "offer",
+    data: {
+      kind: "need",
+      title: "Suche Begleitung beim Wildkraeuter-Sammeln",
+      description:
+        "Bin Anfaenger, suche jemanden mit Erfahrung. Vielleicht ein paar gemeinsame Streifzuege?",
+      category: "knowledge",
+      priceText: "Gegen Kuchen und gute Gespraeche",
+      location: { lat: 51.5167, lng: 9.9333, address: "Goettingen" },
+      hashtags: ["kraeuter", "wildkraeuter", "natur", "lernen", "goettingen"],
       isDemo: true,
     },
   },

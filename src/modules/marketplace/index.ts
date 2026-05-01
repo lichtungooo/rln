@@ -1,19 +1,30 @@
 import { ShoppingBag } from "lucide-react"
 import type { ModuleDefinition } from "../registry"
-import { makeSchemaModuleView } from "../renderers/SchemaModuleView"
 import { marketplaceSchema } from "./marketplace-schema"
+import { MarketplaceView } from "./MarketplaceView"
 
 /**
- * Marktplatz-Modul — basiert auf Schema (siehe marketplace-schema.ts).
+ * Marktplatz-Modul.
  *
- * Erstes Daten-Modul: kein eigener View-Code, der generische SchemaModuleView
- * uebernimmt das Rendering. Beweis dass das Modul-Schmiede-Pattern funktioniert.
+ * Schema lebt in marketplace-schema.ts (Wahrheits-Quelle, Modul-Schmiede-
+ * tauglich). Render-Komponente ist eigen (MarketplaceView), weil die
+ * Kleinanzeigen-Optik mit Bildern, Preis-Badges und Hashtag-Pillen reicher
+ * ist als der generische Schema-Renderer.
  */
 export const marketplaceModule: ModuleDefinition = {
   id: "marketplace",
   label: "Marktplatz",
   icon: ShoppingBag,
-  View: makeSchemaModuleView(marketplaceSchema),
+  View: MarketplaceView,
   itemTypes: [marketplaceSchema.itemType],
   requiredCapabilities: ["ItemWriter"],
 }
+
+export { marketplaceSchema } from "./marketplace-schema"
+export type {
+  MarketplaceData,
+  MarketplaceKind,
+  PriceType,
+  ItemCondition,
+  MarketplaceCategory,
+} from "./marketplace-schema"

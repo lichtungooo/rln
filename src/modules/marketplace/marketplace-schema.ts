@@ -1,41 +1,130 @@
 import type { ModuleSchema } from "../schema-types"
 
 /**
- * Marktplatz — erstes Daten-Modul aus reinem Schema.
+ * Marktplatz — der Tausch-Raum eines Spaces.
  *
- * Items vom Typ "offer" mit:
- *   - title (Titel des Angebots)
- *   - description (Beschreibung)
- *   - kind (Anbieten / Suchen)
- *   - category (Werkzeug / Material / Wissen / ...)
- *   - tags (frei)
- *   - price (frei text — "Tausch", "20 EUR", "Kostenlos", ...)
+ * Items vom Typ "offer" mit Anbieten/Suchen-Modus (kind), Preis-Typ (sell /
+ * gift / lend / exchange), Zustand, Kategorie, Hashtags und Standort.
  *
- * Layout: Cards. Filter: Suche, Art (Anbieten/Suchen), Kategorie.
- *
- * Beweist: aus diesem Schema entsteht ein vollwertiges Modul ohne eigenen Code.
+ * Wichtig: das Schema bleibt die Wahrheits-Quelle (Modul-Schmiede kann es
+ * editieren). Die Render-Komponente (MarketplaceView) ist eigen, weil die
+ * Kleinanzeigen-Optik mit Preis-Badge, Bildern, Kategorie-Chips reicher
+ * ist als der generische Schema-Renderer.
  */
+
+export type MarketplaceKind = "offer" | "need"
+export type PriceType = "sell" | "gift" | "lend" | "exchange"
+export type ItemCondition = "new" | "like_new" | "used" | "for_parts"
+export type MarketplaceCategory =
+  | "tool"
+  | "material"
+  | "produce"
+  | "knowledge"
+  | "workspace"
+  | "service"
+  | "other"
+
+export interface MarketplaceData {
+  kind: MarketplaceKind
+  title: string
+  description?: string
+  category?: MarketplaceCategory
+  /** Nur relevant bei kind=offer */
+  priceType?: PriceType
+  /** Nur relevant bei priceType=sell — Betrag in EUR */
+  priceAmount?: number
+  /** Frei-Text-Zusatz: "VHB", "Pfand 50 EUR", "Tausch gegen Holz" */
+  priceText?: string
+  /** Zustand bei sell/gift */
+  condition?: ItemCondition
+  /** Hashtags zum Suchen — ohne #-Zeichen */
+  hashtags?: string[]
+  /** Bild-URLs / data-uri (Phase: nur Anzeige, Upload kommt spaeter) */
+  images?: string[]
+  /** Standort */
+  location?: { lat: number; lng: number; address?: string }
+  /** Bei lend: Verlinkung zu einem Verleih-Kalender (kommt M4) */
+  rentCalendarId?: string
+  /** Demo-Marker */
+  isDemo?: boolean
+}
+
+export const PRICE_TYPE_LABEL: Record<PriceType, string> = {
+  sell: "Verkaufen",
+  gift: "Verschenken",
+  lend: "Verleihen",
+  exchange: "Tauschen",
+}
+
+export const PRICE_TYPE_COLOR: Record<PriceType, string> = {
+  sell: "#10B981",     // gruen
+  gift: "#A855F7",     // lila
+  lend: "#F59E0B",     // bernstein
+  exchange: "#3B82F6", // blau
+}
+
+export const CATEGORY_LABEL: Record<MarketplaceCategory, string> = {
+  tool: "Werkzeug",
+  material: "Material",
+  produce: "Ernte / Rohstoff",
+  knowledge: "Wissen",
+  workspace: "Werkstatt-Zeit",
+  service: "Dienstleistung",
+  other: "Anderes",
+}
+
+export const CATEGORY_ICON: Record<MarketplaceCategory, string> = {
+  tool: "Wrench",
+  material: "Box",
+  produce: "Apple",
+  knowledge: "BookOpen",
+  workspace: "Hammer",
+  service: "Sparkles",
+  other: "Package",
+}
+
+export const CONDITION_LABEL: Record<ItemCondition, string> = {
+  new: "Neu",
+  like_new: "Sehr gut",
+  used: "Gebraucht",
+  for_parts: "Defekt / fuer Bastler",
+}
+
 export const marketplaceSchema: ModuleSchema = {
   id: "marketplace",
   label: "Marktplatz",
-  description: "Anbieten + Suchen — Werkzeug, Material, Wissen, Werkstatt-Zeit",
+  description: "Anbieten, Suchen, Verleihen, Verschenken — Werkzeug, Material, Ernte, Wissen.",
   icon: "ShoppingBag",
   itemType: "offer",
-  version: "0.1.0",
+  version: "0.2.0",
   license: "MIT",
-  tags: ["macher", "tausch", "leihen", "werkstatt"],
+  tags: ["macher", "tausch", "leihen", "verschenken", "werkstatt"],
 
   fields: [
     {
       id: "kind",
-      label: "Art",
+      label: "Anbieten oder Suchen?",
       type: "select",
       visibility: "public",
       required: true,
       options: [
-        { value: "offer", label: "Anbieten" },
-        { value: "need", label: "Suchen" },
+        { value: "offer", label: "Ich biete an" },
+        { value: "need", label: "Ich suche" },
       ],
+      order: 5,
+    },
+    {
+      id: "priceType",
+      label: "Wie?",
+      type: "select",
+      visibility: "public",
+      options: [
+        { value: "sell", label: "Verkaufen" },
+        { value: "gift", label: "Verschenken" },
+        { value: "lend", label: "Verleihen" },
+        { value: "exchange", label: "Tauschen" },
+      ],
+      hint: "Nur bei 'Anbieten'",
       order: 10,
     },
     {
@@ -44,7 +133,7 @@ export const marketplaceSchema: ModuleSchema = {
       type: "text",
       visibility: "public",
       required: true,
-      placeholder: "Was bietest du an / suchst du?",
+      placeholder: "z.B. 'Akkuschrauber Bosch 18V' oder 'Suche Holzspalter'",
       order: 20,
     },
     {
@@ -52,8 +141,8 @@ export const marketplaceSchema: ModuleSchema = {
       label: "Beschreibung",
       type: "textarea",
       visibility: "public",
-      placeholder: "Mehr Details — Zustand, Bedingungen, Zeitraum",
-      maxLength: 500,
+      placeholder: "Mehr Details — Zustand, Bedingungen, Zeitraum, Lieferung, ...",
+      maxLength: 1500,
       order: 30,
     },
     {
@@ -64,6 +153,7 @@ export const marketplaceSchema: ModuleSchema = {
       options: [
         { value: "tool", label: "Werkzeug" },
         { value: "material", label: "Material" },
+        { value: "produce", label: "Ernte / Rohstoff" },
         { value: "knowledge", label: "Wissen" },
         { value: "workspace", label: "Werkstatt-Zeit" },
         { value: "service", label: "Dienstleistung" },
@@ -72,21 +162,44 @@ export const marketplaceSchema: ModuleSchema = {
       order: 40,
     },
     {
-      id: "price",
-      label: "Preis / Tausch",
-      type: "text",
+      id: "condition",
+      label: "Zustand",
+      type: "select",
       visibility: "public",
-      placeholder: "z.B. 'Tausch', '20 EUR', 'Kostenlos', 'Pfand 50 EUR'",
+      options: [
+        { value: "new", label: "Neu" },
+        { value: "like_new", label: "Sehr gut" },
+        { value: "used", label: "Gebraucht" },
+        { value: "for_parts", label: "Defekt / fuer Bastler" },
+      ],
+      hint: "Nur bei Sachen — bei Wissen / Service nicht relevant",
       order: 50,
     },
     {
-      id: "tags",
-      label: "Tags",
+      id: "priceAmount",
+      label: "Preis (EUR)",
+      type: "number",
+      visibility: "public",
+      placeholder: "z.B. 35",
+      hint: "Nur bei 'Verkaufen'",
+      order: 60,
+    },
+    {
+      id: "priceText",
+      label: "Preis-Hinweis",
+      type: "text",
+      visibility: "public",
+      placeholder: "z.B. 'VHB', 'Pfand 50 EUR', 'Tausch gegen Holz'",
+      order: 65,
+    },
+    {
+      id: "hashtags",
+      label: "Hashtags",
       type: "tags",
       visibility: "public",
-      hint: "Frei — fuer Suche und Discovery",
-      placeholder: "Holz, schwer, Berlin, ...",
-      order: 60,
+      hint: "Fuer Suche und Discovery — z.B. #holz #berlin #verleih",
+      placeholder: "Tippe ein Wort und Enter",
+      order: 70,
     },
     {
       id: "location",
@@ -94,7 +207,7 @@ export const marketplaceSchema: ModuleSchema = {
       type: "location",
       visibility: "public",
       hint: "Pin auf der Karte (optional)",
-      order: 70,
+      order: 80,
     },
   ],
 
@@ -108,6 +221,7 @@ export const marketplaceSchema: ModuleSchema = {
         titleField: "title",
         descriptionField: "description",
         badgeFields: ["kind", "category"],
+        imageField: "images",
       },
     },
     {
@@ -118,12 +232,11 @@ export const marketplaceSchema: ModuleSchema = {
       config: {
         locationField: "location",
         titleField: "title",
-        // Pin-Farbe nach Art (Anbieten/Suchen)
         pinColor: {
           field: "kind",
           map: {
-            offer: "#E8751A",  // Macher-Orange = anbieten
-            need: "#3b82f6",   // blau = suchen
+            offer: "#E8751A",
+            need: "#3b82f6",
           },
         },
       },
@@ -151,8 +264,9 @@ export const marketplaceSchema: ModuleSchema = {
   filters: [
     { fieldId: "title", type: "search", label: "Suche" },
     { fieldId: "kind", type: "select", label: "Art" },
+    { fieldId: "priceType", type: "select", label: "Wie" },
     { fieldId: "category", type: "select", label: "Kategorie" },
-    { fieldId: "tags", type: "tags", label: "Tags" },
+    { fieldId: "hashtags", type: "tags", label: "Hashtags" },
   ],
 
   sortOptions: [
