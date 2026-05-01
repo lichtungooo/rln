@@ -781,6 +781,24 @@ function ModulesTab({ group, initialOpenModuleId }: { group: Group; initialOpenM
     }
   }
 
+  // Wenn ein Modul fuer Konfiguration ausgewaehlt ist: Vollbild-Editor
+  // mit Editor links (kompakt) + Live-Vorschau rechts (gross). So bekommt
+  // die Karte / der Kalender wirklich Platz.
+  if (selectedId && draft !== null && MODULES_WITH_CONFIG.has(selectedId)) {
+    const mod = getModule(selectedId)
+    return (
+      <ModuleConfigFullscreen
+        moduleId={selectedId}
+        moduleLabel={mod?.label ?? selectedId}
+        draft={draft}
+        setDraft={setDraft}
+        onSave={handleSaveConfig}
+        onBack={closeConfig}
+        saving={busy}
+      />
+    )
+  }
+
   return (
     <div className="space-y-4">
       <div className="max-w-2xl">
@@ -798,19 +816,18 @@ function ModulesTab({ group, initialOpenModuleId }: { group: Group; initialOpenM
           const isOn = enabled.includes(mod.id)
           const isFunction = FUNCTION_MODULE_IDS.includes(mod.id)
           const hasConfig = MODULES_WITH_CONFIG.has(mod.id)
-          const isSelected = selectedId === mod.id
           return (
             <div
               key={mod.id}
               className={`border rounded-md transition-colors ${
                 isOn ? "bg-card" : "bg-muted/20"
-              } ${isSelected ? "ring-2 ring-primary" : ""}`}
+              }`}
             >
               <div className="flex items-center gap-3 p-3">
                 <Icon className={`h-5 w-5 shrink-0 ${isOn ? "text-primary" : "text-muted-foreground"}`} />
                 <button
                   type="button"
-                  onClick={() => (hasConfig && isOn ? (isSelected ? closeConfig() : openConfig(mod.id)) : null)}
+                  onClick={() => (hasConfig && isOn ? openConfig(mod.id) : null)}
                   disabled={!hasConfig || !isOn}
                   className={`flex-1 min-w-0 text-left ${
                     hasConfig && isOn ? "cursor-pointer hover:opacity-80" : "cursor-default"
@@ -819,18 +836,14 @@ function ModulesTab({ group, initialOpenModuleId }: { group: Group; initialOpenM
                   <div className="text-sm font-medium leading-tight flex items-center gap-1.5">
                     {mod.label}
                     {hasConfig && isOn && (
-                      <ChevronDown
-                        className={`h-3.5 w-3.5 transition-transform ${
-                          isSelected ? "rotate-180" : ""
-                        } text-muted-foreground`}
-                      />
+                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
                     )}
                   </div>
                   <div className="text-[11px] text-muted-foreground">
                     {isFunction
                       ? "Funktions-Modul — erscheint als Tab in der Navbar"
                       : "Konfigurations-Modul — sichtbar als Tab wenn aktiv"}
-                    {hasConfig && isOn && " · Klick fuer Konfiguration"}
+                    {hasConfig && isOn && " · Klick zum Konfigurieren"}
                   </div>
                 </button>
                 <label className="inline-flex items-center cursor-pointer shrink-0">
@@ -850,18 +863,6 @@ function ModulesTab({ group, initialOpenModuleId }: { group: Group; initialOpenM
                   </div>
                 </label>
               </div>
-
-              {/* Aufgeklappte Konfig + Live-Preview */}
-              {isSelected && hasConfig && draft !== null && (
-                <ModuleConfigSplit
-                  moduleId={mod.id}
-                  draft={draft}
-                  setDraft={setDraft}
-                  onSave={handleSaveConfig}
-                  onCancel={closeConfig}
-                  saving={busy}
-                />
-              )}
             </div>
           )
         })}
@@ -874,29 +875,58 @@ function ModulesTab({ group, initialOpenModuleId }: { group: Group; initialOpenM
 // ModuleConfigSplit — Editor + Live-Preview pro Modul
 // ============================================================
 
-function ModuleConfigSplit({
+/**
+ * ModuleConfigFullscreen — ersetzt den ModulesTab-Inhalt komplett, wenn
+ * ein Modul zur Konfiguration ausgewaehlt ist. So bekommt Editor + Live-
+ * Vorschau die volle verfuegbare Hoehe (vorher: 60vh-Quetsche).
+ *
+ * Layout: Header oben (Zurueck + Title + Speichern), darunter zwei Spalten —
+ * Editor links (~40%, scroll), Live-Vorschau rechts (~60%, fix).
+ */
+function ModuleConfigFullscreen({
   moduleId,
+  moduleLabel,
   draft,
   setDraft,
   onSave,
-  onCancel,
+  onBack,
   saving,
 }: {
   moduleId: string
+  moduleLabel: string
   draft: unknown
   setDraft: (next: unknown) => void
   onSave: () => void
-  onCancel: () => void
+  onBack: () => void
   saving: boolean
 }) {
   return (
-    <div className="border-t bg-muted/10">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-0 lg:divide-x">
+    <div className="-m-4 sm:-m-6 flex flex-col h-full min-h-[70vh]">
+      {/* Header */}
+      <div className="flex items-center gap-3 px-4 py-3 border-b bg-card shrink-0">
+        <Button type="button" variant="ghost" size="sm" onClick={onBack} disabled={saving} className="text-xs">
+          ← Module
+        </Button>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-semibold leading-tight truncate">
+            {moduleLabel} konfigurieren
+          </h3>
+          <p className="text-[11px] text-muted-foreground">
+            Aenderungen sind erst nach "Speichern" persistent — die Vorschau zeigt sie sofort.
+          </p>
+        </div>
+        <Button type="button" variant="ghost" size="sm" onClick={onBack} disabled={saving}>
+          Abbrechen
+        </Button>
+        <Button type="button" size="sm" onClick={onSave} disabled={saving}>
+          {saving ? "Speichere..." : "Speichern"}
+        </Button>
+      </div>
+
+      {/* Body: Editor + Live-Vorschau */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[minmax(320px,40%)_1fr] gap-0 lg:divide-x min-h-0">
         {/* Editor */}
-        <div className="p-3 max-h-[60vh] overflow-y-auto">
-          <div className="text-[10px] uppercase font-semibold text-muted-foreground mb-2 tracking-wider">
-            Konfiguration
-          </div>
+        <div className="overflow-y-auto p-4 bg-muted/10">
           <ModuleConfigEditor
             moduleId={moduleId}
             draft={draft}
@@ -904,25 +934,17 @@ function ModuleConfigSplit({
           />
         </div>
 
-        {/* Live-Preview */}
-        <div className="p-3 bg-background max-h-[60vh] overflow-hidden flex flex-col">
-          <div className="text-[10px] uppercase font-semibold text-muted-foreground mb-2 tracking-wider shrink-0">
-            Live-Vorschau
+        {/* Live-Vorschau */}
+        <div className="bg-background flex flex-col min-h-0">
+          <div className="px-4 py-2 border-b bg-muted/30 shrink-0">
+            <div className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
+              Live-Vorschau
+            </div>
           </div>
-          <div className="flex-1 min-h-0 border rounded-md overflow-hidden">
+          <div className="flex-1 min-h-0 overflow-hidden">
             <ModuleConfigPreview moduleId={moduleId} draft={draft} />
           </div>
         </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex justify-end gap-2 px-3 py-2 border-t bg-card">
-        <Button type="button" variant="ghost" size="sm" onClick={onCancel} disabled={saving}>
-          Abbrechen
-        </Button>
-        <Button type="button" size="sm" onClick={onSave} disabled={saving}>
-          {saving ? "Speichere..." : "Speichern"}
-        </Button>
       </div>
     </div>
   )
