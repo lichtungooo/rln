@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import * as LucideIcons from "lucide-react"
 import { Sparkles, type LucideIcon } from "lucide-react"
 import { progressInLevel, BEREICH_BY_ID, type AvatarItemData, type TreeBereichId } from "../gamification"
@@ -27,6 +27,10 @@ export interface AvatarProps {
   size?: number
   /** Optional: Synergie-Bonus aktiv → leuchtender Ring */
   synergyActive?: boolean
+  /** Item per Drag aufs Avatar gelegt (Phase D2). */
+  onItemDropped?: (itemId: string) => void
+  /** Klick auf ein Halo-Item — z.B. zum Entfernen vom Avatar. */
+  onHaloItemClick?: (itemId: string) => void
 }
 
 const HALO_POSITIONS_BY_BEREICH: Record<TreeBereichId, number> = {
@@ -67,11 +71,14 @@ export function Avatar({
   variant = "default",
   size = 200,
   synergyActive = false,
+  onItemDropped,
+  onHaloItemClick,
 }: AvatarProps) {
   const initial = (name.trim()[0] ?? "?").toUpperCase()
   const radius = size / 2
   const haloRadius = radius + 26
   const itemSize = Math.max(34, size * 0.18)
+  const [dragHover, setDragHover] = useState(false)
 
   const bgGradient = useMemo(() => {
     if (variant === "magisch") return "linear-gradient(135deg, #A855F7, #EC4899, #F59E0B)"
@@ -110,11 +117,47 @@ export function Avatar({
 
   const containerSize = haloRadius * 2 + itemSize
 
+  const handleDragOver = (e: React.DragEvent) => {
+    if (!onItemDropped) return
+    e.preventDefault()
+    e.dataTransfer.dropEffect = "move"
+    if (!dragHover) setDragHover(true)
+  }
+  const handleDragLeave = () => {
+    if (dragHover) setDragHover(false)
+  }
+  const handleDrop = (e: React.DragEvent) => {
+    if (!onItemDropped) return
+    e.preventDefault()
+    setDragHover(false)
+    const itemId = e.dataTransfer.getData("text/avatar-item-id")
+    if (itemId) onItemDropped(itemId)
+  }
+
   return (
     <div
-      className="relative inline-block"
-      style={{ width: containerSize, height: containerSize }}
+      className="relative inline-block transition-all"
+      style={{
+        width: containerSize,
+        height: containerSize,
+        transform: dragHover ? "scale(1.04)" : "scale(1)",
+      }}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
     >
+      {/* Drag-Hover-Indicator */}
+      {dragHover && (
+        <div
+          className="absolute rounded-full pointer-events-none"
+          style={{
+            inset: itemSize / 2 - 16,
+            border: "3px dashed #E8751A",
+            boxShadow: "0 0 30px rgba(232,117,26,0.4)",
+          }}
+        />
+      )}
+
       {/* Halo-Ring fuer Synergie */}
       {synergyActive && (
         <div
@@ -163,10 +206,16 @@ export function Avatar({
       {placedItems.map(({ item, x, y }) => {
         const bereich = item.def.bereichId ? BEREICH_BY_ID[item.def.bereichId] : null
         const color = item.def.color ?? bereich?.color ?? "#FBBF24"
+        const clickable = Boolean(onHaloItemClick)
         return (
-          <div
+          <button
             key={item.id}
-            className="absolute rounded-full grid place-items-center bg-card border-2 transition-transform hover:scale-110"
+            type="button"
+            disabled={!clickable}
+            onClick={() => onHaloItemClick?.(item.id)}
+            className={`absolute rounded-full grid place-items-center bg-card border-2 transition-transform ${
+              clickable ? "hover:scale-110 cursor-pointer" : ""
+            }`}
             style={{
               left: x + itemSize / 2,
               top: y + itemSize / 2,
@@ -175,10 +224,10 @@ export function Avatar({
               borderColor: color,
               boxShadow: RARITY_GLOW[item.def.rarity] ?? RARITY_GLOW.common,
             }}
-            title={`${item.def.name} (${item.def.rarity})`}
+            title={clickable ? `${item.def.name} (${item.def.rarity}) — klick zum Entfernen` : `${item.def.name} (${item.def.rarity})`}
           >
             <DynamicIcon name={item.def.symbol} className="w-1/2 h-1/2" color={color} />
-          </div>
+          </button>
         )
       })}
     </div>

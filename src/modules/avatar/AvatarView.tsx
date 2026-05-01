@@ -121,6 +121,8 @@ export function AvatarView({ spaceId }: ModuleViewProps) {
             displayedItems={displayed}
             synergyActive={synergyActive}
             size={200}
+            onItemDropped={(itemId) => toggleDisplayed(itemId)}
+            onHaloItemClick={(itemId) => toggleDisplayed(itemId)}
           />
 
           <div className="mt-4">
@@ -402,12 +404,19 @@ function InventoryCard({
   const color = item.def.color ?? bereich?.color ?? "#FBBF24"
   const borderColor = RARITY_BORDER[item.def.rarity]
 
+  const handleDragStart = (e: React.DragEvent) => {
+    e.dataTransfer.effectAllowed = "move"
+    e.dataTransfer.setData("text/avatar-item-id", item.id)
+  }
+
   return (
     <button
       type="button"
       onClick={onToggle}
+      draggable={!isDisplayed}
+      onDragStart={handleDragStart}
       className={`group relative bg-card rounded-lg border-2 p-3 text-center transition-all hover:scale-[1.02] hover:shadow-lg ${
-        isDisplayed ? "ring-2 ring-primary ring-offset-2" : ""
+        isDisplayed ? "ring-2 ring-primary ring-offset-2" : "cursor-grab active:cursor-grabbing"
       }`}
       style={{ borderColor }}
     >
