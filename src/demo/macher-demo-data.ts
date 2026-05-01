@@ -436,6 +436,69 @@ export const MACHER_DEMO_ITEMS: DemoItem[] = [
       isDemo: true,
     },
   },
+
+  // ============================================================
+  // Wissensfeld — Fragen + Antworten + ein offener Vorschlag
+  // ============================================================
+  {
+    type: "frage",
+    data: {
+      content:
+        "Wie lernen wir, in der Werkstatt das stille Wissen weiterzugeben — nicht mit Anleitung, sondern mit Beispiel?",
+      tags: ["weitergabe", "handwerk", "stilles-wissen", "lehrling"],
+      circleOrigin: "Bewusstseinskreis Berlin, 28. April",
+      felder: ["wissen-weisheit", "handwerk-kreativitaet", "gemeinschaft-vertrauen"],
+      isDemo: true,
+    },
+  },
+  {
+    type: "frage",
+    data: {
+      content:
+        "Was bedeutet es, wenn ein Werkzeug uns gehoert hat — und wir es nun gemeinsam nutzen? Was wandelt sich in uns?",
+      tags: ["besitz", "teilen", "gemeinschaft", "werkzeug"],
+      circleOrigin: "Werkstatt-Sonntag Hamburg, 25. April",
+      felder: ["gemeinschaft-vertrauen", "wertschoepfung-austausch", "macht-befreiung"],
+      isDemo: true,
+    },
+  },
+  {
+    type: "frage",
+    data: {
+      content:
+        "Wann ist eine Reparatur Heilung — und wann ein Loesch des Sterbens, das auch sein Recht hat?",
+      tags: ["reparieren", "vergaenglichkeit", "achtsamkeit"],
+      felder: ["natur-schoepfung", "seele-geist-bewusstsein", "handwerk-kreativitaet"],
+      suggestedAnswers: [
+        "Wenn das Werkstueck uns trauert, fuehlt sich Reparatur richtig an. Wenn es ruhen will, ist das Loslassen Heilung.",
+        "Reparatur ist immer auch ein Gespraech mit dem Material — manchmal antwortet es: nicht mehr.",
+      ],
+      isDemo: true,
+    },
+  },
+  {
+    type: "frage",
+    data: {
+      content: "Wie hoeren wir den Wald, wenn wir Holz nehmen?",
+      tags: ["wald", "holz", "respekt", "ahnen"],
+      felder: ["natur-schoepfung", "heimat-ahnen", "handwerk-kreativitaet"],
+      isDemo: true,
+    },
+  },
+
+  // Vorschlag fuer den Konsent-Prozess
+  {
+    type: "vorschlag",
+    data: {
+      content:
+        "Wir schlagen vor, dass jede Werkstatt einen Pat:innen-Tag im Monat traegt — ein Macher nimmt jemanden mit, der lernen will. Ohne Geld, ohne Plan. Nur Zeit und Hand.",
+      tags: ["weitergabe", "lehrling", "rhythmus"],
+      status: "einwandpruefung",
+      signale: { mittragen: [], bedenken: [], einwand: [] },
+      felder: ["gemeinschaft-vertrauen", "wissen-weisheit"],
+      isDemo: true,
+    },
+  },
 ]
 
 /** Item-Typen, die in den Demo-Daten vorkommen — fuer Zaehler/UI. */
