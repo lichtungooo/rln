@@ -7,8 +7,8 @@ import {
   MapPin,
   Sparkles,
   ChevronLeft,
-  Trash2,
   Hammer,
+  Layers,
 } from "lucide-react"
 import {
   Button,
@@ -74,6 +74,34 @@ export function QuestView(_props: ModuleViewProps<QuestModuleConfig>) {
     return quests.find((q) => q.id === activeQuestId) ?? null
   }, [activeQuestId, quests])
 
+  // Quests in Reihen gruppieren — Series werden zuerst gezeigt, dann
+  // Single-Quests
+  const grouped = useMemo(() => {
+    const seriesMap = new Map<string, Item[]>()
+    const singles: Item[] = []
+    for (const q of quests) {
+      const sid = (q.data as QuestData).questSeriesId
+      if (sid) {
+        if (!seriesMap.has(sid)) seriesMap.set(sid, [])
+        seriesMap.get(sid)!.push(q)
+      } else {
+        singles.push(q)
+      }
+    }
+    // Sortierung pro Series nach questSeriesPosition
+    for (const [, items] of seriesMap) {
+      items.sort((a, b) => {
+        const aPos = (a.data as QuestData).questSeriesPosition ?? 999
+        const bPos = (b.data as QuestData).questSeriesPosition ?? 999
+        return aPos - bPos
+      })
+    }
+    return {
+      series: Array.from(seriesMap.entries()).map(([id, items]) => ({ id, items })),
+      singles,
+    }
+  }, [quests])
+
   // Detail-Modus
   if (activeQuest) {
     return (
@@ -94,6 +122,8 @@ export function QuestView(_props: ModuleViewProps<QuestModuleConfig>) {
           isCompleted={isCompleted(activeQuest.id)}
           onComplete={() => complete(activeQuest, "self")}
           onUncomplete={() => uncomplete(activeQuest.id)}
+          allQuests={quests}
+          onSelectQuest={setActiveQuestId}
         />
       </div>
     )
@@ -169,26 +199,64 @@ export function QuestView(_props: ModuleViewProps<QuestModuleConfig>) {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {quests
-            .slice()
-            .sort((a, b) => {
-              // Offene Quests zuerst, dann erledigte
-              const aDone = isCompleted(a.id) ? 1 : 0
-              const bDone = isCompleted(b.id) ? 1 : 0
-              if (aDone !== bDone) return aDone - bDone
-              return a.createdAt.localeCompare(b.createdAt)
-            })
-            .map((q) => (
-              <QuestCard
-                key={q.id}
-                quest={q}
-                skills={skills}
-                avatarItems={avatarItems}
-                completed={isCompleted(q.id)}
-                onClick={() => setActiveQuestId(q.id)}
-              />
-            ))}
+        <div className="space-y-6">
+          {/* Quest-Reihen */}
+          {grouped.series.map(({ id, items }) => {
+            const seriesLabel = id.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+            const doneCount = items.filter((q) => isCompleted(q.id)).length
+            return (
+              <div key={id}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Layers className="h-4 w-4" style={{ color: "#A855F7" }} />
+                  <h2 className="text-base font-semibold">{seriesLabel}</h2>
+                  <span className="text-xs text-muted-foreground">
+                    Reihe · {doneCount}/{items.length} erledigt
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {items.map((q) => (
+                    <QuestCard
+                      key={q.id}
+                      quest={q}
+                      skills={skills}
+                      avatarItems={avatarItems}
+                      completed={isCompleted(q.id)}
+                      onClick={() => setActiveQuestId(q.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+
+          {/* Einzelne Quests */}
+          {grouped.singles.length > 0 && (
+            <div>
+              {grouped.series.length > 0 && (
+                <h2 className="text-base font-semibold mb-2">Einzelne Quests</h2>
+              )}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {grouped.singles
+                  .slice()
+                  .sort((a, b) => {
+                    const aDone = isCompleted(a.id) ? 1 : 0
+                    const bDone = isCompleted(b.id) ? 1 : 0
+                    if (aDone !== bDone) return aDone - bDone
+                    return a.createdAt.localeCompare(b.createdAt)
+                  })
+                  .map((q) => (
+                    <QuestCard
+                      key={q.id}
+                      quest={q}
+                      skills={skills}
+                      avatarItems={avatarItems}
+                      completed={isCompleted(q.id)}
+                      onClick={() => setActiveQuestId(q.id)}
+                    />
+                  ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -310,6 +378,8 @@ function QuestDetail({
   isCompleted,
   onComplete,
   onUncomplete,
+  allQuests,
+  onSelectQuest,
 }: {
   quest: Item
   skills: Item[]
@@ -317,9 +387,31 @@ function QuestDetail({
   isCompleted: boolean
   onComplete: () => Promise<void>
   onUncomplete: () => Promise<void>
+  allQuests: Item[]
+  onSelectQuest: (id: string) => void
 }) {
   const data = quest.data as QuestData
   const [busy, setBusy] = useState(false)
+
+  // Series-Sequenz fuer Vorgaenger/Nachfolger
+  const seriesQuests = useMemo(() => {
+    if (!data.questSeriesId) return null
+    const items = allQuests
+      .filter((q) => (q.data as QuestData).questSeriesId === data.questSeriesId)
+      .sort((a, b) => {
+        const aPos = (a.data as QuestData).questSeriesPosition ?? 999
+        const bPos = (b.data as QuestData).questSeriesPosition ?? 999
+        return aPos - bPos
+      })
+    const idx = items.findIndex((q) => q.id === quest.id)
+    return {
+      seriesLabel: data.questSeriesId.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()),
+      total: items.length,
+      position: data.questSeriesPosition ?? idx + 1,
+      previous: idx > 0 ? items[idx - 1] : null,
+      next: idx < items.length - 1 ? items[idx + 1] : null,
+    }
+  }, [data.questSeriesId, data.questSeriesPosition, quest.id, allQuests])
 
   const handleComplete = async () => {
     setBusy(true)
@@ -343,6 +435,22 @@ function QuestDetail({
   return (
     <Card>
       <CardHeader>
+        {/* Series-Banner */}
+        {seriesQuests && (
+          <div
+            className="flex items-center gap-2 mb-3 px-3 py-2 rounded-md text-xs"
+            style={{ background: "rgba(168,85,247,0.08)", borderLeft: "3px solid #A855F7" }}
+          >
+            <Layers className="h-3.5 w-3.5 shrink-0" style={{ color: "#A855F7" }} />
+            <span className="font-semibold" style={{ color: "#A855F7" }}>
+              {seriesQuests.seriesLabel}
+            </span>
+            <span className="text-muted-foreground">
+              · Teil {seriesQuests.position} von {seriesQuests.total}
+            </span>
+          </div>
+        )}
+
         <div className="flex items-start gap-3">
           {isCompleted ? (
             <CheckCircle2 className="h-7 w-7 text-primary shrink-0" />
@@ -479,6 +587,38 @@ function QuestDetail({
           </Button>
         )}
       </div>
+
+      {/* Series-Navigation: Vorgaenger / Nachfolger */}
+      {seriesQuests && (seriesQuests.previous || seriesQuests.next) && (
+        <div className="border-t bg-muted/10 p-3 flex items-center justify-between gap-2">
+          {seriesQuests.previous ? (
+            <button
+              type="button"
+              onClick={() => onSelectQuest(seriesQuests.previous!.id)}
+              className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium hover:bg-muted/40 rounded transition-colors text-left max-w-[45%]"
+            >
+              <ChevronLeft className="h-3.5 w-3.5 shrink-0" />
+              <div className="min-w-0">
+                <div className="text-[9px] text-muted-foreground uppercase">Vorher</div>
+                <div className="text-sm truncate">{(seriesQuests.previous.data as QuestData).title}</div>
+              </div>
+            </button>
+          ) : <div />}
+          {seriesQuests.next ? (
+            <button
+              type="button"
+              onClick={() => onSelectQuest(seriesQuests.next!.id)}
+              className="flex items-center gap-2 px-3 py-1.5 text-xs font-medium hover:bg-muted/40 rounded transition-colors text-right max-w-[45%]"
+            >
+              <div className="min-w-0">
+                <div className="text-[9px] text-muted-foreground uppercase">Naechste</div>
+                <div className="text-sm truncate">{(seriesQuests.next.data as QuestData).title}</div>
+              </div>
+              <ChevronLeft className="h-3.5 w-3.5 shrink-0 rotate-180" />
+            </button>
+          ) : <div />}
+        </div>
+      )}
     </Card>
   )
 }
@@ -504,6 +644,8 @@ function QuestForm({
   const [description, setDescription] = useState("")
   const [skillXp, setSkillXp] = useState<Record<string, number>>({})
   const [rewardItemIds, setRewardItemIds] = useState<Set<string>>(new Set())
+  const [seriesName, setSeriesName] = useState("")
+  const [seriesPosition, setSeriesPosition] = useState<number | "">("")
   const [busy, setBusy] = useState(false)
 
   const totalXp = Object.values(skillXp).reduce((a, b) => a + b, 0)
@@ -529,12 +671,17 @@ function QuestForm({
     if (!currentUser?.id || !title.trim()) return
     setBusy(true)
     try {
+      const seriesId = seriesName.trim()
+        ? seriesName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+        : undefined
       const data: QuestData = {
         title: title.trim(),
         description: description.trim() || undefined,
         skillXp: Object.keys(skillXp).length > 0 ? skillXp : undefined,
         rewardItems: rewardItemIds.size > 0 ? Array.from(rewardItemIds) : undefined,
         verification: "self",
+        questSeriesId: seriesId,
+        questSeriesPosition: seriesId && typeof seriesPosition === "number" ? seriesPosition : undefined,
       }
       const created = await createItem({
         type: GAMIFICATION_ITEM_TYPES.quest,
@@ -623,6 +770,34 @@ function QuestForm({
               })}
             </div>
           )}
+        </div>
+
+        {/* Quest-Reihe */}
+        <div className="border-t pt-4 space-y-2">
+          <Label className="text-xs flex items-center gap-1.5">
+            <Layers className="h-3 w-3" />
+            Quest-Reihe (optional)
+          </Label>
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_120px] gap-2">
+            <Input
+              value={seriesName}
+              onChange={(e) => setSeriesName(e.target.value)}
+              placeholder="z.B. Carpenter-Pfad, Schweiss-Schule, Lichtungs-Reise"
+            />
+            <Input
+              type="number"
+              min="1"
+              max="99"
+              value={seriesPosition || ""}
+              onChange={(e) => setSeriesPosition(Number(e.target.value) || "")}
+              placeholder="Position"
+              disabled={!seriesName.trim()}
+            />
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            Quests mit dem gleichen Reihen-Namen erscheinen in der Liste gruppiert + verlinkt.
+            Position ist die Stelle in der Reihe (1, 2, 3, ...).
+          </p>
         </div>
 
         {/* Avatar-Items als Belohnung */}
