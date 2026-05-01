@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
+import { useSearchParams } from "react-router-dom"
 import * as LucideIcons from "lucide-react"
 import {
   Plus,
@@ -218,8 +219,30 @@ export function MarketplaceView({ spaceId }: ModuleViewProps) {
   const { data: currentUser } = useCurrentUser()
   const { mutate: createItem } = useCreateItem()
   const { mutate: deleteItem } = useDeleteItem()
-  const [activeId, setActiveId] = useState<string | null>(null)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const urlItemId = searchParams.get("item")
+  const [activeId, setActiveId] = useState<string | null>(urlItemId)
   const [creating, setCreating] = useState(false)
+
+  // URL ↔ activeId Sync
+  useEffect(() => {
+    setActiveId(urlItemId)
+  }, [urlItemId])
+
+  const openItem = (id: string) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.set("item", id)
+      return next
+    })
+  }
+  const closeItem = () => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      next.delete("item")
+      return next
+    })
+  }
   const [activeWorld, setActiveWorld] = useState<WorldId>("things")
   const [search, setSearch] = useState("")
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set())
@@ -331,7 +354,7 @@ export function MarketplaceView({ spaceId }: ModuleViewProps) {
     if (activeEntry.kind === "virtual") {
       return (
         <div className="container mx-auto max-w-3xl p-4">
-          <Button variant="ghost" size="sm" onClick={() => setActiveId(null)} className="mb-4">
+          <Button variant="ghost" size="sm" onClick={closeItem} className="mb-4">
             <ChevronLeft className="h-4 w-4 mr-1" />
             Zurueck zur Liste
           </Button>
@@ -344,7 +367,7 @@ export function MarketplaceView({ spaceId }: ModuleViewProps) {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => setActiveId(null)}
+          onClick={closeItem}
           className="mb-4"
         >
           <ChevronLeft className="h-4 w-4 mr-1" />
@@ -357,7 +380,7 @@ export function MarketplaceView({ spaceId }: ModuleViewProps) {
           onDelete={async () => {
             if (!confirm("Wirklich loeschen?")) return
             await deleteItem(activeEntry.item.id)
-            setActiveId(null)
+            closeItem()
           }}
         />
       </div>
@@ -380,7 +403,7 @@ export function MarketplaceView({ spaceId }: ModuleViewProps) {
         <MarketplaceForm
           onCreated={(id) => {
             setCreating(false)
-            setActiveId(id)
+            openItem(id)
           }}
           onCancel={() => setCreating(false)}
           createItem={async (data) => {
@@ -549,7 +572,7 @@ export function MarketplaceView({ spaceId }: ModuleViewProps) {
             <MarketplaceCard
               key={entry.id}
               entry={entry}
-              onClick={() => setActiveId(entry.id)}
+              onClick={() => openItem(entry.id)}
               onTagClick={(tag) => toggleTag(tag)}
             />
           ))}

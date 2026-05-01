@@ -1,4 +1,5 @@
 import { useMemo, useState, useCallback, useEffect } from "react"
+import { useNavigate } from "react-router-dom"
 import { Settings, Plus, X, Search as SearchIcon } from "lucide-react"
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet"
 import L from "leaflet"
@@ -9,6 +10,7 @@ import { QuickCreateForm } from "./QuickCreateForm"
 import { renderPinIcon, renderPinHtml, type PinStyle } from "./pin-styles"
 import { EmptyMapBanner } from "../../demo/EmptyMapBanner"
 import { MapCalendarWidget } from "./MapCalendarWidget"
+import { getSpacePathSegment } from "../../spaces/space-data"
 
 // ============================================================
 // Default-Pin-Konfiguration pro Item-Typ
@@ -255,6 +257,8 @@ export function MapView({ spaceId, activeGroup, config, isPreview, onOpenSetting
   const isAdmin = useIsSpaceAdmin(spaceId)
   const { mutate: createItem } = useCreateItem()
   const { data: currentUser } = useCurrentUser()
+  const navigate = useNavigate()
+  const spaceSegment = activeGroup ? getSpacePathSegment(activeGroup) : null
 
   // Quick-Create-Flow von der Karte aus
   const [creatingType, setCreatingType] = useState<string | null>(null)
@@ -351,6 +355,27 @@ export function MapView({ spaceId, activeGroup, config, isPreview, onOpenSetting
             }
           }
         }
+
+        // Detail-Link: Marktplatz-Items oeffnen die Marketplace-View, Profile-
+        // Pins koennen spaeter aufs Profil verlinken (kommt mit Profil-Detail).
+        let linkHref: string | undefined
+        let linkLabel: string | undefined
+        if (item.type === "offer" && spaceSegment) {
+          linkHref = `/${spaceSegment}/marketplace?item=${item.id}`
+          linkLabel = "Inserat ansehen"
+        }
+
+        // Profile-Pins: Skills/Offers/Needs als Pillen im Popup
+        let profileSkills: string[] | undefined
+        let profileOffers: string[] | undefined
+        let profileNeeds: string[] | undefined
+        if (item.type === "profile") {
+          const d = item.data as Record<string, unknown>
+          if (Array.isArray(d.skills)) profileSkills = d.skills as string[]
+          if (Array.isArray(d.offers)) profileOffers = d.offers as string[]
+          if (Array.isArray(d.needs)) profileNeeds = d.needs as string[]
+        }
+
         return {
           item,
           lat: loc.lat,
@@ -361,6 +386,11 @@ export function MapView({ spaceId, activeGroup, config, isPreview, onOpenSetting
           description,
           pinKey,
           priceHint,
+          linkHref,
+          linkLabel,
+          profileSkills,
+          profileOffers,
+          profileNeeds,
           icon: renderPinIcon(style),
           pinColor: style.color,
         }
@@ -548,6 +578,12 @@ export function MapView({ spaceId, activeGroup, config, isPreview, onOpenSetting
                 type={m.pinKey}
                 priceHint={m.priceHint}
                 accentColor={m.pinColor}
+                profileSkills={m.profileSkills}
+                profileOffers={m.profileOffers}
+                profileNeeds={m.profileNeeds}
+                linkHref={m.linkHref}
+                linkLabel={m.linkLabel}
+                onLinkClick={(href) => navigate(href)}
               />
             </Popup>
           </Marker>
@@ -683,6 +719,12 @@ function PinPopupContent({
   type,
   priceHint,
   accentColor,
+  profileSkills,
+  profileOffers,
+  profileNeeds,
+  linkHref,
+  linkLabel,
+  onLinkClick,
 }: {
   title: string
   start?: string
@@ -691,6 +733,12 @@ function PinPopupContent({
   type: string
   priceHint?: string
   accentColor?: string
+  profileSkills?: string[]
+  profileOffers?: string[]
+  profileNeeds?: string[]
+  linkHref?: string
+  linkLabel?: string
+  onLinkClick?: (href: string) => void
 }) {
   const typeLabel = TYPE_LABEL[type] ?? type
   const accent = accentColor ?? "#E8751A"
@@ -764,6 +812,89 @@ function PinPopupContent({
           {shortDesc}
         </p>
       )}
+
+      {/* Profile-Felder als Pillen */}
+      {profileSkills && profileSkills.length > 0 && (
+        <PopupPillRow label="Kann" items={profileSkills} color="#E8751A" />
+      )}
+      {profileOffers && profileOffers.length > 0 && (
+        <PopupPillRow label="Bietet" items={profileOffers} color="#10B981" />
+      )}
+      {profileNeeds && profileNeeds.length > 0 && (
+        <PopupPillRow label="Sucht" items={profileNeeds} color="#3B82F6" />
+      )}
+
+      {/* Detail-Link (Marktplatz-Pin) */}
+      {linkHref && linkLabel && onLinkClick && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.preventDefault()
+            onLinkClick(linkHref)
+          }}
+          style={{
+            display: "block",
+            width: "100%",
+            marginTop: 10,
+            padding: "6px 10px",
+            background: accent,
+            color: "#fff",
+            border: "none",
+            borderRadius: 6,
+            fontSize: "0.75rem",
+            fontWeight: 600,
+            cursor: "pointer",
+            textAlign: "center",
+          }}
+        >
+          {linkLabel} →
+        </button>
+      )}
+    </div>
+  )
+}
+
+function PopupPillRow({
+  label,
+  items,
+  color,
+}: {
+  label: string
+  items: string[]
+  color: string
+}) {
+  return (
+    <div style={{ marginTop: 8 }}>
+      <div style={{
+        fontSize: "0.6rem",
+        textTransform: "uppercase",
+        letterSpacing: "0.06em",
+        color: "#888",
+        fontWeight: 600,
+        marginBottom: 3,
+      }}>
+        {label}
+      </div>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+        {items.slice(0, 6).map((it) => (
+          <span
+            key={it}
+            style={{
+              padding: "1px 6px",
+              fontSize: "0.65rem",
+              borderRadius: 999,
+              background: `${color}20`,
+              color,
+              fontWeight: 500,
+            }}
+          >
+            {it}
+          </span>
+        ))}
+        {items.length > 6 && (
+          <span style={{ fontSize: "0.6rem", color: "#888" }}>+{items.length - 6}</span>
+        )}
+      </div>
     </div>
   )
 }
