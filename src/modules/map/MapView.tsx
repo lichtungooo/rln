@@ -17,10 +17,33 @@ import { MapCalendarWidget } from "./MapCalendarWidget"
 export const DEFAULT_PIN_STYLES: Record<string, { color: string; shape: PinStyle["shape"]; label: string }> = {
   place: { color: "#E8751A", shape: "drop", label: "Werkstaetten" },
   event: { color: "#3b82f6", shape: "drop", label: "Events" },
-  offer: { color: "#10b981", shape: "circle", label: "Angebote" },
-  need: { color: "#f59e0b", shape: "circle", label: "Suche" },
+  // Marktplatz: ein Pin-Familie (Kreis), aber unterschiedliche Farben nach
+  // kind/priceType. Das Sub-Mapping passiert in effectivePinKey().
+  offer: { color: "#10b981", shape: "circle", label: "Marktplatz" },
+  "offer:sell": { color: "#10b981", shape: "circle", label: "Verkaufen" },
+  "offer:gift": { color: "#A855F7", shape: "circle", label: "Verschenken" },
+  "offer:lend": { color: "#F59E0B", shape: "circle", label: "Verleihen" },
+  "offer:exchange": { color: "#3B82F6", shape: "circle", label: "Tauschen" },
+  "offer:need": { color: "#EF4444", shape: "circle", label: "Suche" },
+  // need bleibt als Legacy-Eintrag fuer Konfigs aus der Vor-M1-Zeit
+  need: { color: "#EF4444", shape: "circle", label: "Suche" },
   quest: { color: "#a855f7", shape: "hexagon", label: "Quests" },
   profile: { color: "#ec4899", shape: "circle", label: "Macher" },
+}
+
+/**
+ * Marktplatz-Items haben einen sub-type — z.B. "offer:lend" fuer Verleih.
+ * Andere Item-Typen behalten ihren Type unveraendert.
+ */
+export function effectivePinKey(item: { type: string; data: Record<string, unknown> }): string {
+  if (item.type !== "offer") return item.type
+  const kind = item.data.kind
+  if (kind === "need") return "offer:need"
+  const priceType = item.data.priceType
+  if (priceType === "sell" || priceType === "gift" || priceType === "lend" || priceType === "exchange") {
+    return `offer:${priceType}`
+  }
+  return "offer"
 }
 
 // ============================================================
@@ -251,8 +274,10 @@ export function MapView({ spaceId, activeGroup, config, isPreview, onOpenSetting
   // useItems-Hook nicht alle Typen kombinieren kann.
   const placeItems = useItems({ type: pinTypes.includes("place") ? "place" : "__none__" }).data
   const eventItems = useItems({ type: pinTypes.includes("event") ? "event" : "__none__" }).data
-  const offerItems = useItems({ type: pinTypes.includes("offer") ? "offer" : "__none__" }).data
-  const needItems = useItems({ type: pinTypes.includes("need") ? "need" : "__none__" }).data
+  // Marktplatz: alle Items vom Typ "offer" (kind=offer und kind=need leben unter
+  // diesem Typ — pinTypes "offer"/"need" werden beide hier erkannt).
+  const showMarketplace = pinTypes.includes("offer") || pinTypes.includes("need")
+  const offerItems = useItems({ type: showMarketplace ? "offer" : "__none__" }).data
   const questItems = useItems({ type: pinTypes.includes("quest") ? "quest" : "__none__" }).data
   // User-Pins: profile-extension-Items (eines pro User) mit data.location
   const profileExtItems = useItems({
@@ -265,9 +290,23 @@ export function MapView({ spaceId, activeGroup, config, isPreview, onOpenSetting
     [profileExtItems]
   )
 
+  // Marktplatz-Items werden gefiltert: bei pinTypes nur "offer" (ohne "need")
+  // werden Suchen ausgeblendet — und umgekehrt fuer Legacy-Configs mit nur
+  // "need". Bei beiden gesetzt landen alle Marktplatz-Items hier.
+  const filteredOfferItems = useMemo(() => {
+    if (!showMarketplace) return []
+    const wantOffer = pinTypes.includes("offer")
+    const wantNeed = pinTypes.includes("need")
+    return offerItems.filter((it) => {
+      const kind = (it.data as Record<string, unknown>).kind
+      if (kind === "need") return wantNeed
+      return wantOffer
+    })
+  }, [offerItems, pinTypes, showMarketplace])
+
   const allItems = useMemo(
-    () => [...placeItems, ...eventItems, ...offerItems, ...needItems, ...questItems, ...profileItems],
-    [placeItems, eventItems, offerItems, needItems, questItems, profileItems]
+    () => [...placeItems, ...eventItems, ...filteredOfferItems, ...questItems, ...profileItems],
+    [placeItems, eventItems, filteredOfferItems, questItems, profileItems]
   )
 
   const parsedSearch = useMemo(() => parseSearchQuery(searchQuery), [searchQuery])
@@ -280,7 +319,8 @@ export function MapView({ spaceId, activeGroup, config, isPreview, onOpenSetting
         const loc = (item.data.location as { lat?: number; lng?: number; address?: string } | undefined) ?? null
         if (!loc || typeof loc.lat !== "number" || typeof loc.lng !== "number") return null
         if (searchActive && !itemMatchesSearch(item, parsedSearch)) return null
-        const style = resolvePinStyle(item.type, cfg)
+        const pinKey = effectivePinKey(item)
+        const style = resolvePinStyle(pinKey, cfg)
         // User-Pins (type "profile") zeigen Name aus data.name oder data.title
         const isProfile = item.type === "profile"
         const title = isProfile
@@ -292,7 +332,25 @@ export function MapView({ spaceId, activeGroup, config, isPreview, onOpenSetting
         const start = typeof item.data.start === "string" ? item.data.start : undefined
         const description = isProfile
           ? (typeof item.data.bio === "string" ? item.data.bio : undefined)
-          : (typeof item.data.markdownBody === "string" ? item.data.markdownBody : undefined)
+          : (typeof item.data.markdownBody === "string"
+              ? item.data.markdownBody
+              : typeof item.data.description === "string"
+              ? item.data.description
+              : undefined)
+        // Marktplatz-Preis-Hinweis fuer den Popup
+        let priceHint: string | undefined
+        if (item.type === "offer") {
+          const data = item.data as Record<string, unknown>
+          if (data.kind === "offer") {
+            const priceAmount = typeof data.priceAmount === "number" ? data.priceAmount : undefined
+            const priceText = typeof data.priceText === "string" ? data.priceText : undefined
+            if (data.priceType === "sell" && priceAmount !== undefined) {
+              priceHint = `${priceAmount} EUR${priceText ? ` · ${priceText}` : ""}`
+            } else if (priceText) {
+              priceHint = priceText
+            }
+          }
+        }
         return {
           item,
           lat: loc.lat,
@@ -301,7 +359,10 @@ export function MapView({ spaceId, activeGroup, config, isPreview, onOpenSetting
           address,
           start,
           description,
+          pinKey,
+          priceHint,
           icon: renderPinIcon(style),
+          pinColor: style.color,
         }
       })
       .filter((m): m is NonNullable<typeof m> => m !== null)
@@ -484,7 +545,9 @@ export function MapView({ spaceId, activeGroup, config, isPreview, onOpenSetting
                 start={m.start}
                 address={m.address}
                 description={m.description}
-                type={m.item.type}
+                type={m.pinKey}
+                priceHint={m.priceHint}
+                accentColor={m.pinColor}
               />
             </Popup>
           </Marker>
@@ -588,7 +651,12 @@ export function MapView({ spaceId, activeGroup, config, isPreview, onOpenSetting
 const TYPE_LABEL: Record<string, string> = {
   place: "Werkstatt",
   event: "Event",
-  offer: "Angebot",
+  offer: "Marktplatz",
+  "offer:sell": "Verkaufen",
+  "offer:gift": "Verschenken",
+  "offer:lend": "Verleihen",
+  "offer:exchange": "Tauschen",
+  "offer:need": "Suche",
   need: "Suche",
   quest: "Quest",
   profile: "Macher",
@@ -613,14 +681,19 @@ function PinPopupContent({
   address,
   description,
   type,
+  priceHint,
+  accentColor,
 }: {
   title: string
   start?: string
   address?: string
   description?: string
   type: string
+  priceHint?: string
+  accentColor?: string
 }) {
   const typeLabel = TYPE_LABEL[type] ?? type
+  const accent = accentColor ?? "#E8751A"
   const shortDesc = description
     ? description.length > 120
       ? description.slice(0, 117) + "..."
@@ -633,11 +706,24 @@ function PinPopupContent({
         fontSize: "0.65rem",
         textTransform: "uppercase",
         letterSpacing: "0.06em",
-        color: "#E8751A",
+        color: accent,
         fontWeight: 600,
         margin: "0 0 4px",
       }}>
         {typeLabel}
+        {priceHint && (
+          <span style={{
+            marginLeft: 8,
+            padding: "1px 6px",
+            background: accent,
+            color: "#fff",
+            borderRadius: 999,
+            fontSize: "0.6rem",
+            letterSpacing: 0,
+          }}>
+            {priceHint}
+          </span>
+        )}
       </div>
       <div style={{ fontWeight: 600, fontSize: "0.95rem", margin: 0, lineHeight: 1.3 }}>
         {title}
