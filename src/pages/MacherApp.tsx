@@ -63,6 +63,7 @@ import { membersModule } from '../modules/members'
 import { themeModule } from '../modules/theme'
 import { questModule } from '../modules/quest'
 import { skillTreeModule } from '../modules/skill-tree'
+import { dashboardModule } from '../modules/dashboard'
 import { HudBar } from '../modules/gamification/HudBar'
 import { useSpaceTheme } from '../themes/use-space-theme'
 import { SpaceSettings, type SpaceSettingsTab } from '../settings/SpaceSettings'
@@ -79,6 +80,7 @@ registerModule(membersModule)
 registerModule(themeModule)
 registerModule(questModule)
 registerModule(skillTreeModule)
+registerModule(dashboardModule)
 
 const STORAGE_KEY_CONNECTOR = 'macher-connector'
 const STORAGE_KEY_GROUP = 'macher-active-group'
@@ -213,7 +215,9 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
   // Funktions-Module — diese erscheinen als Tabs in der Navbar.
   // Konfigurations-Module (theme, members, modulschmiede) leben jetzt im
   // Vollbild-Settings unter dem Zahnrad in der Navbar.
-  const DEFAULT_MODULE_IDS = ['map', 'kanban', 'calendar', 'marketplace', 'quest', 'skill-tree']
+  // Dashboard zuerst — der private Spiegel ist die Heimat. Dann Karte als
+  // raeumlicher Anker, dann die anderen Module.
+  const DEFAULT_MODULE_IDS = ['dashboard', 'map', 'kanban', 'calendar', 'marketplace', 'quest', 'skill-tree']
   // Meta-Module die IMMER sichtbar sind (auch wenn ein Space sie nicht in
   // group.data.modules hat). Das sind die Schaufenster-Module der Macher-Map:
   // Marketplace + Kalender zum Probieren, Modulschmiede zum Bauen.
@@ -616,7 +620,7 @@ function AuthGate({ connector, children }: { connector: DataInterface; children:
 const macherMapDemoData = {
   items: [] as any[],
   groups: [
-    { id: 'macher', name: 'Macher', createdBy: 'macher-1', createdAt: '2026-04-28T00:00:00.000Z', data: { scope: 'group', description: 'Werkstaetten, Abenteuer und Macher in deiner Naehe', slug: 'macher', modules: ['map', 'kanban', 'calendar', 'marketplace', 'quest', 'skill-tree'], access: 'open', roles: ['admin', 'member'], memberCount: 1 } },
+    { id: 'macher', name: 'Macher', createdBy: 'macher-1', createdAt: '2026-04-28T00:00:00.000Z', data: { scope: 'group', description: 'Werkstaetten, Abenteuer und Macher in deiner Naehe', slug: 'macher', modules: ['dashboard', 'map', 'kanban', 'calendar', 'marketplace', 'quest', 'skill-tree'], access: 'open', roles: ['admin', 'member'], memberCount: 1 } },
   ],
   users: [
     { id: 'macher-1', displayName: 'Macher', avatarUrl: undefined },
