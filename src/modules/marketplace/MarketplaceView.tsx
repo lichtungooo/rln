@@ -10,6 +10,9 @@ import {
   X,
   Hash,
   Filter as FilterIcon,
+  Package,
+  Lightbulb,
+  HandHeart,
   type LucideIcon,
 } from "lucide-react"
 import {
@@ -57,6 +60,59 @@ import {
 
 const MARKETPLACE_ITEM_TYPE = marketplaceSchema.itemType
 
+type WorldId = "things" | "talents" | "needs"
+
+const WORLDS: Array<{
+  id: WorldId
+  label: string
+  shortLabel: string
+  icon: LucideIcon
+  hint: string
+  emptyHint: string
+  color: string
+}> = [
+  {
+    id: "things",
+    label: "Sachen",
+    shortLabel: "Sachen",
+    icon: Package,
+    hint: "Werkzeug, Material, Ernte, Werkstatt-Zeit",
+    emptyHint: "Noch keine Sachen — Werkzeug, Material oder Ernte gehoert hierher.",
+    color: "#E8751A",
+  },
+  {
+    id: "talents",
+    label: "Begabungen",
+    shortLabel: "Begabungen",
+    icon: Lightbulb,
+    hint: "Wissen, Dienstleistungen, Faehigkeiten",
+    emptyHint: "Noch keine Begabungen — was kannst du, das andere brauchen?",
+    color: "#A855F7",
+  },
+  {
+    id: "needs",
+    label: "Beduerfnisse",
+    shortLabel: "Beduerfnisse",
+    icon: HandHeart,
+    hint: "Was wird gesucht — Material, Hilfe, Begleitung",
+    emptyHint: "Noch keine Beduerfnisse — was suchst du oder die Gemeinschaft?",
+    color: "#3B82F6",
+  },
+]
+
+/**
+ * Sachen vs Begabungen unterscheidet sich an der Kategorie:
+ *   Sachen:     tool, material, produce, workspace, other
+ *   Begabungen: knowledge, service
+ * Beduerfnisse: alles wo kind === "need" (egal Kategorie)
+ */
+function worldOf(data: MarketplaceData): WorldId {
+  if (data.kind === "need") return "needs"
+  const cat = data.category
+  if (cat === "knowledge" || cat === "service") return "talents"
+  return "things"
+}
+
 function CategoryIcon({
   category,
   className,
@@ -78,6 +134,7 @@ export function MarketplaceView({ spaceId: _spaceId }: ModuleViewProps) {
   const { mutate: deleteItem } = useDeleteItem()
   const [activeId, setActiveId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
+  const [activeWorld, setActiveWorld] = useState<WorldId>("things")
   const [search, setSearch] = useState("")
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set())
   const [showAllTags, setShowAllTags] = useState(false)
@@ -87,22 +144,38 @@ export function MarketplaceView({ spaceId: _spaceId }: ModuleViewProps) {
     return items.find((it) => it.id === activeId) ?? null
   }, [items, activeId])
 
-  // Alle Hashtags + ihre Haeufigkeit fuer den Filter-Bar
+  // Items pro Welt zaehlen (fuer Tab-Counter)
+  const worldCounts = useMemo(() => {
+    const counts: Record<WorldId, number> = { things: 0, talents: 0, needs: 0 }
+    for (const it of items) {
+      const w = worldOf(it.data as MarketplaceData)
+      counts[w]++
+    }
+    return counts
+  }, [items])
+
+  // Items in der aktiven Welt — Basis fuer Hashtag-Aggregation und Filter
+  const itemsInWorld = useMemo(
+    () => items.filter((it) => worldOf(it.data as MarketplaceData) === activeWorld),
+    [items, activeWorld]
+  )
+
+  // Alle Hashtags der aktiven Welt + ihre Haeufigkeit fuer den Filter-Bar
   const allHashtags = useMemo(() => {
     const counts = new Map<string, number>()
-    for (const it of items) {
+    for (const it of itemsInWorld) {
       const tags = (it.data as MarketplaceData).hashtags ?? []
       for (const t of tags) counts.set(t, (counts.get(t) ?? 0) + 1)
     }
     return Array.from(counts.entries())
       .map(([tag, count]) => ({ tag, count }))
       .sort((a, b) => b.count - a.count)
-  }, [items])
+  }, [itemsInWorld])
 
-  // Gefilterte + sortierte Liste
+  // Gefilterte + sortierte Liste (innerhalb der aktiven Welt)
   const filteredItems = useMemo(() => {
     const needle = search.trim().toLowerCase()
-    return items
+    return itemsInWorld
       .filter((it) => {
         const data = it.data as MarketplaceData
         // Hashtag-AND-Filter: jedes aktive Tag muss vorhanden sein
@@ -129,7 +202,15 @@ export function MarketplaceView({ spaceId: _spaceId }: ModuleViewProps) {
         return true
       })
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-  }, [items, search, activeTags])
+  }, [itemsInWorld, search, activeTags])
+
+  const switchWorld = (w: WorldId) => {
+    setActiveWorld(w)
+    // Hashtag-Filter haengt an der Welt — bei Wechsel leeren, damit die alten
+    // Tags nicht in einer Welt rumirren wo sie nichts finden.
+    setActiveTags(new Set())
+  }
+  const activeWorldDef = WORLDS.find((w) => w.id === activeWorld) ?? WORLDS[0]
 
   const toggleTag = (tag: string) => {
     const next = new Set(activeTags)
@@ -211,7 +292,7 @@ export function MarketplaceView({ spaceId: _spaceId }: ModuleViewProps) {
         <div>
           <h1 className="text-2xl font-bold mb-1">Marktplatz</h1>
           <p className="text-sm text-muted-foreground">
-            Werkzeug, Material, Ernte, Wissen — anbieten, suchen, verleihen, verschenken.
+            Drei Welten unter einem Dach — Sachen, Begabungen, Beduerfnisse.
           </p>
         </div>
         <Button onClick={() => setCreating(true)} size="sm">
@@ -220,8 +301,35 @@ export function MarketplaceView({ spaceId: _spaceId }: ModuleViewProps) {
         </Button>
       </div>
 
+      {/* Welt-Tabs */}
+      <div className="grid grid-cols-3 gap-1 p-1 rounded-lg bg-muted">
+        {WORLDS.map((w) => {
+          const Icon = w.icon
+          const isOn = activeWorld === w.id
+          const count = worldCounts[w.id]
+          return (
+            <button
+              key={w.id}
+              type="button"
+              onClick={() => switchWorld(w.id)}
+              className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-semibold transition-all ${
+                isOn ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
+              }`}
+              style={isOn ? { color: w.color } : undefined}
+            >
+              <Icon className="h-4 w-4" />
+              <span>{w.label}</span>
+              <span className="text-[10px] opacity-70">({count})</span>
+            </button>
+          )
+        })}
+      </div>
+      <p className="text-xs text-muted-foreground -mt-2 px-1">
+        {activeWorldDef.hint}
+      </p>
+
       {/* Such- + Filter-Bar */}
-      {items.length > 0 && (
+      {itemsInWorld.length > 0 && (
         <div className="space-y-2">
           <div className="relative">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
@@ -314,6 +422,8 @@ export function MarketplaceView({ spaceId: _spaceId }: ModuleViewProps) {
             <p className="text-sm">Noch nichts hier. Lege das erste Inserat an mit "+ Neues Inserat".</p>
           </CardContent>
         </Card>
+      ) : itemsInWorld.length === 0 ? (
+        <EmptyWorld world={activeWorldDef} />
       ) : filteredItems.length === 0 ? (
         <Card>
           <CardContent className="p-10 text-center text-muted-foreground">
@@ -334,6 +444,29 @@ export function MarketplaceView({ spaceId: _spaceId }: ModuleViewProps) {
         </div>
       )}
     </div>
+  )
+}
+
+// ============================================================
+// EmptyWorld — Hinweis pro Tab wenn die Welt leer ist
+// ============================================================
+
+function EmptyWorld({
+  world,
+}: {
+  world: { label: string; icon: LucideIcon; emptyHint: string; color: string }
+}) {
+  const Icon = world.icon
+  return (
+    <Card>
+      <CardContent className="p-10 text-center">
+        <Icon
+          className="h-12 w-12 mx-auto mb-3 opacity-40"
+          style={{ color: world.color }}
+        />
+        <p className="text-sm text-muted-foreground">{world.emptyHint}</p>
+      </CardContent>
+    </Card>
   )
 }
 
