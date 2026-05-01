@@ -61,8 +61,15 @@ const FELD_BY_ID: Record<string, ThemenFeld> = Object.fromEntries(
 export function WissensfeldView(_props: ModuleViewProps) {
   const [activeFrageId, setActiveFrageId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
-  const { fragen, antwortenByFrage, askFrage, giveAntwort, removeFrage, removeAntwort } =
-    useWissensfeld()
+  const {
+    fragen,
+    antwortenByFrage,
+    askFrage,
+    giveAntwort,
+    removeFrage,
+    removeAntwort,
+    toggleResonanz,
+  } = useWissensfeld()
   const { data: currentUser } = useCurrentUser()
 
   const activeFrage = useMemo(() => {
@@ -98,6 +105,7 @@ export function WissensfeldView(_props: ModuleViewProps) {
             setActiveFrageId(null)
           }}
           onRemoveAntwort={removeAntwort}
+          onResonanz={toggleResonanz}
         />
       </div>
     )
@@ -257,6 +265,7 @@ function FrageDetail({
   onAntwort,
   onRemoveFrage,
   onRemoveAntwort,
+  onResonanz,
 }: {
   frage: Item
   antworten: Item[]
@@ -265,11 +274,27 @@ function FrageDetail({
   onAntwort: (content: string, tags: string[]) => Promise<Item | null>
   onRemoveFrage: () => Promise<void>
   onRemoveAntwort: (id: string) => Promise<void>
+  onResonanz: (antwortId: string, signal: "beruehrt" | "willBesprechen") => Promise<void>
 }) {
   const data = frage.data as FrageData
   const felder = (data.felder ?? [])
     .map((id) => FELD_BY_ID[id])
     .filter((f): f is ThemenFeld => Boolean(f))
+
+  // Antworten nach Resonanz sortieren — leise zaehlen leiser. beruehrt+
+  // willBesprechen ergeben den Score. Bei Gleichstand neueste zuerst.
+  const sortedAntworten = useMemo(() => {
+    return [...antworten].sort((a, b) => {
+      const ra =
+        (((a.data as AntwortData).resonanz?.beruehrt ?? []).length) +
+        (((a.data as AntwortData).resonanz?.willBesprechen ?? []).length)
+      const rb =
+        (((b.data as AntwortData).resonanz?.beruehrt ?? []).length) +
+        (((b.data as AntwortData).resonanz?.willBesprechen ?? []).length)
+      if (ra !== rb) return rb - ra
+      return b.createdAt.localeCompare(a.createdAt)
+    })
+  }, [antworten])
 
   const [draft, setDraft] = useState("")
   const [draftTags, setDraftTags] = useState<string[]>([])
@@ -357,17 +382,19 @@ function FrageDetail({
       </Card>
 
       {/* Antworten */}
-      {antworten.length > 0 && (
+      {sortedAntworten.length > 0 && (
         <div className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-            {antworten.length === 1 ? "Eine Bluete" : `${antworten.length} Blueten`}
+            {sortedAntworten.length === 1 ? "Eine Bluete" : `${sortedAntworten.length} Blueten`}
           </h2>
-          {antworten.map((a) => (
+          {sortedAntworten.map((a) => (
             <AntwortCard
               key={a.id}
               antwort={a}
               isOwner={a.createdBy === currentUserId}
+              currentUserId={currentUserId}
               onRemove={() => onRemoveAntwort(a.id)}
+              onResonanz={(signal) => onResonanz(a.id, signal)}
             />
           ))}
         </div>
@@ -415,13 +442,23 @@ function FrageDetail({
 function AntwortCard({
   antwort,
   isOwner,
+  currentUserId,
   onRemove,
+  onResonanz,
 }: {
   antwort: Item
   isOwner: boolean
+  currentUserId: string | undefined
   onRemove: () => Promise<void>
+  onResonanz: (signal: "beruehrt" | "willBesprechen") => Promise<void>
 }) {
   const data = antwort.data as AntwortData
+  const beruehrt = data.resonanz?.beruehrt ?? []
+  const willBesprechen = data.resonanz?.willBesprechen ?? []
+  const myBeruehrt = currentUserId ? beruehrt.includes(currentUserId) : false
+  const myWillBesprechen = currentUserId ? willBesprechen.includes(currentUserId) : false
+  const canResonate = Boolean(currentUserId) && !isOwner
+
   return (
     <Card>
       <CardContent className="p-4 space-y-2">
@@ -464,21 +501,89 @@ function AntwortCard({
           )}
         </div>
 
-        {/* Resonanz-Anzeige (interaktiv kommt in W2) */}
-        {(data.resonanz?.beruehrt?.length ?? 0) +
-          (data.resonanz?.willBesprechen?.length ?? 0) >
-          0 && (
-          <div className="flex items-center gap-3 text-[11px] text-muted-foreground pt-1">
-            {(data.resonanz?.beruehrt?.length ?? 0) > 0 && (
-              <span>🌱 {data.resonanz.beruehrt.length}</span>
-            )}
-            {(data.resonanz?.willBesprechen?.length ?? 0) > 0 && (
-              <span>🔥 {data.resonanz.willBesprechen.length}</span>
-            )}
-          </div>
-        )}
+        {/* Resonanz-Signale: interaktiv */}
+        <div className="flex items-center gap-2 pt-2 border-t border-border/40">
+          <ResonanzButton
+            label="Das beruehrt mich"
+            emoji="🌱"
+            count={beruehrt.length}
+            active={myBeruehrt}
+            disabled={!canResonate}
+            disabledReason={
+              !currentUserId
+                ? "Tritt in den Kreis"
+                : isOwner
+                ? "Eigene Antwort traegt sich selbst"
+                : undefined
+            }
+            color="#10B981"
+            onClick={() => onResonanz("beruehrt")}
+          />
+          <ResonanzButton
+            label="Das will ich besprechen"
+            emoji="🔥"
+            count={willBesprechen.length}
+            active={myWillBesprechen}
+            disabled={!canResonate}
+            disabledReason={
+              !currentUserId
+                ? "Tritt in den Kreis"
+                : isOwner
+                ? "Eigene Antwort traegt sich selbst"
+                : undefined
+            }
+            color="#E8751A"
+            onClick={() => onResonanz("willBesprechen")}
+          />
+        </div>
       </CardContent>
     </Card>
+  )
+}
+
+function ResonanzButton({
+  label,
+  emoji,
+  count,
+  active,
+  disabled,
+  disabledReason,
+  color,
+  onClick,
+}: {
+  label: string
+  emoji: string
+  count: number
+  active: boolean
+  disabled: boolean
+  disabledReason?: string
+  color: string
+  onClick: () => void
+}) {
+  const title = disabled ? disabledReason : active ? "Signal leiser stellen" : label
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium transition-all ${
+        disabled ? "opacity-40 cursor-not-allowed" : "hover:scale-105"
+      }`}
+      style={{
+        background: active ? `${color}20` : "transparent",
+        border: `1.5px solid ${active ? color : "rgba(0,0,0,0.1)"}`,
+        color: active ? color : "var(--muted-foreground)",
+      }}
+    >
+      <span>{emoji}</span>
+      <span>{label}</span>
+      {count > 0 && (
+        <span className="font-bold" style={{ color: active ? color : undefined }}>
+          {count}
+        </span>
+      )}
+    </button>
   )
 }
 
