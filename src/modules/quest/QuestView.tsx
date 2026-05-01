@@ -41,6 +41,7 @@ import {
 import { useQuests } from "./use-quests"
 import type { QuestData } from "./quest-engine"
 import { QrVerificationDialog } from "./QrVerificationDialog"
+import { CelebrationOverlay } from "./CelebrationOverlay"
 import {
   useVerificationRequests,
   type VerificationRequestData,
@@ -471,6 +472,7 @@ function QuestDetail({
   const [busy, setBusy] = useState(false)
   const [qrDialogOpen, setQrDialogOpen] = useState(false)
   const [verifierId, setVerifierId] = useState<string>("")
+  const [celebrating, setCelebrating] = useState(false)
   const { data: currentUser } = useCurrentUser()
   const latestRequest = verificationApi.findLatestRequestForQuest(quest.id)
   const requestData = latestRequest?.data as VerificationRequestData | undefined
@@ -502,6 +504,7 @@ function QuestDetail({
     setBusy(true)
     try {
       await onComplete("self")
+      setCelebrating(true)
     } finally {
       setBusy(false)
     }
@@ -509,6 +512,7 @@ function QuestDetail({
 
   const handleQrVerified = async () => {
     await onComplete("qr")
+    setCelebrating(true)
   }
 
   const handleSendRequest = async () => {
@@ -530,6 +534,7 @@ function QuestDetail({
     setBusy(true)
     try {
       await onComplete(verification === "attestation" ? "attestation" : "peer")
+      setCelebrating(true)
     } finally {
       setBusy(false)
     }
@@ -769,6 +774,14 @@ function QuestDetail({
           expectedCode={data.qrCode}
           questTitle={data.title}
           onVerified={handleQrVerified}
+        />
+      )}
+
+      {/* Magic-Moment beim Quest-Abschluss */}
+      {celebrating && (
+        <CelebrationOverlay
+          onDone={() => setCelebrating(false)}
+          message={verification === "attestation" ? "Attestiert!" : "Quest erledigt"}
         />
       )}
 

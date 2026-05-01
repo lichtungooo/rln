@@ -120,7 +120,7 @@ export function QrVerificationDialog({
     [expectedCode, onVerified, stopScanner, handleClose]
   )
 
-  const startScanner = async () => {
+  const startScanner = useCallback(async () => {
     setError(null)
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -132,7 +132,25 @@ export function QrVerificationDialog({
       setError("Kamera nicht verfuegbar. Code bitte manuell eingeben.")
       setIsScanning(false)
     }
-  }
+  }, [])
+
+  // Auto-Start: wenn der Dialog im "scan"-Modus geoeffnet wird und kein
+  // Fehler vorliegt, gleich die Kamera starten — Festival-Realitaet, da
+  // klickt niemand zweimal.
+  useEffect(() => {
+    if (
+      open &&
+      mode === "scan" &&
+      !isScanning &&
+      !success &&
+      !error &&
+      !streamRef.current &&
+      typeof navigator !== "undefined" &&
+      navigator.mediaDevices?.getUserMedia
+    ) {
+      startScanner()
+    }
+  }, [open, mode, isScanning, success, error, startScanner])
 
   // Stream am Video haengen + Scanner-Loop
   useEffect(() => {
