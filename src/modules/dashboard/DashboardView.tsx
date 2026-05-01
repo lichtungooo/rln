@@ -7,6 +7,7 @@ import { TreeWidget } from "./widgets/TreeWidget"
 import { QuestWidget } from "./widgets/QuestWidget"
 import { LogWidget } from "./widgets/LogWidget"
 import { CalendarWidget } from "./widgets/CalendarWidget"
+import { AvatarWidget } from "../avatar"
 
 /**
  * DashboardView — der private Spiegel.
@@ -69,7 +70,8 @@ export function DashboardView({ spaceId, activeGroup }: ModuleViewProps) {
       </div>
 
       {/* Widget-Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 auto-rows-[260px]">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 auto-rows-[280px]">
+        <AvatarWidget spaceSlug={spaceSlug} spaceId={spaceId} />
         <TreeWidget spaceSlug={spaceSlug} />
         <QuestWidget spaceSlug={spaceSlug} />
         <CalendarWidget spaceSlug={spaceSlug} />

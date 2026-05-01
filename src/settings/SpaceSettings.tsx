@@ -700,7 +700,7 @@ function GeneralTab({ group }: { group: Group }) {
 // Tab: Module — An/Aus + Sub-Konfig mit Live-Preview
 // ============================================================
 
-const FUNCTION_MODULE_IDS = ["dashboard", "map", "kanban", "calendar", "marketplace", "quest", "skill-tree"]
+const FUNCTION_MODULE_IDS = ["dashboard", "map", "kanban", "calendar", "marketplace", "quest", "skill-tree", "avatar"]
 
 const MODULES_WITH_CONFIG = new Set(["map", "calendar"])
 
