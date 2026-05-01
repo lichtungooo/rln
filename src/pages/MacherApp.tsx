@@ -63,10 +63,11 @@ import { membersModule } from '../modules/members'
 import { themeModule } from '../modules/theme'
 import { questModule } from '../modules/quest'
 import { skillTreeModule } from '../modules/skill-tree'
+import { HudBar } from '../modules/gamification/HudBar'
 import { useSpaceTheme } from '../themes/use-space-theme'
 import { SpaceSettings, type SpaceSettingsTab } from '../settings/SpaceSettings'
 import { MacherWorkspaceSwitcher } from '../spaces/MacherWorkspaceSwitcher'
-import { findGroupBySlugOrId, getSpacePathSegment, generateSlug, isSlugFree } from '../spaces/space-data'
+import { findGroupBySlugOrId, getSpacePathSegment, getSpaceMeta, generateSlug, isSlugFree } from '../spaces/space-data'
 import { SpaceHierarchyBar } from '../spaces/SpaceHierarchyBar'
 
 registerModule(mapModule)
@@ -436,6 +437,14 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
           />
         </NavbarEnd>
       </Navbar>
+
+      {/* HUD oben rechts — Total-Level + XP-Balken, expandierbar zu 7 Bereichen */}
+      {activeGroup && (
+        <HudBar
+          spaceSlug={getSpaceMeta(activeGroup).slug ?? activeGroup.id}
+          currentModule={activeModule}
+        />
+      )}
 
       <AppShellMain withBottomNav={!activeModuleDef?.fullWidth}>
         {activeGroup && (
