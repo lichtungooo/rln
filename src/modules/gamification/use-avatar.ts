@@ -113,13 +113,34 @@ export function useUserAvatar(spaceId: string | null) {
     [data, persist]
   )
 
+  const archetypesForSpace = useMemo<string[]>(() => {
+    if (!spaceId) return []
+    return data.archetypesPerSpace?.[spaceId] ?? []
+  }, [data.archetypesPerSpace, spaceId])
+
+  /** Toggle ob ein Archetyp fuer den aktuellen Space aktiv ist */
+  const toggleArchetype = useCallback(
+    async (spaceId: string, archetypeId: string) => {
+      const map = { ...(data.archetypesPerSpace ?? {}) }
+      const current = new Set(map[spaceId] ?? [])
+      if (current.has(archetypeId)) current.delete(archetypeId)
+      else current.add(archetypeId)
+      if (current.size > 0) map[spaceId] = Array.from(current)
+      else delete map[spaceId]
+      await persist({ ...data, archetypesPerSpace: map })
+    },
+    [data, persist]
+  )
+
   return {
     data,
     owned,
     displayed,
     titleForSpace,
+    archetypesForSpace,
     grantItem,
     toggleDisplayed,
     setTitle,
+    toggleArchetype,
   }
 }

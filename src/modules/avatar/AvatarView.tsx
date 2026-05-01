@@ -16,6 +16,8 @@ import {
   INNERE_BEREICHE,
   BEREICH_BY_ID,
   progressInLevel,
+  ARCHETYPES,
+  getArchetype,
   type AvatarItemData,
   type AvatarItemRarity,
 } from "../gamification"
@@ -56,7 +58,7 @@ function DynamicIcon({ name, className, color }: { name: string; className?: str
 
 export function AvatarView({ spaceId }: ModuleViewProps) {
   const { data: currentUser } = useCurrentUser()
-  const { owned, displayed, titleForSpace, toggleDisplayed, setTitle } = useUserAvatar(spaceId)
+  const { owned, displayed, titleForSpace, archetypesForSpace, toggleDisplayed, setTitle, toggleArchetype } = useUserAvatar(spaceId)
   const { data: progress } = useUserProgress()
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState("")
@@ -186,6 +188,15 @@ export function AvatarView({ spaceId }: ModuleViewProps) {
         </CardContent>
       </Card>
 
+      {/* Archetypen */}
+      <ArchetypeSection
+        spaceId={spaceId}
+        activeArchetypes={archetypesForSpace}
+        currentTitle={titleForSpace}
+        onToggle={(id) => spaceId && toggleArchetype(spaceId, id)}
+        onUseTitle={(t) => spaceId && setTitle(spaceId, t)}
+      />
+
       {/* Inventar */}
       <div>
         <div className="flex items-center justify-between mb-3">
@@ -236,6 +247,139 @@ export function AvatarView({ spaceId }: ModuleViewProps) {
       <div className="text-[11px] text-muted-foreground/80 italic max-w-2xl border-l-2 border-primary/30 pl-3 py-1 leading-relaxed">
         Items sind soulbound — sie gehoeren dir, niemand kann sie tauschen oder
         nehmen. Sie reisen mit dir ueber alle Spaces, der Titel bleibt pro Space.
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// ArchetypeSection — sieben Wege zur Auswahl
+// ============================================================
+
+function ArchetypeSection({
+  spaceId,
+  activeArchetypes,
+  currentTitle,
+  onToggle,
+  onUseTitle,
+}: {
+  spaceId: string | null
+  activeArchetypes: string[]
+  currentTitle: string | undefined
+  onToggle: (id: string) => void
+  onUseTitle: (title: string) => void
+}) {
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  if (!spaceId) return null
+
+  const active = new Set(activeArchetypes)
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="text-lg font-bold">Wege</h2>
+        <span className="text-xs text-muted-foreground">
+          {active.size} von 7 — du traegst mehrere
+        </span>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+        {ARCHETYPES.map((arch) => {
+          const Icon = arch.icon
+          const isActive = active.has(arch.id)
+          const isExpanded = expandedId === arch.id
+          return (
+            <div key={arch.id}>
+              <button
+                type="button"
+                onClick={() => onToggle(arch.id)}
+                onContextMenu={(e) => { e.preventDefault(); setExpandedId(isExpanded ? null : arch.id) }}
+                className={`w-full p-3 rounded-lg border-2 text-left transition-all hover:scale-[1.01] ${
+                  isActive ? "shadow-md" : "hover:shadow"
+                }`}
+                style={{
+                  borderColor: isActive ? arch.color : "transparent",
+                  background: isActive ? `${arch.color}10` : "var(--card, white)",
+                }}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <Icon className="h-4 w-4 shrink-0" style={{ color: arch.color }} />
+                  <span className={`text-sm font-semibold ${isActive ? "" : "text-muted-foreground"}`}>
+                    {arch.label}
+                  </span>
+                </div>
+                <p className="text-[10px] text-muted-foreground italic leading-snug line-clamp-2">
+                  "{arch.question}"
+                </p>
+              </button>
+
+              {/* Detail-Panel beim Rechtsklick (Long-Press auf Mobile) */}
+              <div className="mt-1">
+                <button
+                  type="button"
+                  onClick={() => setExpandedId(isExpanded ? null : arch.id)}
+                  className="text-[9px] text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {isExpanded ? "weniger" : "mehr"}
+                </button>
+
+                {isExpanded && (
+                  <div className="mt-1 p-2 rounded border bg-muted/20 space-y-1.5">
+                    <p className="text-[11px] text-foreground/80 leading-snug">
+                      {arch.description}
+                    </p>
+                    <div className="text-[10px]">
+                      <div className="text-muted-foreground mb-0.5">Bevorzugte Bereiche:</div>
+                      <div className="flex flex-wrap gap-1">
+                        {arch.preferredBereiche.map((b) => {
+                          const bereich = BEREICH_BY_ID[b]
+                          return (
+                            <span
+                              key={b}
+                              className="px-1.5 py-0.5 rounded-full text-[9px] text-white"
+                              style={{ background: bereich.color }}
+                            >
+                              {bereich.label}
+                            </span>
+                          )
+                        })}
+                      </div>
+                    </div>
+                    <div className="text-[10px]">
+                      <div className="text-muted-foreground mb-0.5">Titel-Vorschlaege:</div>
+                      <div className="flex flex-wrap gap-1">
+                        {arch.titleSuggestions.map((t) => (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); onUseTitle(t) }}
+                            className={`text-[10px] px-2 py-0.5 rounded transition-colors ${
+                              currentTitle === t
+                                ? "text-white font-semibold"
+                                : "border text-muted-foreground hover:text-foreground"
+                            }`}
+                            style={{
+                              background: currentTitle === t ? arch.color : "transparent",
+                              borderColor: currentTitle === t ? arch.color : undefined,
+                            }}
+                          >
+                            der/die {t}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="text-[11px] text-muted-foreground/80 italic mt-2 leading-relaxed">
+        Archetypen sind Einladungen — kein Korsett. Sie schlagen Quests vor und
+        lassen XP staerker auf bevorzugte Bereiche fliessen. Klick zum An- und
+        Abwaehlen, "mehr" fuer Detail.
       </div>
     </div>
   )

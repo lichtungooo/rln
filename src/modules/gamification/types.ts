@@ -176,6 +176,8 @@ export interface UserAvatarData {
   titlePerSpace?: Record<string, string>
   /** Pro Space evtl. eigene Avatar-Variante (z.B. Macher schlicht, Lichtung magisch) */
   variantPerSpace?: Record<string, "default" | "schlicht" | "magisch" | "klassisch">
+  /** Pro Space gewaehlter Archetyp (oder mehrere — der Mensch traegt mehrere Wege) */
+  archetypesPerSpace?: Record<string, string[]>
 }
 
 // ============================================================

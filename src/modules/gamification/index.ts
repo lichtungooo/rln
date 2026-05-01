@@ -40,3 +40,5 @@ export { useUserAvatar } from "./use-avatar"
 export { useGamificationSeed } from "./use-seed"
 
 export { MACHER_DEFAULT_SKILLS, MACHER_DEFAULT_AVATAR_ITEMS } from "./macher-skills"
+
+export { ARCHETYPES, getArchetype, type Archetype, type ArchetypeId } from "./archetypes"
