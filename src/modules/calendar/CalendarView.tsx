@@ -77,8 +77,13 @@ export interface CalendarModuleConfig {
 export const calendarDefaultConfig: CalendarModuleConfig = {
   mode: "mixed",
   defaultView: "month",
-  itemTypes: ["event", "appointment", "quest"],
-  colors: { event: "#3b82f6", appointment: "#10b981", quest: "#a855f7" },
+  itemTypes: ["event", "appointment", "quest", "marketplace-booking"],
+  colors: {
+    event: "#3b82f6",
+    appointment: "#10b981",
+    quest: "#a855f7",
+    "marketplace-booking": "#F59E0B",
+  },
   firstDayOfWeek: "monday",
   timeFormat: "24h",
   defaultDurationMinutes: 60,
@@ -128,10 +133,53 @@ export function CalendarView({ spaceId, activeGroup, config, isPreview, onOpenSe
   const eventItems = useItems({ type: cfg.itemTypes.includes("event") ? "event" : "__none__" }).data
   const apptItems = useItems({ type: cfg.itemTypes.includes("appointment") ? "appointment" : "__none__" }).data
   const questItems = useItems({ type: cfg.itemTypes.includes("quest") ? "quest" : "__none__" }).data
+  // Marktplatz-Bookings: werden in virtuelle Termine umgemappt mit Titel aus
+  // dem zugehoerigen offer-Item ("Verleih: Akkuschrauber Bosch").
+  const showBookings = cfg.itemTypes.includes("marketplace-booking")
+  const bookingItems = useItems({ type: showBookings ? "marketplace-booking" : "__none__" }).data
+  const offerItems = useItems({ type: showBookings ? "offer" : "__none__" }).data
+
+  // Bookings → virtuelle Events (mit data.title + data.start + data.end).
+  // Approved + pending sind sichtbar; rejected werden ausgeblendet.
+  const bookingAsEvents = useMemo<Item[]>(() => {
+    if (!showBookings) return []
+    const offerById = new Map(offerItems.map((o) => [o.id, o]))
+    return bookingItems
+      .map((b) => {
+        const d = b.data as Record<string, unknown>
+        const status = d.status as string | undefined
+        if (status === "rejected") return null
+        const itemId = d.itemId as string | undefined
+        const offer = itemId ? offerById.get(itemId) : null
+        const offerTitle = (offer?.data as Record<string, unknown> | undefined)?.title
+        const title = offerTitle ? `Verleih: ${offerTitle}` : "Verleih"
+        const start = d.start as string | undefined
+        const end = d.end as string | undefined
+        if (!start || !end) return null
+        // Status-Marker im Titel fuer pending
+        const finalTitle = status === "pending" ? `${title} (angefragt)` : title
+        const virt: Item = {
+          ...b,
+          data: {
+            ...d,
+            title: finalTitle,
+            start,
+            end,
+            // Marker damit der Edit-Dialog weiss: das ist read-only
+            _isMarketplaceBooking: true,
+          },
+        }
+        return virt
+      })
+      .filter((it): it is Item => it !== null)
+  }, [bookingItems, offerItems, showBookings])
 
   const rawItems = useMemo(
-    () => [...eventItems, ...apptItems, ...questItems].filter((it) => it.data.start),
-    [eventItems, apptItems, questItems]
+    () =>
+      [...eventItems, ...apptItems, ...questItems, ...bookingAsEvents].filter(
+        (it) => it.data.start
+      ),
+    [eventItems, apptItems, questItems, bookingAsEvents]
   )
 
   // Participation fuer Filter
@@ -200,6 +248,16 @@ export function CalendarView({ spaceId, activeGroup, config, isPreview, onOpenSe
     await deleteItem(editItem.id)
     setEditItem(null)
   }, [editItem, deleteItem])
+
+  // Marketplace-Bookings sind im Kalender nur sichtbar, nicht editierbar.
+  // Sie werden im Marktplatz-Modul verwaltet — hier waere die Bearbeitung
+  // verwirrend (Status/itemId nicht in den Calendar-Feldern abbildbar).
+  const handleItemClick = useCallback((item: Item) => {
+    if ((item.data as Record<string, unknown>)._isMarketplaceBooking) {
+      return
+    }
+    setEditItem(item)
+  }, [])
 
   return (
     <div className="space-y-4 relative">
@@ -305,7 +363,7 @@ export function CalendarView({ spaceId, activeGroup, config, isPreview, onOpenSe
           onDayChange={setCurrentDay}
           timeFormat={cfg.timeFormat}
           colors={cfg.colors ?? {}}
-          onItemClick={setEditItem}
+          onItemClick={handleItemClick}
         />
       )}
       {activeView === "month" && (
@@ -315,7 +373,7 @@ export function CalendarView({ spaceId, activeGroup, config, isPreview, onOpenSe
           onMonthChange={setCurrentMonth}
           firstDayOfWeek={cfg.firstDayOfWeek}
           colors={cfg.colors ?? {}}
-          onItemClick={setEditItem}
+          onItemClick={handleItemClick}
         />
       )}
       {activeView === "year" && (
@@ -331,20 +389,20 @@ export function CalendarView({ spaceId, activeGroup, config, isPreview, onOpenSe
         />
       )}
       {activeView === "week" && (
-        <AgendaView items={allItems} colors={cfg.colors ?? {}} timeFormat={cfg.timeFormat} onItemClick={setEditItem} weekOnly />
+        <AgendaView items={allItems} colors={cfg.colors ?? {}} timeFormat={cfg.timeFormat} onItemClick={handleItemClick} weekOnly />
       )}
       {activeView === "agenda" && (
-        <AgendaView items={allItems} colors={cfg.colors ?? {}} timeFormat={cfg.timeFormat} onItemClick={setEditItem} />
+        <AgendaView items={allItems} colors={cfg.colors ?? {}} timeFormat={cfg.timeFormat} onItemClick={handleItemClick} />
       )}
       {activeView === "events" && (
-        <EventListView items={allItems} colors={cfg.colors ?? {}} onItemClick={setEditItem} />
+        <EventListView items={allItems} colors={cfg.colors ?? {}} onItemClick={handleItemClick} />
       )}
       {activeView === "mine" && (
         <MyEventsView
           items={allItems}
           colors={cfg.colors ?? {}}
           timeFormat={cfg.timeFormat}
-          onItemClick={setEditItem}
+          onItemClick={handleItemClick}
         />
       )}
 
