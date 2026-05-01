@@ -633,7 +633,7 @@ const macherMapDemoData = {
   groupItems: {} as Record<string, string[]>,
 }
 
-const MACHER_DATA_VERSION = 3
+const MACHER_DATA_VERSION = 4
 
 async function resetLocalData() {
   const dbs = await indexedDB.databases()

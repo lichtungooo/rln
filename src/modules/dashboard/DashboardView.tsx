@@ -8,6 +8,7 @@ import { QuestWidget } from "./widgets/QuestWidget"
 import { LogWidget } from "./widgets/LogWidget"
 import { CalendarWidget } from "./widgets/CalendarWidget"
 import { AvatarWidget } from "../avatar"
+import { OnboardingCard } from "./OnboardingCard"
 
 /**
  * DashboardView — der private Spiegel.
@@ -68,6 +69,9 @@ export function DashboardView({ spaceId, activeGroup }: ModuleViewProps) {
           </p>
         </div>
       </div>
+
+      {/* Onboarding-Card fuer frische User */}
+      <OnboardingCard spaceSlug={spaceSlug} />
 
       {/* Widget-Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 auto-rows-[280px]">

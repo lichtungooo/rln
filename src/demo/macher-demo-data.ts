@@ -195,16 +195,69 @@ export const MACHER_DEMO_ITEMS: DemoItem[] = [
   },
 
   // ============================================================
-  // Quests (kleine offene Aufgaben)
+  // Quests — zeigen das volle Verifikations-Spektrum
   // ============================================================
+
+  // Quest-Reihe "Werkstatt-Pfad" mit 3 Stufen
+  {
+    type: "quest",
+    data: {
+      title: "Erste Naht legen",
+      description: "Eine 10cm Schweissnaht auf Stahlblech — sauber, ohne Loecher.",
+      markdownBody:
+        "Erste Stufe des Werkstatt-Pfads. Ziel: ein gerader Strich. Nicht schoen, aber dicht.",
+      verification: "self",
+      bereichXp: { handwerk: 30, koerper: 5 },
+      questSeriesId: "werkstatt-pfad",
+      questSeriesPosition: 1,
+      hashtags: ["werkstatt", "schweissen", "anfang"],
+      isDemo: true,
+    },
+  },
+  {
+    type: "quest",
+    data: {
+      title: "Eckverbindung schweissen",
+      description: "Zwei Stahlplatten im 90-Grad-Winkel verbinden.",
+      markdownBody:
+        "Zweite Stufe. Hier zaehlt die Vorbereitung — entgraten, fixieren, dann erst zuenden.",
+      verification: "qr",
+      qrCode: "macher-werkstatt-pfad-2-eckverbindung",
+      bereichXp: { handwerk: 50, koerper: 10 },
+      questSeriesId: "werkstatt-pfad",
+      questSeriesPosition: 2,
+      hashtags: ["werkstatt", "schweissen", "qr"],
+      isDemo: true,
+    },
+  },
+  {
+    type: "quest",
+    data: {
+      title: "Eigenes Werkstueck",
+      description: "Ein selbst entworfenes Stueck schweissen — und einen Macher um Bestaetigung bitten.",
+      markdownBody:
+        "Dritte Stufe. Du bringst dein Stueck, ein Werkstatt-Macher attestiert die Arbeit.",
+      verification: "attestation",
+      bereichXp: { handwerk: 80, geist: 20, soziales: 10 },
+      questSeriesId: "werkstatt-pfad",
+      questSeriesPosition: 3,
+      hashtags: ["werkstatt", "schweissen", "attestiert"],
+      isDemo: true,
+    },
+  },
+
+  // Eigenstaendige Quest mit Standort
   {
     type: "quest",
     data: {
       title: "Bauanleitung: Hochbeet aus Paletten",
+      description: "Schritt-fuer-Schritt mit Fotos dokumentieren.",
       address: "Berlin",
       location: { lat: 52.517, lng: 13.3889, address: "Berlin" },
       markdownBody:
         "Wer macht ein Schritt-fuer-Schritt mit Fotos? Open-Source CC-BY.",
+      verification: "self",
+      bereichXp: { handwerk: 40, geist: 30, gemeinschaft: 20 },
       hashtags: ["upcycling", "garten", "berlin", "open-source"],
       isDemo: true,
     },
@@ -213,10 +266,13 @@ export const MACHER_DEMO_ITEMS: DemoItem[] = [
     type: "quest",
     data: {
       title: "Reparatur-Sonntag organisieren",
+      description: "Raeumlichkeit + 5 Reparateure finden, Termin festlegen.",
       address: "Hamburg-Altona",
       location: { lat: 53.55, lng: 9.9333, address: "Hamburg-Altona" },
       markdownBody:
         "Raeumlichkeit + 5 Reparateure finden. Termin: Fruehling 2026.",
+      verification: "peer",
+      bereichXp: { gemeinschaft: 40, soziales: 30, geist: 10 },
       hashtags: ["reparieren", "hamburg", "kollab"],
       isDemo: true,
     },
