@@ -19,6 +19,7 @@ export const WISSENSFELD_ITEM_TYPES = {
   frage: "frage",
   antwort: "antwort",
   erkenntnis: "erkenntnis",
+  stimmungsbild: "stimmungsbild",
   vorschlag: "vorschlag",
   entscheidung: "entscheidung",
 } as const
@@ -170,6 +171,34 @@ export interface AntwortData {
   resonanz: ResonanzData
   /** Themen-Felder */
   felder?: string[]
+}
+
+/**
+ * Stimmungsbild — schnelle Konsent-Abfrage ohne 5-Status-Workflow.
+ * Drei Resonanz-Stufen, kein Einwand-Drama. "Wo stehen wir gerade?"
+ */
+export interface StimmungsbildSignale {
+  /** ✨ Lebendig in mir */
+  lebendig: string[]
+  /** 🌊 Noch im Werden */
+  werdend: string[]
+  /** ✋ Nicht meins */
+  fremd: string[]
+}
+
+export interface StimmungsbildData {
+  /** Kurze Frage — "Wie steht ihr zu...?" */
+  content: string
+  /** Tags fuer das Wissens-Netz */
+  tags?: string[]
+  /** Themen-Felder */
+  felder?: string[]
+  /** Signale */
+  signale: StimmungsbildSignale
+  /** Aus welchem Kreis kam die Frage? */
+  circleOrigin?: string
+  /** Wann wird das Stimmungsbild geschlossen? Optional. */
+  closesAt?: string
 }
 
 export interface ErkenntnisData {

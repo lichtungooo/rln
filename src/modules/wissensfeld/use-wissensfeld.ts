@@ -15,6 +15,8 @@ import {
   type VorschlagData,
   type VorschlagStatus,
   type VorschlagSignale,
+  type StimmungsbildData,
+  type StimmungsbildSignale,
 } from "./types"
 
 /**
@@ -35,6 +37,7 @@ export function useWissensfeld() {
   const { data: antworten } = useItems({ type: WISSENSFELD_ITEM_TYPES.antwort })
   const { data: vorschlaege } = useItems({ type: WISSENSFELD_ITEM_TYPES.vorschlag })
   const { data: entscheidungen } = useItems({ type: WISSENSFELD_ITEM_TYPES.entscheidung })
+  const { data: stimmungsbilder } = useItems({ type: WISSENSFELD_ITEM_TYPES.stimmungsbild })
   const { data: currentUser } = useCurrentUser()
   const { mutate: createItem } = useCreateItem()
   const { mutate: updateItem } = useUpdateItem()
@@ -275,6 +278,71 @@ export function useWissensfeld() {
     [vorschlaege, currentUser?.id, deleteItem]
   )
 
+  // ============================================================
+  // Stimmungsbilder (Phase W5a) — leichte Konsent-Abfrage
+  // ============================================================
+
+  const stimmungsbilderSorted = useMemo<Item[]>(
+    () => [...stimmungsbilder].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    [stimmungsbilder]
+  )
+
+  /** Neues Stimmungsbild oeffnen */
+  const openStimmungsbild = useCallback(
+    async (input: {
+      content: string
+      tags?: string[]
+      felder?: string[]
+      circleOrigin?: string
+    }): Promise<Item | null> => {
+      if (!currentUser?.id) throw new Error("Du bist noch nicht im Kreis angekommen.")
+      const data: StimmungsbildData = {
+        content: input.content.trim(),
+        tags: input.tags,
+        felder: input.felder,
+        circleOrigin: input.circleOrigin,
+        signale: { lebendig: [], werdend: [], fremd: [] },
+      }
+      const created = await createItem({
+        type: WISSENSFELD_ITEM_TYPES.stimmungsbild,
+        createdBy: currentUser.id,
+        data: data as unknown as Record<string, unknown>,
+      })
+      return created ?? null
+    },
+    [currentUser?.id, createItem]
+  )
+
+  /** Signal toggeln — ein User hat eine Stimme; neues Signal entfernt vorheriges. */
+  const signalStimmungsbild = useCallback(
+    async (stimmungsbildId: string, signal: keyof StimmungsbildSignale) => {
+      if (!currentUser?.id) return
+      const item = stimmungsbilder.find((it) => it.id === stimmungsbildId)
+      if (!item) return
+      const data = item.data as StimmungsbildData
+      const next: StimmungsbildSignale = {
+        lebendig: (data.signale?.lebendig ?? []).filter((id) => id !== currentUser.id),
+        werdend: (data.signale?.werdend ?? []).filter((id) => id !== currentUser.id),
+        fremd: (data.signale?.fremd ?? []).filter((id) => id !== currentUser.id),
+      }
+      const wasActive = (data.signale?.[signal] ?? []).includes(currentUser.id)
+      if (!wasActive) next[signal].push(currentUser.id)
+      await updateItem(item.id, {
+        data: { ...data, signale: next } as unknown as Record<string, unknown>,
+      })
+    },
+    [stimmungsbilder, currentUser?.id, updateItem]
+  )
+
+  const removeStimmungsbild = useCallback(
+    async (stimmungsbildId: string) => {
+      const s = stimmungsbilder.find((it) => it.id === stimmungsbildId)
+      if (!s || s.createdBy !== currentUser?.id) return
+      await deleteItem(stimmungsbildId)
+    },
+    [stimmungsbilder, currentUser?.id, deleteItem]
+  )
+
   return {
     fragen: fragenSorted,
     antwortenByFrage,
@@ -291,5 +359,10 @@ export function useWissensfeld() {
     advanceVorschlag,
     closeVorschlag,
     removeVorschlag,
+    // Stimmungsbilder
+    stimmungsbilder: stimmungsbilderSorted,
+    openStimmungsbild,
+    signalStimmungsbild,
+    removeStimmungsbild,
   }
 }

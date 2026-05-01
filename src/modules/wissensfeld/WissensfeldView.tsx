@@ -83,6 +83,10 @@ export function WissensfeldView(_props: ModuleViewProps) {
     advanceVorschlag,
     closeVorschlag,
     removeVorschlag,
+    stimmungsbilder,
+    openStimmungsbild,
+    signalStimmungsbild,
+    removeStimmungsbild,
   } = useWissensfeld()
   const { data: currentUser } = useCurrentUser()
 
@@ -261,11 +265,15 @@ export function WissensfeldView(_props: ModuleViewProps) {
         <KonsentSection
           vorschlaege={vorschlaege}
           entscheidungen={entscheidungen}
+          stimmungsbilder={stimmungsbilder}
           onPropose={proposeVorschlag}
           onSignal={signalVorschlag}
           onAdvance={advanceVorschlag}
           onClose={closeVorschlag}
           onRemove={removeVorschlag}
+          onOpenStimmungsbild={openStimmungsbild}
+          onSignalStimmungsbild={signalStimmungsbild}
+          onRemoveStimmungsbild={removeStimmungsbild}
         />
       )}
 

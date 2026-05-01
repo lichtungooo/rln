@@ -21,6 +21,7 @@ export const wissensfeldModule: ModuleDefinition = {
     WISSENSFELD_ITEM_TYPES.frage,
     WISSENSFELD_ITEM_TYPES.antwort,
     WISSENSFELD_ITEM_TYPES.erkenntnis,
+    WISSENSFELD_ITEM_TYPES.stimmungsbild,
     WISSENSFELD_ITEM_TYPES.vorschlag,
     WISSENSFELD_ITEM_TYPES.entscheidung,
   ],

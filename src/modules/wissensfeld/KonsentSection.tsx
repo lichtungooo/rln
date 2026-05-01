@@ -18,7 +18,10 @@ import {
   type VorschlagStatus,
   type VorschlagSignale,
   type EntscheidungData,
+  type StimmungsbildSignale,
 } from "./types"
+import { StimmungsbildSection } from "./StimmungsbildSection"
+import type { Item as ItemType } from "@real-life-stack/data-interface"
 
 /**
  * KonsentSection — der gemeinsame Weg vom Vorschlag zur Entscheidung.
@@ -55,11 +58,15 @@ const STATUS_COLOR: Record<VorschlagStatus, string> = {
 export interface KonsentSectionProps {
   vorschlaege: Item[]
   entscheidungen: Item[]
+  stimmungsbilder: Item[]
   onPropose: (input: { content: string; tags?: string[] }) => Promise<Item | null>
   onSignal: (vorschlagId: string, signal: keyof VorschlagSignale) => Promise<void>
   onAdvance: (vorschlagId: string, nextStatus: VorschlagStatus) => Promise<void>
   onClose: (input: { vorschlagId: string; circleOrigin: string; circleDate: string }) => Promise<void>
   onRemove: (vorschlagId: string) => Promise<void>
+  onOpenStimmungsbild: (input: { content: string; circleOrigin?: string }) => Promise<ItemType | null>
+  onSignalStimmungsbild: (id: string, signal: keyof StimmungsbildSignale) => Promise<void>
+  onRemoveStimmungsbild: (id: string) => Promise<void>
 }
 
 export function KonsentSection(props: KonsentSectionProps) {
@@ -97,6 +104,14 @@ export function KonsentSection(props: KonsentSectionProps) {
           onCancel={() => setCreating(false)}
         />
       )}
+
+      {/* Stimmungsbilder — schnelle Konsent-Abfrage ohne 5-Status */}
+      <StimmungsbildSection
+        stimmungsbilder={props.stimmungsbilder}
+        onOpen={props.onOpenStimmungsbild}
+        onSignal={props.onSignalStimmungsbild}
+        onRemove={props.onRemoveStimmungsbild}
+      />
 
       {/* Aktive Vorschlaege */}
       {props.vorschlaege.length === 0 ? (
