@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { Crown, Shield, User as UserIcon, ChevronDown, Loader2 } from "lucide-react"
+import { Crown, Shield, User as UserIcon, ChevronDown, Loader2, ShieldCheck } from "lucide-react"
 import {
   useMembers,
   useCurrentUser,
@@ -15,6 +15,7 @@ import {
   type SpaceRoleAssignable,
   roleLabel,
 } from "../../groups/roles"
+import { useReputationMap, trustLabel } from "../gamification"
 
 /**
  * MembersView — Mitglieder + Rollen-Verwaltung.
@@ -33,6 +34,8 @@ export function MembersView({ spaceId, activeGroup }: ModuleViewProps) {
   const { data: currentUser } = useCurrentUser()
   const { roleOf, isAdmin, setRole, busy, error } = useGroupRoles(spaceId)
   const [pendingId, setPendingId] = useState<string | null>(null)
+  const memberIds = useMemo(() => members.map((m) => m.id), [members])
+  const reputationMap = useReputationMap(memberIds)
 
   const sortedMembers = useMemo(() => {
     if (!members.length) return []
@@ -91,6 +94,7 @@ export function MembersView({ spaceId, activeGroup }: ModuleViewProps) {
             const canEdit = isAdmin && role !== "owner" && !isMe
             const isPending = pendingId === member.id
 
+            const rep = reputationMap[member.id]
             return (
               <MemberRow
                 key={member.id}
@@ -101,6 +105,7 @@ export function MembersView({ spaceId, activeGroup }: ModuleViewProps) {
                 isMe={isMe}
                 canEdit={canEdit}
                 pending={isPending && busy}
+                trustScore={rep?.trustScore ?? 0}
                 onChange={(next) => handleChange(member.id, next)}
               />
             )
@@ -135,10 +140,11 @@ interface MemberRowProps {
   isMe: boolean
   canEdit: boolean
   pending: boolean
+  trustScore: number
   onChange: (next: SpaceRoleAssignable) => void
 }
 
-function MemberRow({ name, did, avatarUrl, role, isMe, canEdit, pending, onChange }: MemberRowProps) {
+function MemberRow({ name, did, avatarUrl, role, isMe, canEdit, pending, trustScore, onChange }: MemberRowProps) {
   return (
     <div className="flex items-center gap-3 p-2 border rounded-md bg-card">
       {/* Avatar */}
@@ -160,6 +166,17 @@ function MemberRow({ name, did, avatarUrl, role, isMe, canEdit, pending, onChang
           {shortDid(did)}
         </code>
       </div>
+
+      {/* Trust-Badge — nur wenn Score > 0 */}
+      {trustScore > 0 && (
+        <div
+          className="flex items-center gap-1 text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-700 dark:text-purple-300 shrink-0"
+          title={`${trustLabel(trustScore)} (${trustScore})`}
+        >
+          <ShieldCheck className="h-2.5 w-2.5" />
+          <span className="font-semibold">{trustScore}</span>
+        </div>
+      )}
 
       {/* Rolle */}
       <RoleSelector role={role} canEdit={canEdit} pending={pending} onChange={onChange} />

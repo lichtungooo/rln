@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { Edit2, Check, X, Sparkles } from "lucide-react"
+import { Edit2, Check, X, Sparkles, ShieldCheck, Heart, HandHeart } from "lucide-react"
 import * as LucideIcons from "lucide-react"
 import {
   Card,
@@ -13,6 +13,8 @@ import type { ModuleViewProps } from "../registry"
 import {
   useUserAvatar,
   useUserProgress,
+  useReputation,
+  trustLabel,
   INNERE_BEREICHE,
   BEREICH_BY_ID,
   progressInLevel,
@@ -20,6 +22,7 @@ import {
   getArchetype,
   type AvatarItemData,
   type AvatarItemRarity,
+  type ReputationStats,
 } from "../gamification"
 import { Avatar } from "./Avatar"
 
@@ -60,6 +63,7 @@ export function AvatarView({ spaceId }: ModuleViewProps) {
   const { data: currentUser } = useCurrentUser()
   const { owned, displayed, titleForSpace, archetypesForSpace, toggleDisplayed, setTitle, toggleArchetype } = useUserAvatar(spaceId)
   const { data: progress } = useUserProgress()
+  const reputation = useReputation()
   const [editingTitle, setEditingTitle] = useState(false)
   const [titleDraft, setTitleDraft] = useState("")
 
@@ -186,9 +190,21 @@ export function AvatarView({ spaceId }: ModuleViewProps) {
                 Auf Avatar
               </div>
             </div>
+            <div>
+              <div className="text-2xl font-bold flex items-center gap-1.5">
+                <ShieldCheck className="h-5 w-5 text-purple-600" />
+                {reputation.trustScore}
+              </div>
+              <div className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
+                {trustLabel(reputation.trustScore)}
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Reputations-Karte */}
+      <ReputationCard reputation={reputation} />
 
       {/* Archetypen */}
       <ArchetypeSection
@@ -452,5 +468,58 @@ function InventoryCard({
         {isDisplayed ? "✓ auf Avatar" : "anlegen"}
       </div>
     </button>
+  )
+}
+
+// ============================================================
+// ReputationCard — verdiente Anerkennung (Phase E4)
+// ============================================================
+
+function ReputationCard({ reputation }: { reputation: ReputationStats }) {
+  const empty = reputation.received === 0 && reputation.given === 0
+  return (
+    <Card>
+      <CardContent className="p-5">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-purple-600" />
+            <h2 className="text-base font-bold">Vertrauen</h2>
+          </div>
+          <span className="text-xs text-muted-foreground">
+            Was andere ueber dich bestaetigen
+          </span>
+        </div>
+
+        {empty ? (
+          <p className="text-xs text-muted-foreground italic">
+            Noch keine Attestation. Schliesse Quests im Modus "Attestiert" ab — andere
+            bestaetigen, was du geleistet hast. Jede Bestaetigung baut Vertrauen auf.
+          </p>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-lg border bg-muted/30 p-3">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                <Heart className="h-3.5 w-3.5 text-rose-500" />
+                Empfangen
+              </div>
+              <div className="text-2xl font-bold">{reputation.received}</div>
+              <div className="text-[10px] text-muted-foreground">
+                {reputation.attestors.length} verschiedene Attestoren
+              </div>
+            </div>
+            <div className="rounded-lg border bg-muted/30 p-3">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+                <HandHeart className="h-3.5 w-3.5 text-emerald-500" />
+                Gegeben
+              </div>
+              <div className="text-2xl font-bold">{reputation.given}</div>
+              <div className="text-[10px] text-muted-foreground">
+                {reputation.attested.length} Spieler attestiert
+              </div>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }

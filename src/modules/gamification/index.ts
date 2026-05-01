@@ -38,6 +38,7 @@ export { useUserProgress } from "./use-progress"
 export { useLog } from "./use-log"
 export { useUserAvatar } from "./use-avatar"
 export { useGamificationSeed } from "./use-seed"
+export { useReputation, useReputationMap, trustLabel, type ReputationStats } from "./use-reputation"
 
 export { MACHER_DEFAULT_SKILLS, MACHER_DEFAULT_AVATAR_ITEMS } from "./macher-skills"
 
