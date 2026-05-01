@@ -6,6 +6,7 @@ import {
   Plus,
   Trash2,
   Sparkles,
+  Scale,
   type LucideIcon,
 } from "lucide-react"
 import {
@@ -29,6 +30,9 @@ import {
   type ThemenFeld,
 } from "./types"
 import { useWissensfeld } from "./use-wissensfeld"
+import { KonsentSection } from "./KonsentSection"
+
+type WissensfeldTab = "fragen" | "konsent"
 
 /**
  * WissensfeldView — Spiegel des kollektiven Bewusstseins.
@@ -59,6 +63,7 @@ const FELD_BY_ID: Record<string, ThemenFeld> = Object.fromEntries(
 )
 
 export function WissensfeldView(_props: ModuleViewProps) {
+  const [activeTab, setActiveTab] = useState<WissensfeldTab>("fragen")
   const [activeFrageId, setActiveFrageId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const [activeFeldId, setActiveFeldId] = useState<string | null>(null)
@@ -71,6 +76,13 @@ export function WissensfeldView(_props: ModuleViewProps) {
     removeFrage,
     removeAntwort,
     toggleResonanz,
+    vorschlaege,
+    entscheidungen,
+    proposeVorschlag,
+    signalVorschlag,
+    advanceVorschlag,
+    closeVorschlag,
+    removeVorschlag,
   } = useWissensfeld()
   const { data: currentUser } = useCurrentUser()
 
@@ -211,12 +223,54 @@ export function WissensfeldView(_props: ModuleViewProps) {
             Samen. Jede Antwort eine Bluete. Was beruehrt, leuchtet sanft auf.
           </p>
         </div>
-        <Button onClick={() => setCreating(true)} size="sm">
-          <Plus className="h-4 w-4 mr-1" />
-          Frage saeen
-        </Button>
+        {activeTab === "fragen" && (
+          <Button onClick={() => setCreating(true)} size="sm">
+            <Plus className="h-4 w-4 mr-1" />
+            Frage saeen
+          </Button>
+        )}
       </div>
 
+      {/* Tab-Switcher: Fragen / Konsent */}
+      <div className="grid grid-cols-2 gap-1 p-1 rounded-lg bg-muted">
+        <button
+          type="button"
+          onClick={() => setActiveTab("fragen")}
+          className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-semibold transition-all ${
+            activeTab === "fragen" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
+          }`}
+          style={activeTab === "fragen" ? { color: "#E8751A" } : undefined}
+        >
+          <Flame className="h-4 w-4" />
+          Fragen <span className="text-[10px] opacity-70">({fragen.length})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("konsent")}
+          className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-semibold transition-all ${
+            activeTab === "konsent" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
+          }`}
+          style={activeTab === "konsent" ? { color: "#10B981" } : undefined}
+        >
+          <Scale className="h-4 w-4" />
+          Konsent <span className="text-[10px] opacity-70">({vorschlaege.length})</span>
+        </button>
+      </div>
+
+      {activeTab === "konsent" && (
+        <KonsentSection
+          vorschlaege={vorschlaege}
+          entscheidungen={entscheidungen}
+          onPropose={proposeVorschlag}
+          onSignal={signalVorschlag}
+          onAdvance={advanceVorschlag}
+          onClose={closeVorschlag}
+          onRemove={removeVorschlag}
+        />
+      )}
+
+      {activeTab === "fragen" && (
+        <>
       {fragen.length === 0 ? (
         <Card>
           <CardContent className="p-10 text-center text-muted-foreground">
@@ -330,6 +384,8 @@ export function WissensfeldView(_props: ModuleViewProps) {
               ))}
             </div>
           )}
+        </>
+      )}
         </>
       )}
     </div>

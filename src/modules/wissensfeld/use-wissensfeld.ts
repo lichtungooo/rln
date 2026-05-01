@@ -12,6 +12,9 @@ import {
   type FrageData,
   type AntwortData,
   type ResonanzData,
+  type VorschlagData,
+  type VorschlagStatus,
+  type VorschlagSignale,
 } from "./types"
 
 /**
@@ -30,6 +33,8 @@ import {
 export function useWissensfeld() {
   const { data: fragen } = useItems({ type: WISSENSFELD_ITEM_TYPES.frage })
   const { data: antworten } = useItems({ type: WISSENSFELD_ITEM_TYPES.antwort })
+  const { data: vorschlaege } = useItems({ type: WISSENSFELD_ITEM_TYPES.vorschlag })
+  const { data: entscheidungen } = useItems({ type: WISSENSFELD_ITEM_TYPES.entscheidung })
   const { data: currentUser } = useCurrentUser()
   const { mutate: createItem } = useCreateItem()
   const { mutate: updateItem } = useUpdateItem()
@@ -146,6 +151,130 @@ export function useWissensfeld() {
     [antworten, currentUser?.id, updateItem]
   )
 
+  // ============================================================
+  // Konsent-Prozess (Phase W4)
+  // ============================================================
+
+  /** Vorschlaege, neueste zuerst */
+  const vorschlaegeSorted = useMemo<Item[]>(
+    () => [...vorschlaege].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    [vorschlaege]
+  )
+  const entscheidungenSorted = useMemo<Item[]>(
+    () => [...entscheidungen].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+    [entscheidungen]
+  )
+
+  /** Vorschlag formulieren */
+  const proposeVorschlag = useCallback(
+    async (input: {
+      content: string
+      tags?: string[]
+      frageId?: string
+      felder?: string[]
+    }): Promise<Item | null> => {
+      if (!currentUser?.id) throw new Error("Du bist noch nicht im Kreis angekommen.")
+      const data: VorschlagData = {
+        content: input.content.trim(),
+        tags: input.tags ?? [],
+        status: "offen",
+        signale: { mittragen: [], bedenken: [], einwand: [] },
+        frageId: input.frageId,
+        felder: input.felder,
+      }
+      const created = await createItem({
+        type: WISSENSFELD_ITEM_TYPES.vorschlag,
+        createdBy: currentUser.id,
+        data: data as unknown as Record<string, unknown>,
+      })
+      return created ?? null
+    },
+    [currentUser?.id, createItem]
+  )
+
+  /** Signal zu einem Vorschlag setzen — toggelt: erneuter Klick zieht zurueck. */
+  const signalVorschlag = useCallback(
+    async (vorschlagId: string, signal: keyof VorschlagSignale) => {
+      if (!currentUser?.id) return
+      const item = vorschlaege.find((it) => it.id === vorschlagId)
+      if (!item) return
+      const data = item.data as VorschlagData
+      const next: VorschlagSignale = {
+        mittragen: [...(data.signale?.mittragen ?? [])],
+        bedenken: [...(data.signale?.bedenken ?? [])],
+        einwand: [...(data.signale?.einwand ?? [])],
+      }
+      // Erst aus allen drei Listen den User entfernen — ein User hat nur ein Signal
+      next.mittragen = next.mittragen.filter((id) => id !== currentUser.id)
+      next.bedenken = next.bedenken.filter((id) => id !== currentUser.id)
+      next.einwand = next.einwand.filter((id) => id !== currentUser.id)
+      // Dann das gewaehlte hinzufuegen — auser es war schon das gewaehlte
+      const wasActive = (data.signale?.[signal] ?? []).includes(currentUser.id)
+      if (!wasActive) next[signal].push(currentUser.id)
+      await updateItem(item.id, {
+        data: { ...data, signale: next } as unknown as Record<string, unknown>,
+      })
+    },
+    [vorschlaege, currentUser?.id, updateItem]
+  )
+
+  /** Status eines Vorschlags weiterdrehen — nur durch den Antragsteller */
+  const advanceVorschlag = useCallback(
+    async (vorschlagId: string, nextStatus: VorschlagStatus) => {
+      if (!currentUser?.id) return
+      const item = vorschlaege.find((it) => it.id === vorschlagId)
+      if (!item || item.createdBy !== currentUser.id) return
+      const data = item.data as VorschlagData
+      await updateItem(item.id, {
+        data: { ...data, status: nextStatus } as unknown as Record<string, unknown>,
+      })
+    },
+    [vorschlaege, currentUser?.id, updateItem]
+  )
+
+  /** Vorschlag zur Entscheidung tragen — nur wenn keine Einwaende. */
+  const closeVorschlag = useCallback(
+    async (input: { vorschlagId: string; circleOrigin: string; circleDate: string }) => {
+      if (!currentUser?.id) return
+      const item = vorschlaege.find((it) => it.id === input.vorschlagId)
+      if (!item || item.createdBy !== currentUser.id) return
+      const data = item.data as VorschlagData
+      if ((data.signale?.einwand ?? []).length > 0) {
+        throw new Error("Dieser Vorschlag traegt Einwaende — er kehrt in den Kreis zurueck.")
+      }
+
+      // Vorschlag als angenommen markieren
+      await updateItem(item.id, {
+        data: { ...data, status: "angenommen" } as unknown as Record<string, unknown>,
+      })
+
+      // Entscheidung als eigenes Item dokumentieren
+      await createItem({
+        type: WISSENSFELD_ITEM_TYPES.entscheidung,
+        createdBy: currentUser.id,
+        data: {
+          content: data.content,
+          tags: data.tags,
+          circleOrigin: input.circleOrigin,
+          circleDate: input.circleDate,
+          vorschlagId: input.vorschlagId,
+          frageId: data.frageId,
+          felder: data.felder,
+        } as unknown as Record<string, unknown>,
+      })
+    },
+    [vorschlaege, currentUser?.id, updateItem, createItem]
+  )
+
+  const removeVorschlag = useCallback(
+    async (vorschlagId: string) => {
+      const v = vorschlaege.find((it) => it.id === vorschlagId)
+      if (!v || v.createdBy !== currentUser?.id) return
+      await deleteItem(vorschlagId)
+    },
+    [vorschlaege, currentUser?.id, deleteItem]
+  )
+
   return {
     fragen: fragenSorted,
     antwortenByFrage,
@@ -154,5 +283,13 @@ export function useWissensfeld() {
     removeFrage,
     removeAntwort,
     toggleResonanz,
+    // Konsent
+    vorschlaege: vorschlaegeSorted,
+    entscheidungen: entscheidungenSorted,
+    proposeVorschlag,
+    signalVorschlag,
+    advanceVorschlag,
+    closeVorschlag,
+    removeVorschlag,
   }
 }
