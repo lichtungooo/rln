@@ -9,6 +9,9 @@ import {
   ChevronLeft,
   Hammer,
   Layers,
+  QrCode,
+  Users,
+  ShieldCheck,
 } from "lucide-react"
 import {
   Button,
@@ -36,6 +39,9 @@ import {
 } from "../gamification"
 import { useQuests } from "./use-quests"
 import type { QuestData } from "./quest-engine"
+import { QrVerificationDialog } from "./QrVerificationDialog"
+
+type Verification = "self" | "qr" | "peer" | "attestation"
 
 /**
  * QuestView — die Sicht aufs Quest-Modul.
@@ -120,7 +126,7 @@ export function QuestView(_props: ModuleViewProps<QuestModuleConfig>) {
           skills={skills}
           avatarItems={avatarItems}
           isCompleted={isCompleted(activeQuest.id)}
-          onComplete={() => complete(activeQuest, "self")}
+          onComplete={(verification) => complete(activeQuest, verification)}
           onUncomplete={() => uncomplete(activeQuest.id)}
           allQuests={quests}
           onSelectQuest={setActiveQuestId}
@@ -324,6 +330,15 @@ function QuestCard({
         </div>
       </div>
 
+      {/* Verifikations-Marker */}
+      {data.verification && data.verification !== "self" && (
+        <div className="flex items-center gap-1.5 mt-2 text-[10px] text-muted-foreground">
+          {data.verification === "qr" && <><QrCode className="h-3 w-3" /> QR</>}
+          {data.verification === "peer" && <><Users className="h-3 w-3" /> Peer</>}
+          {data.verification === "attestation" && <><ShieldCheck className="h-3 w-3" /> Attestiert</>}
+        </div>
+      )}
+
       {/* Belohnungen */}
       <div className="space-y-1.5 mt-3">
         {totalXp > 0 && (
@@ -385,13 +400,15 @@ function QuestDetail({
   skills: Item[]
   avatarItems: Item[]
   isCompleted: boolean
-  onComplete: () => Promise<void>
+  onComplete: (verification: Verification) => Promise<void>
   onUncomplete: () => Promise<void>
   allQuests: Item[]
   onSelectQuest: (id: string) => void
 }) {
   const data = quest.data as QuestData
+  const verification: Verification = data.verification ?? "self"
   const [busy, setBusy] = useState(false)
+  const [qrDialogOpen, setQrDialogOpen] = useState(false)
 
   // Series-Sequenz fuer Vorgaenger/Nachfolger
   const seriesQuests = useMemo(() => {
@@ -413,13 +430,17 @@ function QuestDetail({
     }
   }, [data.questSeriesId, data.questSeriesPosition, quest.id, allQuests])
 
-  const handleComplete = async () => {
+  const handleSelfComplete = async () => {
     setBusy(true)
     try {
-      await onComplete()
+      await onComplete("self")
     } finally {
       setBusy(false)
     }
+  }
+
+  const handleQrVerified = async () => {
+    await onComplete("qr")
   }
 
   const handleUncomplete = async () => {
@@ -580,13 +601,55 @@ function QuestDetail({
               Wieder oeffnen
             </Button>
           </>
+        ) : verification === "qr" ? (
+          <>
+            <span className="flex-1 text-xs text-muted-foreground self-center">
+              <QrCode className="h-3.5 w-3.5 inline mr-1" />
+              QR-Verifikation noetig
+            </span>
+            <Button size="lg" onClick={() => setQrDialogOpen(true)} disabled={busy}>
+              <QrCode className="h-4 w-4 mr-2" />
+              QR pruefen
+            </Button>
+          </>
+        ) : verification === "peer" ? (
+          <>
+            <span className="flex-1 text-xs text-muted-foreground self-center">
+              <Users className="h-3.5 w-3.5 inline mr-1" />
+              Peer-Bestaetigung — kommt in der naechsten Phase
+            </span>
+            <Button size="lg" disabled variant="outline">
+              Anfrage senden
+            </Button>
+          </>
+        ) : verification === "attestation" ? (
+          <>
+            <span className="flex-1 text-xs text-muted-foreground self-center">
+              <ShieldCheck className="h-3.5 w-3.5 inline mr-1" />
+              Attestation — kommt in der naechsten Phase
+            </span>
+            <Button size="lg" disabled variant="outline">
+              Attestieren
+            </Button>
+          </>
         ) : (
-          <Button size="lg" onClick={handleComplete} disabled={busy}>
+          <Button size="lg" onClick={handleSelfComplete} disabled={busy}>
             <CheckCircle2 className="h-4 w-4 mr-2" />
             {busy ? "Schliesse ab..." : "Quest abschliessen"}
           </Button>
         )}
       </div>
+
+      {/* QR-Verifikations-Dialog */}
+      {verification === "qr" && data.qrCode && (
+        <QrVerificationDialog
+          open={qrDialogOpen}
+          onOpenChange={setQrDialogOpen}
+          expectedCode={data.qrCode}
+          questTitle={data.title}
+          onVerified={handleQrVerified}
+        />
+      )}
 
       {/* Series-Navigation: Vorgaenger / Nachfolger */}
       {seriesQuests && (seriesQuests.previous || seriesQuests.next) && (
@@ -646,6 +709,8 @@ function QuestForm({
   const [rewardItemIds, setRewardItemIds] = useState<Set<string>>(new Set())
   const [seriesName, setSeriesName] = useState("")
   const [seriesPosition, setSeriesPosition] = useState<number | "">("")
+  const [verification, setVerification] = useState<Verification>("self")
+  const [qrCode, setQrCode] = useState("")
   const [busy, setBusy] = useState(false)
 
   const totalXp = Object.values(skillXp).reduce((a, b) => a + b, 0)
@@ -674,12 +739,18 @@ function QuestForm({
       const seriesId = seriesName.trim()
         ? seriesName.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
         : undefined
+      // QR-Code automatisch generieren, falls verification=qr und nichts gesetzt
+      const finalQrCode =
+        verification === "qr"
+          ? qrCode.trim() || `quest-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
+          : undefined
       const data: QuestData = {
         title: title.trim(),
         description: description.trim() || undefined,
         skillXp: Object.keys(skillXp).length > 0 ? skillXp : undefined,
         rewardItems: rewardItemIds.size > 0 ? Array.from(rewardItemIds) : undefined,
-        verification: "self",
+        verification,
+        qrCode: finalQrCode,
         questSeriesId: seriesId,
         questSeriesPosition: seriesId && typeof seriesPosition === "number" ? seriesPosition : undefined,
       }
@@ -722,6 +793,62 @@ function QuestForm({
             placeholder="Was ist zu tun? Warum lohnt es sich?"
             className="min-h-20"
           />
+        </div>
+
+        {/* Verifikations-Modus */}
+        <div>
+          <Label className="text-xs mb-1.5 block">Wie wird die Quest bestaetigt?</Label>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+            {(
+              [
+                { id: "self", label: "Selbst", icon: CheckCircle2, hint: "Klick reicht" },
+                { id: "qr", label: "QR-Code", icon: QrCode, hint: "Vor Ort scannen" },
+                { id: "peer", label: "Peer", icon: Users, hint: "Naechste Phase" },
+                { id: "attestation", label: "Attestiert", icon: ShieldCheck, hint: "Naechste Phase" },
+              ] as { id: Verification; label: string; icon: typeof CheckCircle2; hint: string }[]
+            ).map((opt) => {
+              const Icon = opt.icon
+              const isOn = verification === opt.id
+              const disabled = opt.id === "peer" || opt.id === "attestation"
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => setVerification(opt.id)}
+                  className={`flex flex-col items-start gap-1 p-2.5 rounded-md border-2 text-left transition-all ${
+                    isOn
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-muted-foreground/40"
+                  } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                  title={disabled ? "Kommt mit Phase B2.2/B2.3" : undefined}
+                >
+                  <div className="flex items-center gap-1.5">
+                    <Icon className={`h-3.5 w-3.5 ${isOn ? "text-primary" : "text-muted-foreground"}`} />
+                    <span className="text-xs font-semibold">{opt.label}</span>
+                  </div>
+                  <span className="text-[9px] text-muted-foreground">{opt.hint}</span>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* QR-Code-Feld nur sichtbar wenn QR gewaehlt */}
+          {verification === "qr" && (
+            <div className="mt-3 space-y-1.5">
+              <Label className="text-xs">QR-Code-Inhalt (optional)</Label>
+              <Input
+                value={qrCode}
+                onChange={(e) => setQrCode(e.target.value)}
+                placeholder="Frei lassen — wird automatisch generiert"
+                className="text-xs font-mono"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Den QR-Code findest du nach dem Anlegen im Quest-Detail unter "QR pruefen → Zeigen".
+                Er kann ausgedruckt am Stand/in der Werkstatt haengen.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Skills mit XP-Inputs */}
