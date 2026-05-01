@@ -7,6 +7,9 @@ import {
   ShoppingBag,
   Search as SearchIcon,
   Trash2,
+  X,
+  Hash,
+  Filter as FilterIcon,
   type LucideIcon,
 } from "lucide-react"
 import {
@@ -75,16 +78,72 @@ export function MarketplaceView({ spaceId: _spaceId }: ModuleViewProps) {
   const { mutate: deleteItem } = useDeleteItem()
   const [activeId, setActiveId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
+  const [search, setSearch] = useState("")
+  const [activeTags, setActiveTags] = useState<Set<string>>(new Set())
+  const [showAllTags, setShowAllTags] = useState(false)
 
   const activeItem = useMemo(() => {
     if (!activeId) return null
     return items.find((it) => it.id === activeId) ?? null
   }, [items, activeId])
 
-  // Sortiert nach createdAt desc
-  const sortedItems = useMemo(() => {
-    return [...items].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  // Alle Hashtags + ihre Haeufigkeit fuer den Filter-Bar
+  const allHashtags = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const it of items) {
+      const tags = (it.data as MarketplaceData).hashtags ?? []
+      for (const t of tags) counts.set(t, (counts.get(t) ?? 0) + 1)
+    }
+    return Array.from(counts.entries())
+      .map(([tag, count]) => ({ tag, count }))
+      .sort((a, b) => b.count - a.count)
   }, [items])
+
+  // Gefilterte + sortierte Liste
+  const filteredItems = useMemo(() => {
+    const needle = search.trim().toLowerCase()
+    return items
+      .filter((it) => {
+        const data = it.data as MarketplaceData
+        // Hashtag-AND-Filter: jedes aktive Tag muss vorhanden sein
+        if (activeTags.size > 0) {
+          const tags = data.hashtags ?? []
+          for (const t of activeTags) {
+            if (!tags.includes(t)) return false
+          }
+        }
+        // Volltext-Suche ueber Titel, Beschreibung, Hashtags, Adresse
+        if (needle) {
+          const haystack = [
+            data.title,
+            data.description,
+            (data.hashtags ?? []).join(" "),
+            data.location?.address,
+            data.priceText,
+          ]
+            .filter(Boolean)
+            .join(" ")
+            .toLowerCase()
+          if (!haystack.includes(needle)) return false
+        }
+        return true
+      })
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+  }, [items, search, activeTags])
+
+  const toggleTag = (tag: string) => {
+    const next = new Set(activeTags)
+    if (next.has(tag)) next.delete(tag)
+    else next.add(tag)
+    setActiveTags(next)
+  }
+  const clearFilters = () => {
+    setActiveTags(new Set())
+    setSearch("")
+  }
+
+  const visibleHashtags = showAllTags ? allHashtags : allHashtags.slice(0, 10)
+  const hasActiveFilter = search.trim() || activeTags.size > 0
 
   // Detail-Modus
   if (activeItem) {
@@ -161,20 +220,115 @@ export function MarketplaceView({ spaceId: _spaceId }: ModuleViewProps) {
         </Button>
       </div>
 
-      {sortedItems.length === 0 ? (
+      {/* Such- + Filter-Bar */}
+      {items.length > 0 && (
+        <div className="space-y-2">
+          <div className="relative">
+            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Volltext-Suche — Titel, Beschreibung, Hashtag, Standort..."
+              className="pl-9 h-10"
+            />
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground hover:text-foreground"
+                aria-label="Suche leeren"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
+          {/* Aktive Tags + Top-Tags */}
+          {allHashtags.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <FilterIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0 mr-0.5" />
+              {/* Aktive Tags zuerst */}
+              {Array.from(activeTags).map((tag) => (
+                <button
+                  key={`active-${tag}`}
+                  type="button"
+                  onClick={() => toggleTag(tag)}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-primary text-primary-foreground"
+                >
+                  <Hash className="h-2.5 w-2.5" />
+                  {tag}
+                  <X className="h-2.5 w-2.5 opacity-80" />
+                </button>
+              ))}
+              {/* Vorgeschlagene Tags */}
+              {visibleHashtags
+                .filter(({ tag }) => !activeTags.has(tag))
+                .map(({ tag, count }) => (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => toggleTag(tag)}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-muted hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    <Hash className="h-2.5 w-2.5" />
+                    {tag}
+                    <span className="text-[9px] opacity-60">{count}</span>
+                  </button>
+                ))}
+              {allHashtags.length > 10 && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllTags(!showAllTags)}
+                  className="text-[10px] text-muted-foreground hover:text-foreground underline ml-1"
+                >
+                  {showAllTags ? "weniger" : `+${allHashtags.length - 10} mehr`}
+                </button>
+              )}
+              {hasActiveFilter && (
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="ml-auto text-[10px] text-muted-foreground hover:text-foreground underline"
+                >
+                  Filter loeschen
+                </button>
+              )}
+            </div>
+          )}
+
+          {hasActiveFilter && (
+            <div className="text-xs text-muted-foreground">
+              {filteredItems.length} {filteredItems.length === 1 ? "Treffer" : "Treffer"}
+              {filteredItems.length === 0 && (
+                <span> — versuche einen anderen Begriff oder einen anderen Hashtag</span>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {items.length === 0 ? (
         <Card>
           <CardContent className="p-10 text-center text-muted-foreground">
             <ShoppingBag className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
             <p className="text-sm">Noch nichts hier. Lege das erste Inserat an mit "+ Neues Inserat".</p>
           </CardContent>
         </Card>
+      ) : filteredItems.length === 0 ? (
+        <Card>
+          <CardContent className="p-10 text-center text-muted-foreground">
+            <SearchIcon className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
+            <p className="text-sm">Kein Treffer fuer deine Suche.</p>
+          </CardContent>
+        </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {sortedItems.map((it) => (
+          {filteredItems.map((it) => (
             <MarketplaceCard
               key={it.id}
               item={it}
               onClick={() => setActiveId(it.id)}
+              onTagClick={(tag) => toggleTag(tag)}
             />
           ))}
         </div>
@@ -187,17 +341,32 @@ export function MarketplaceView({ spaceId: _spaceId }: ModuleViewProps) {
 // MarketplaceCard — Kleinanzeigen-Stil mit Bild-Slot, Preis-Badge
 // ============================================================
 
-function MarketplaceCard({ item, onClick }: { item: Item; onClick: () => void }) {
+function MarketplaceCard({
+  item,
+  onClick,
+  onTagClick,
+}: {
+  item: Item
+  onClick: () => void
+  onTagClick?: (tag: string) => void
+}) {
   const data = item.data as MarketplaceData
   const isNeed = data.kind === "need"
   const priceType = data.priceType
   const firstImage = data.images?.[0]
 
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="group text-left bg-card border rounded-xl overflow-hidden transition-all hover:shadow-lg hover:scale-[1.01] hover:border-primary/40"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault()
+          onClick()
+        }
+      }}
+      className="group cursor-pointer text-left bg-card border rounded-xl overflow-hidden transition-all hover:shadow-lg hover:scale-[1.01] hover:border-primary/40"
     >
       {/* Bild-Slot */}
       <div className="relative aspect-[4/3] bg-gradient-to-br from-muted/40 to-muted/80 overflow-hidden">
@@ -247,13 +416,21 @@ function MarketplaceCard({ item, onClick }: { item: Item; onClick: () => void })
           )}
         </div>
 
-        {/* Hashtags max 3 */}
+        {/* Hashtags max 3 — klickbar zum Filter setzen */}
         {data.hashtags && data.hashtags.length > 0 && (
           <div className="flex flex-wrap gap-1 pt-1">
             {data.hashtags.slice(0, 3).map((tag) => (
-              <span key={tag} className="text-[10px] text-primary/80">
+              <button
+                key={tag}
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onTagClick?.(tag)
+                }}
+                className="text-[10px] text-primary/80 hover:text-primary hover:underline"
+              >
                 #{tag}
-              </span>
+              </button>
             ))}
             {data.hashtags.length > 3 && (
               <span className="text-[10px] text-muted-foreground">+{data.hashtags.length - 3}</span>
@@ -269,7 +446,7 @@ function MarketplaceCard({ item, onClick }: { item: Item; onClick: () => void })
           </div>
         )}
       </div>
-    </button>
+    </div>
   )
 }
 
