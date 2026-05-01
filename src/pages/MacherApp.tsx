@@ -603,18 +603,18 @@ function AuthGate({ connector, children }: { connector: DataInterface; children:
 const macherMapDemoData = {
   items: [] as any[],
   groups: [
-    { id: 'macher-map', name: 'Macher-Map', createdBy: 'macher-1', createdAt: '2026-04-28T00:00:00.000Z', data: { scope: 'group', description: 'Werkstaetten, Abenteuer und Macher in deiner Naehe', modules: ['map', 'kanban'], access: 'open', roles: ['admin', 'member'], memberCount: 1 } },
+    { id: 'macher', name: 'Macher', createdBy: 'macher-1', createdAt: '2026-04-28T00:00:00.000Z', data: { scope: 'group', description: 'Werkstaetten, Abenteuer und Macher in deiner Naehe', slug: 'macher', modules: ['map', 'kanban', 'calendar', 'marketplace'], access: 'open', roles: ['admin', 'member'], memberCount: 1 } },
   ],
   users: [
     { id: 'macher-1', displayName: 'Macher', avatarUrl: undefined },
   ],
   groupMembers: {
-    'macher-map': ['macher-1'],
+    'macher': ['macher-1'],
   } as Record<string, string[]>,
   groupItems: {} as Record<string, string[]>,
 }
 
-const MACHER_DATA_VERSION = 2
+const MACHER_DATA_VERSION = 3
 
 async function resetLocalData() {
   const dbs = await indexedDB.databases()

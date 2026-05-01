@@ -25,11 +25,11 @@ interface IcsEvent {
 /**
  * Erzeugt einen ICS-Feed aus Items.
  */
-export function generateIcs(events: Item[], feedName = "Macher-Map"): string {
+export function generateIcs(events: Item[], feedName = "Real Life Network"): string {
   const lines: string[] = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Macher-Map//EN",
+    "PRODID:-//Real Life Network//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     `X-WR-CALNAME:${escapeIcs(feedName)}`,

@@ -35,6 +35,7 @@ import { MembersView } from "../modules/members/MembersView"
 import { ModulschmiedeView } from "../modules/modulschmiede/ModulschmiedeView"
 import { DemoSection } from "../demo/DemoSection"
 import { TagInput } from "../modules/profile/TagInput"
+import { ImageUploadField } from "../modules/calendar/ImageUploadField"
 import { getAllModules, getModule, getModuleConfig } from "../modules/registry"
 import {
   generateSlug,
@@ -487,6 +488,8 @@ function GeneralTab({ group }: { group: Group }) {
   const [slug, setSlug] = useState(meta.slug ?? "")
   const [hashtags, setHashtags] = useState<string[]>(meta.hashtags ?? [])
   const [parentSpaceId, setParentSpaceId] = useState<string>(meta.parentSpaceId ?? "")
+  const initialImage = (group.data?.image as string | undefined) ?? (group.data?.avatar as string | undefined)
+  const [image, setImage] = useState<string | undefined>(initialImage)
   const [saving, setSaving] = useState(false)
   const [savedAt, setSavedAt] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -531,6 +534,10 @@ function GeneralTab({ group }: { group: Group }) {
       nextData.slug = slug.trim() || undefined
       nextData.hashtags = hashtags.length > 0 ? hashtags : undefined
       nextData.parentSpaceId = parentSpaceId || undefined
+      nextData.image = image || undefined
+      // Beim Setzen von image auch das Legacy-avatar-Feld synchron halten
+      if (image) nextData.avatar = image
+      else delete nextData.avatar
       // undefined-Felder loeschen, damit data sauber bleibt
       Object.keys(nextData).forEach((k) => {
         if (nextData[k] === undefined) delete nextData[k]
@@ -552,6 +559,7 @@ function GeneralTab({ group }: { group: Group }) {
     description.trim() !== (meta.description ?? "") ||
     slug.trim() !== (meta.slug ?? "") ||
     parentSpaceId !== (meta.parentSpaceId ?? "") ||
+    image !== initialImage ||
     JSON.stringify(hashtags) !== JSON.stringify(meta.hashtags ?? [])
 
   return (
@@ -572,6 +580,16 @@ function GeneralTab({ group }: { group: Group }) {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="z.B. Macher Berlin Mitte"
+          />
+        </div>
+
+        <div>
+          <ImageUploadField
+            mode="cover"
+            value={image}
+            onChange={setImage}
+            label="Logo / Avatar"
+            hint="Erscheint im Workspace-Switcher und in Einladungen. Quadratisch wirkt am besten."
           />
         </div>
 
