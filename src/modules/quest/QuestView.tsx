@@ -26,6 +26,7 @@ import {
   useCurrentUser,
   useCreateItem,
   useDeleteItem,
+  useMembers,
 } from "@real-life-stack/toolkit"
 import type { Item } from "@real-life-stack/data-interface"
 import type { ModuleViewProps } from "../registry"
@@ -40,6 +41,10 @@ import {
 import { useQuests } from "./use-quests"
 import type { QuestData } from "./quest-engine"
 import { QrVerificationDialog } from "./QrVerificationDialog"
+import {
+  useVerificationRequests,
+  type VerificationRequestData,
+} from "./use-verification"
 
 type Verification = "self" | "qr" | "peer" | "attestation"
 
@@ -67,13 +72,15 @@ export const questDefaultConfig: QuestModuleConfig = {
   maxXpPerQuest: 200,
 }
 
-export function QuestView(_props: ModuleViewProps<QuestModuleConfig>) {
+export function QuestView({ spaceId }: ModuleViewProps<QuestModuleConfig>) {
   const [activeQuestId, setActiveQuestId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
   const { quests, isCompleted, complete, uncomplete } = useQuests()
   const { data: skills } = useItems({ type: GAMIFICATION_ITEM_TYPES.skill })
   const { data: avatarItems } = useItems({ type: GAMIFICATION_ITEM_TYPES.avatarItem })
   const { seed, busy: seeding, status: seedStatus } = useGamificationSeed()
+  const { data: members } = useMembers(spaceId)
+  const verification = useVerificationRequests()
 
   const activeQuest = useMemo(() => {
     if (!activeQuestId) return null
@@ -125,11 +132,13 @@ export function QuestView(_props: ModuleViewProps<QuestModuleConfig>) {
           quest={activeQuest}
           skills={skills}
           avatarItems={avatarItems}
+          members={members}
           isCompleted={isCompleted(activeQuest.id)}
-          onComplete={(verification) => complete(activeQuest, verification)}
+          onComplete={(v) => complete(activeQuest, v)}
           onUncomplete={() => uncomplete(activeQuest.id)}
           allQuests={quests}
           onSelectQuest={setActiveQuestId}
+          verificationApi={verification}
         />
       </div>
     )
@@ -177,6 +186,49 @@ export function QuestView(_props: ModuleViewProps<QuestModuleConfig>) {
           Neue Quest
         </Button>
       </div>
+
+      {/* Inbox: eingehende Verifikations-Anfragen */}
+      {verification.incoming.length > 0 && (
+        <Card className="border-2 border-amber-400/40 bg-amber-50/40 dark:bg-amber-900/10">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Users className="h-4 w-4 text-amber-600" />
+              {verification.incoming.length} Anfrage{verification.incoming.length === 1 ? "" : "n"} an dich
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {verification.incoming.map((req) => {
+              const data = req.data as VerificationRequestData
+              const quest = quests.find((q) => q.id === data.questId)
+              const requester = members.find((m) => m.id === data.requesterId)
+              return (
+                <div
+                  key={req.id}
+                  className="flex items-center justify-between gap-2 p-2.5 rounded-md bg-card border"
+                >
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">
+                      {quest ? (quest.data as QuestData).title : `Quest ${data.questId.slice(0, 8)}`}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {requester?.displayName ?? "Unbekannter Spieler"} bittet um {data.mode === "attestation" ? "Attestation" : "Bestaetigung"}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <Button size="sm" variant="ghost" onClick={() => verification.reject(req)}>
+                      Ablehnen
+                    </Button>
+                    <Button size="sm" onClick={() => verification.approve(req)}>
+                      <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                      Bestaetigen
+                    </Button>
+                  </div>
+                </div>
+              )
+            })}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Seed-Hinweis wenn keine Skills vorhanden */}
       {seedStatus.skillsExisting === 0 && (
@@ -390,25 +442,36 @@ function QuestDetail({
   quest,
   skills,
   avatarItems,
+  members,
   isCompleted,
   onComplete,
   onUncomplete,
   allQuests,
   onSelectQuest,
+  verificationApi,
 }: {
   quest: Item
   skills: Item[]
   avatarItems: Item[]
+  members: { id: string; displayName?: string }[]
   isCompleted: boolean
   onComplete: (verification: Verification) => Promise<void>
   onUncomplete: () => Promise<void>
   allQuests: Item[]
   onSelectQuest: (id: string) => void
+  verificationApi: ReturnType<typeof useVerificationRequests>
 }) {
   const data = quest.data as QuestData
   const verification: Verification = data.verification ?? "self"
   const [busy, setBusy] = useState(false)
   const [qrDialogOpen, setQrDialogOpen] = useState(false)
+  const [verifierId, setVerifierId] = useState<string>("")
+  const { data: currentUser } = useCurrentUser()
+  const latestRequest = verificationApi.findLatestRequestForQuest(quest.id)
+  const requestData = latestRequest?.data as VerificationRequestData | undefined
+  const requestVerifier = requestData
+    ? members.find((m) => m.id === requestData.verifierId)
+    : null
 
   // Series-Sequenz fuer Vorgaenger/Nachfolger
   const seriesQuests = useMemo(() => {
@@ -441,6 +504,30 @@ function QuestDetail({
 
   const handleQrVerified = async () => {
     await onComplete("qr")
+  }
+
+  const handleSendRequest = async () => {
+    if (!verifierId) return
+    setBusy(true)
+    try {
+      await verificationApi.requestVerification({
+        questId: quest.id,
+        verifierId,
+        mode: verification === "attestation" ? "attestation" : "peer",
+      })
+      setVerifierId("")
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleClaimXp = async () => {
+    setBusy(true)
+    try {
+      await onComplete(verification === "attestation" ? "attestation" : "peer")
+    } finally {
+      setBusy(false)
+    }
   }
 
   const handleUncomplete = async () => {
@@ -612,26 +699,55 @@ function QuestDetail({
               QR pruefen
             </Button>
           </>
-        ) : verification === "peer" ? (
-          <>
+        ) : verification === "peer" || verification === "attestation" ? (
+          requestData?.status === "approved" ? (
+            <>
+              <span className="flex-1 text-xs text-primary self-center">
+                <CheckCircle2 className="h-3.5 w-3.5 inline mr-1" />
+                {requestVerifier?.displayName ?? "Peer"} hat bestaetigt
+              </span>
+              <Button size="lg" onClick={handleClaimXp} disabled={busy}>
+                <CheckCircle2 className="h-4 w-4 mr-2" />
+                {busy ? "Speichere..." : "XP einsammeln"}
+              </Button>
+            </>
+          ) : requestData?.status === "pending" ? (
             <span className="flex-1 text-xs text-muted-foreground self-center">
-              <Users className="h-3.5 w-3.5 inline mr-1" />
-              Peer-Bestaetigung — kommt in der naechsten Phase
+              {verification === "attestation" ? (
+                <ShieldCheck className="h-3.5 w-3.5 inline mr-1" />
+              ) : (
+                <Users className="h-3.5 w-3.5 inline mr-1" />
+              )}
+              Wartet auf {requestVerifier?.displayName ?? "Verifizierer"}...
             </span>
-            <Button size="lg" disabled variant="outline">
-              Anfrage senden
-            </Button>
-          </>
-        ) : verification === "attestation" ? (
-          <>
-            <span className="flex-1 text-xs text-muted-foreground self-center">
-              <ShieldCheck className="h-3.5 w-3.5 inline mr-1" />
-              Attestation — kommt in der naechsten Phase
-            </span>
-            <Button size="lg" disabled variant="outline">
-              Attestieren
-            </Button>
-          </>
+          ) : (
+            <div className="flex-1 flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+              <select
+                value={verifierId}
+                onChange={(e) => setVerifierId(e.target.value)}
+                className="flex-1 h-9 px-3 rounded-md border bg-background text-sm"
+              >
+                <option value="">
+                  {verification === "attestation" ? "Attestor waehlen..." : "Peer waehlen..."}
+                </option>
+                {members
+                  .filter((m) => m.id !== currentUser?.id)
+                  .map((m) => (
+                    <option key={m.id} value={m.id}>
+                      {m.displayName ?? m.id}
+                    </option>
+                  ))}
+              </select>
+              <Button size="lg" onClick={handleSendRequest} disabled={busy || !verifierId}>
+                {verification === "attestation" ? (
+                  <ShieldCheck className="h-4 w-4 mr-2" />
+                ) : (
+                  <Users className="h-4 w-4 mr-2" />
+                )}
+                {requestData?.status === "rejected" ? "Erneut anfragen" : "Anfrage senden"}
+              </Button>
+            </div>
+          )
         ) : (
           <Button size="lg" onClick={handleSelfComplete} disabled={busy}>
             <CheckCircle2 className="h-4 w-4 mr-2" />
@@ -803,25 +919,22 @@ function QuestForm({
               [
                 { id: "self", label: "Selbst", icon: CheckCircle2, hint: "Klick reicht" },
                 { id: "qr", label: "QR-Code", icon: QrCode, hint: "Vor Ort scannen" },
-                { id: "peer", label: "Peer", icon: Users, hint: "Naechste Phase" },
-                { id: "attestation", label: "Attestiert", icon: ShieldCheck, hint: "Naechste Phase" },
+                { id: "peer", label: "Peer", icon: Users, hint: "Anderer bestaetigt" },
+                { id: "attestation", label: "Attestiert", icon: ShieldCheck, hint: "Signiert vom Peer" },
               ] as { id: Verification; label: string; icon: typeof CheckCircle2; hint: string }[]
             ).map((opt) => {
               const Icon = opt.icon
               const isOn = verification === opt.id
-              const disabled = opt.id === "peer" || opt.id === "attestation"
               return (
                 <button
                   key={opt.id}
                   type="button"
-                  disabled={disabled}
                   onClick={() => setVerification(opt.id)}
                   className={`flex flex-col items-start gap-1 p-2.5 rounded-md border-2 text-left transition-all ${
                     isOn
                       ? "border-primary bg-primary/5"
                       : "border-border hover:border-muted-foreground/40"
-                  } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
-                  title={disabled ? "Kommt mit Phase B2.2/B2.3" : undefined}
+                  }`}
                 >
                   <div className="flex items-center gap-1.5">
                     <Icon className={`h-3.5 w-3.5 ${isOn ? "text-primary" : "text-muted-foreground"}`} />
