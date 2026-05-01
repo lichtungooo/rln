@@ -80,12 +80,16 @@ export function useQuests() {
         },
       })
 
-      // 2. XP verteilen
+      // 2. XP verteilen — addXp meldet Synergie-Bonus zurueck
+      let synergy: { synergyTriggered: boolean; synergyBonus: number } = {
+        synergyTriggered: false,
+        synergyBonus: 0,
+      }
       if (
         Object.keys(plan.skillXp).length > 0 ||
         Object.keys(plan.bereichXp).length > 0
       ) {
-        await addXp({ skillXp: plan.skillXp, bereichXp: plan.bereichXp })
+        synergy = await addXp({ skillXp: plan.skillXp, bereichXp: plan.bereichXp })
       }
 
       // 3. Items verleihen (soulbound)
@@ -93,14 +97,32 @@ export function useQuests() {
         await grantItem(itemId)
       }
 
-      // 4. Log-Eintrag schreiben
+      // 4. Log-Eintrag schreiben — bei Synergie als Marker im Payload + Summary
+      const summary = synergy.synergyTriggered
+        ? `${plan.logSummary} · Synergie-Bonus +${synergy.synergyBonus} XP`
+        : plan.logSummary
       await addEntry({
         type: "quest_completed",
         sourceModule: "quest",
-        summary: plan.logSummary,
-        payload: plan.logPayload,
+        summary,
+        payload: {
+          ...plan.logPayload,
+          synergyTriggered: synergy.synergyTriggered,
+          synergyBonus: synergy.synergyBonus,
+        },
         relatedItemId: questItem.id,
       })
+
+      // 5. Wenn Synergie ausgeloest wurde: zusaetzlicher Log-Eintrag
+      if (synergy.synergyTriggered) {
+        await addEntry({
+          type: "level_up",
+          sourceModule: "quest",
+          summary: `Synergie! Seele, Geist und Bewusstsein wachsen gleichzeitig (+${synergy.synergyBonus} XP)`,
+          payload: { synergyBonus: synergy.synergyBonus, fromQuestId: questItem.id },
+          relatedItemId: questItem.id,
+        })
+      }
     },
     [currentUser?.id, myCompletions, createItem, addXp, grantItem, addEntry]
   )
