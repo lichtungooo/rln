@@ -201,17 +201,22 @@ export function QuestView({ spaceId }: ModuleViewProps<QuestModuleConfig>) {
               const data = req.data as VerificationRequestData
               const quest = quests.find((q) => q.id === data.questId)
               const requester = members.find((m) => m.id === data.requesterId)
+              const isAttestation = data.mode === "attestation"
+              const ModeIcon = isAttestation ? ShieldCheck : Users
               return (
                 <div
                   key={req.id}
                   className="flex items-center justify-between gap-2 p-2.5 rounded-md bg-card border"
                 >
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">
-                      {quest ? (quest.data as QuestData).title : `Quest ${data.questId.slice(0, 8)}`}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {requester?.displayName ?? "Unbekannter Spieler"} bittet um {data.mode === "attestation" ? "Attestation" : "Bestaetigung"}
+                  <div className="flex items-start gap-2 flex-1 min-w-0">
+                    <ModeIcon className={`h-4 w-4 shrink-0 mt-0.5 ${isAttestation ? "text-purple-600" : "text-amber-600"}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium truncate">
+                        {quest ? (quest.data as QuestData).title : `Quest ${data.questId.slice(0, 8)}`}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {requester?.displayName ?? "Unbekannter Spieler"} bittet um {isAttestation ? "Attestation" : "Bestaetigung"}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
@@ -220,7 +225,7 @@ export function QuestView({ spaceId }: ModuleViewProps<QuestModuleConfig>) {
                     </Button>
                     <Button size="sm" onClick={() => verification.approve(req)}>
                       <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                      Bestaetigen
+                      {isAttestation ? "Attestieren" : "Bestaetigen"}
                     </Button>
                   </div>
                 </div>

@@ -6,6 +6,8 @@ import {
   useCurrentUser,
 } from "@real-life-stack/toolkit"
 import type { Item } from "@real-life-stack/data-interface"
+import { useLog, GAMIFICATION_ITEM_TYPES } from "../gamification"
+import type { QuestData } from "./quest-engine"
 
 /**
  * Verifikations-Anfragen fuer Quests (Phase B2.2 — Peer / B2.3 — Attestation).
@@ -43,9 +45,11 @@ export interface VerificationRequestData {
 
 export function useVerificationRequests() {
   const { data: requests } = useItems({ type: VERIFICATION_REQUEST_TYPE })
+  const { data: quests } = useItems({ type: GAMIFICATION_ITEM_TYPES.quest })
   const { data: currentUser } = useCurrentUser()
   const { mutate: createItem } = useCreateItem()
   const { mutate: updateItem } = useUpdateItem()
+  const { addEntry } = useLog()
 
   /** Anfragen die an mich gerichtet sind und noch offen */
   const incoming = useMemo<Item[]>(() => {
@@ -137,8 +141,29 @@ export function useVerificationRequests() {
         comment,
       }
       await updateItem(requestItem.id, { data: next as unknown as Record<string, unknown> })
+
+      // Bei Attestation: Trust-Token in den eigenen Log schreiben.
+      // Das macht jede Attestation zu einem nachvollziehbaren Reputations-Beweis.
+      if (data.mode === "attestation") {
+        const quest = quests.find((q) => q.id === data.questId)
+        const questTitle = quest ? (quest.data as QuestData).title : data.questId
+        await addEntry({
+          type: "trust_verified",
+          sourceModule: "quest",
+          summary: `Attestiert: "${questTitle}" fuer einen anderen Spieler`,
+          payload: {
+            questId: data.questId,
+            attestedUserId: data.requesterId,
+            attestorId: currentUser.id,
+            requestId: requestItem.id,
+            comment,
+          },
+          relatedItemId: data.questId,
+          visibility: "network",
+        })
+      }
     },
-    [currentUser?.id, updateItem]
+    [currentUser?.id, updateItem, addEntry, quests]
   )
 
   /** Lehnt eine Anfrage ab. */
