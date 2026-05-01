@@ -28,7 +28,9 @@ import {
   useCurrentUser,
   useCreateItem,
   useDeleteItem,
+  useMembers,
 } from "@real-life-stack/toolkit"
+import type { User } from "@real-life-stack/data-interface"
 import type { Item } from "@real-life-stack/data-interface"
 import type { ModuleViewProps } from "../registry"
 import { TagInput } from "../profile/TagInput"
@@ -114,6 +116,87 @@ function worldOf(data: MarketplaceData): WorldId {
   return "things"
 }
 
+/**
+ * Liste-Eintrag: entweder echtes Item oder virtuell aus Profile-Extension.
+ * Virtuelle Items sind read-only, klick fuehrt zum Profil-Inhaber.
+ */
+type ListEntry =
+  | { kind: "real"; id: string; createdBy: string; createdAt: string; data: MarketplaceData; item: Item }
+  | {
+      kind: "virtual"
+      id: string
+      createdBy: string
+      createdAt: string
+      data: MarketplaceData
+      sourceProfileId: string
+      ownerName: string
+    }
+
+/**
+ * Wandelt eine Profile-Extension in 0..N virtuelle Marketplace-Items um.
+ * skills + offers landen als Begabungen (kind=offer + category=knowledge/service),
+ * needs als Beduerfnisse (kind=need).
+ */
+function profileToVirtualEntries(profile: Item, members: User[]): ListEntry[] {
+  const data = profile.data as Record<string, unknown>
+  const owner = members.find((m) => m.id === profile.createdBy)
+  const ownerName =
+    (typeof data.name === "string" && data.name.trim()) ||
+    owner?.displayName ||
+    profile.createdBy.slice(0, 8)
+  const location = (data.location as MarketplaceData["location"]) ?? undefined
+  const baseHashtags = Array.isArray(data.hashtags) ? (data.hashtags as string[]) : []
+  const result: ListEntry[] = []
+
+  const make = (
+    suffix: string,
+    title: string,
+    role: "skill" | "offer" | "need",
+  ): ListEntry => {
+    const isNeed = role === "need"
+    const category: MarketplaceCategory = role === "offer" ? "service" : "knowledge"
+    const description =
+      role === "skill"
+        ? `Faehigkeit aus dem Profil von ${ownerName}.`
+        : role === "offer"
+        ? `Angebot aus dem Profil von ${ownerName}.`
+        : `Aus dem Profil von ${ownerName} — ${ownerName} sucht das in der Gemeinschaft.`
+    return {
+      kind: "virtual",
+      id: `profile:${profile.id}:${suffix}`,
+      createdBy: profile.createdBy,
+      createdAt: profile.createdAt,
+      sourceProfileId: profile.id,
+      ownerName,
+      data: {
+        kind: isNeed ? "need" : "offer",
+        title,
+        description,
+        category,
+        hashtags: baseHashtags.length > 0 ? baseHashtags : undefined,
+        location,
+      },
+    }
+  }
+
+  const skills = Array.isArray(data.skills) ? (data.skills as string[]) : []
+  for (const s of skills) {
+    if (s && s.trim()) result.push(make(`skill-${s}`, s.trim(), "skill"))
+  }
+
+  const offers = Array.isArray(data.offers) ? (data.offers as string[]) : []
+  for (const o of offers) {
+    if (o && o.trim()) result.push(make(`offer-${o}`, o.trim(), "offer"))
+  }
+
+  const needs = Array.isArray(data.needs) ? (data.needs as string[]) : []
+  for (const n of needs) {
+    if (n && n.trim()) result.push(make(`need-${n}`, n.trim(), "need"))
+  }
+
+  return result
+}
+
 function CategoryIcon({
   category,
   className,
@@ -130,6 +213,8 @@ function CategoryIcon({
 
 export function MarketplaceView({ spaceId }: ModuleViewProps) {
   const { data: items } = useItems({ type: MARKETPLACE_ITEM_TYPE })
+  const { data: profileExtensions } = useItems({ type: "profile-extension" })
+  const { data: members } = useMembers(spaceId)
   const { data: currentUser } = useCurrentUser()
   const { mutate: createItem } = useCreateItem()
   const { mutate: deleteItem } = useDeleteItem()
@@ -140,53 +225,66 @@ export function MarketplaceView({ spaceId }: ModuleViewProps) {
   const [activeTags, setActiveTags] = useState<Set<string>>(new Set())
   const [showAllTags, setShowAllTags] = useState(false)
 
-  const activeItem = useMemo(() => {
-    if (!activeId) return null
-    return items.find((it) => it.id === activeId) ?? null
-  }, [items, activeId])
+  // Liste-Eintraege: echte Marketplace-Items + virtuelle aus Profile-Extensions.
+  // Virtuelle landen je nach Profil-Feld in Begabungen (skills/offers) oder
+  // Beduerfnisse (needs) — Sachen-Welt bleibt nur fuer echte Inserate.
+  const allEntries = useMemo<ListEntry[]>(() => {
+    const real: ListEntry[] = items.map((it) => ({
+      kind: "real",
+      id: it.id,
+      createdBy: it.createdBy,
+      createdAt: it.createdAt,
+      data: it.data as MarketplaceData,
+      item: it,
+    }))
+    const virtual: ListEntry[] = profileExtensions.flatMap((p) =>
+      profileToVirtualEntries(p, members)
+    )
+    return [...real, ...virtual]
+  }, [items, profileExtensions, members])
 
-  // Items pro Welt zaehlen (fuer Tab-Counter)
+  const activeEntry = useMemo<ListEntry | null>(() => {
+    if (!activeId) return null
+    return allEntries.find((e) => e.id === activeId) ?? null
+  }, [allEntries, activeId])
+
+  // Items pro Welt zaehlen (fuer Tab-Counter) — inklusive virtueller
   const worldCounts = useMemo(() => {
     const counts: Record<WorldId, number> = { things: 0, talents: 0, needs: 0 }
-    for (const it of items) {
-      const w = worldOf(it.data as MarketplaceData)
-      counts[w]++
-    }
+    for (const e of allEntries) counts[worldOf(e.data)]++
     return counts
-  }, [items])
+  }, [allEntries])
 
-  // Items in der aktiven Welt — Basis fuer Hashtag-Aggregation und Filter
-  const itemsInWorld = useMemo(
-    () => items.filter((it) => worldOf(it.data as MarketplaceData) === activeWorld),
-    [items, activeWorld]
+  // Eintraege in der aktiven Welt — Basis fuer Hashtag-Aggregation und Filter
+  const entriesInWorld = useMemo(
+    () => allEntries.filter((e) => worldOf(e.data) === activeWorld),
+    [allEntries, activeWorld]
   )
 
   // Alle Hashtags der aktiven Welt + ihre Haeufigkeit fuer den Filter-Bar
   const allHashtags = useMemo(() => {
     const counts = new Map<string, number>()
-    for (const it of itemsInWorld) {
-      const tags = (it.data as MarketplaceData).hashtags ?? []
+    for (const e of entriesInWorld) {
+      const tags = e.data.hashtags ?? []
       for (const t of tags) counts.set(t, (counts.get(t) ?? 0) + 1)
     }
     return Array.from(counts.entries())
       .map(([tag, count]) => ({ tag, count }))
       .sort((a, b) => b.count - a.count)
-  }, [itemsInWorld])
+  }, [entriesInWorld])
 
   // Gefilterte + sortierte Liste (innerhalb der aktiven Welt)
-  const filteredItems = useMemo(() => {
+  const filteredEntries = useMemo(() => {
     const needle = search.trim().toLowerCase()
-    return itemsInWorld
-      .filter((it) => {
-        const data = it.data as MarketplaceData
-        // Hashtag-AND-Filter: jedes aktive Tag muss vorhanden sein
+    return entriesInWorld
+      .filter((e) => {
+        const data = e.data
         if (activeTags.size > 0) {
           const tags = data.hashtags ?? []
           for (const t of activeTags) {
             if (!tags.includes(t)) return false
           }
         }
-        // Volltext-Suche ueber Titel, Beschreibung, Hashtags, Adresse
         if (needle) {
           const haystack = [
             data.title,
@@ -194,6 +292,7 @@ export function MarketplaceView({ spaceId }: ModuleViewProps) {
             (data.hashtags ?? []).join(" "),
             data.location?.address,
             data.priceText,
+            e.kind === "virtual" ? e.ownerName : "",
           ]
             .filter(Boolean)
             .join(" ")
@@ -203,7 +302,7 @@ export function MarketplaceView({ spaceId }: ModuleViewProps) {
         return true
       })
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
-  }, [itemsInWorld, search, activeTags])
+  }, [entriesInWorld, search, activeTags])
 
   const switchWorld = (w: WorldId) => {
     setActiveWorld(w)
@@ -228,7 +327,18 @@ export function MarketplaceView({ spaceId }: ModuleViewProps) {
   const hasActiveFilter = search.trim() || activeTags.size > 0
 
   // Detail-Modus
-  if (activeItem) {
+  if (activeEntry) {
+    if (activeEntry.kind === "virtual") {
+      return (
+        <div className="container mx-auto max-w-3xl p-4">
+          <Button variant="ghost" size="sm" onClick={() => setActiveId(null)} className="mb-4">
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Zurueck zur Liste
+          </Button>
+          <VirtualDetail entry={activeEntry} />
+        </div>
+      )
+    }
     return (
       <div className="container mx-auto max-w-3xl p-4">
         <Button
@@ -241,12 +351,12 @@ export function MarketplaceView({ spaceId }: ModuleViewProps) {
           Zurueck zur Liste
         </Button>
         <MarketplaceDetail
-          item={activeItem}
+          item={activeEntry.item}
           spaceId={spaceId}
-          isOwner={activeItem.createdBy === currentUser?.id}
+          isOwner={activeEntry.createdBy === currentUser?.id}
           onDelete={async () => {
             if (!confirm("Wirklich loeschen?")) return
-            await deleteItem(activeItem.id)
+            await deleteItem(activeEntry.item.id)
             setActiveId(null)
           }}
         />
@@ -331,7 +441,7 @@ export function MarketplaceView({ spaceId }: ModuleViewProps) {
       </p>
 
       {/* Such- + Filter-Bar */}
-      {itemsInWorld.length > 0 && (
+      {entriesInWorld.length > 0 && (
         <div className="space-y-2">
           <div className="relative">
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
@@ -408,8 +518,8 @@ export function MarketplaceView({ spaceId }: ModuleViewProps) {
 
           {hasActiveFilter && (
             <div className="text-xs text-muted-foreground">
-              {filteredItems.length} {filteredItems.length === 1 ? "Treffer" : "Treffer"}
-              {filteredItems.length === 0 && (
+              {filteredEntries.length} {filteredEntries.length === 1 ? "Treffer" : "Treffer"}
+              {filteredEntries.length === 0 && (
                 <span> — versuche einen anderen Begriff oder einen anderen Hashtag</span>
               )}
             </div>
@@ -417,16 +527,16 @@ export function MarketplaceView({ spaceId }: ModuleViewProps) {
         </div>
       )}
 
-      {items.length === 0 ? (
+      {allEntries.length === 0 ? (
         <Card>
           <CardContent className="p-10 text-center text-muted-foreground">
             <ShoppingBag className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
             <p className="text-sm">Noch nichts hier. Lege das erste Inserat an mit "+ Neues Inserat".</p>
           </CardContent>
         </Card>
-      ) : itemsInWorld.length === 0 ? (
+      ) : entriesInWorld.length === 0 ? (
         <EmptyWorld world={activeWorldDef} />
-      ) : filteredItems.length === 0 ? (
+      ) : filteredEntries.length === 0 ? (
         <Card>
           <CardContent className="p-10 text-center text-muted-foreground">
             <SearchIcon className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
@@ -435,17 +545,88 @@ export function MarketplaceView({ spaceId }: ModuleViewProps) {
         </Card>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredItems.map((it) => (
+          {filteredEntries.map((entry) => (
             <MarketplaceCard
-              key={it.id}
-              item={it}
-              onClick={() => setActiveId(it.id)}
+              key={entry.id}
+              entry={entry}
+              onClick={() => setActiveId(entry.id)}
               onTagClick={(tag) => toggleTag(tag)}
             />
           ))}
         </div>
       )}
     </div>
+  )
+}
+
+// ============================================================
+// VirtualDetail — Detail-Sicht fuer Profil-Eintraege
+// ============================================================
+
+function VirtualDetail({
+  entry,
+}: {
+  entry: Extract<ListEntry, { kind: "virtual" }>
+}) {
+  const data = entry.data
+  const isNeed = data.kind === "need"
+
+  return (
+    <Card>
+      <div className="relative aspect-[16/9] bg-gradient-to-br from-purple-100 to-amber-50 dark:from-purple-950/30 dark:to-amber-950/20 overflow-hidden rounded-t-xl">
+        <div className="absolute inset-0 flex items-center justify-center">
+          <CategoryIcon category={data.category} className="h-24 w-24 text-purple-500/40" />
+        </div>
+        <div className="absolute top-3 left-3 px-3 py-1 text-xs font-bold rounded-full bg-purple-500 text-white shadow-lg">
+          aus Profil
+        </div>
+        {isNeed && (
+          <div className="absolute top-3 right-3 px-3 py-1 text-xs font-bold rounded-full bg-blue-500 text-white shadow-lg">
+            <SearchIcon className="h-3 w-3 inline mr-1" />
+            GESUCHT
+          </div>
+        )}
+      </div>
+
+      <CardHeader>
+        <CardTitle className="text-2xl leading-tight">{data.title}</CardTitle>
+        <p className="text-sm text-muted-foreground mt-1">
+          {entry.ownerName} {isNeed ? "sucht das" : "bietet das an"}.
+        </p>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        {data.description && (
+          <p className="text-sm leading-relaxed">{data.description}</p>
+        )}
+
+        {data.hashtags && data.hashtags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {data.hashtags.map((tag) => (
+              <span
+                key={tag}
+                className="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary font-medium"
+              >
+                #{tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {data.location?.address && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <MapPin className="h-4 w-4" />
+            <span>{data.location.address}</span>
+          </div>
+        )}
+
+        <div className="rounded-lg bg-muted/40 p-4 text-xs text-muted-foreground border-l-4 border-purple-500/60">
+          Dieser Eintrag stammt direkt aus dem Profil von <strong>{entry.ownerName}</strong>.
+          Aenderungen passieren im Profil — nicht hier. Schreibe {entry.ownerName} an, wenn
+          du in Kontakt kommen willst.
+        </div>
+      </CardContent>
+    </Card>
   )
 }
 
@@ -477,18 +658,20 @@ function EmptyWorld({
 // ============================================================
 
 function MarketplaceCard({
-  item,
+  entry,
   onClick,
   onTagClick,
 }: {
-  item: Item
+  entry: ListEntry
   onClick: () => void
   onTagClick?: (tag: string) => void
 }) {
-  const data = item.data as MarketplaceData
+  const data = entry.data
   const isNeed = data.kind === "need"
   const priceType = data.priceType
   const firstImage = data.images?.[0]
+  const isVirtual = entry.kind === "virtual"
+  const ownerName = isVirtual ? entry.ownerName : null
 
   return (
     <div
@@ -528,9 +711,19 @@ function MarketplaceCard({
           </div>
         )}
 
-        {/* Preis-Badge in der Ecke */}
-        {!isNeed && priceType && (
+        {/* Preis-Badge in der Ecke (nur bei echten Items) */}
+        {!isNeed && priceType && !isVirtual && (
           <PriceBadge priceType={priceType} priceAmount={data.priceAmount} className="absolute top-2 right-2" />
+        )}
+
+        {/* Profil-Marker bei virtuellen Items */}
+        {isVirtual && (
+          <div className="absolute bottom-2 left-2 right-2 px-2 py-1 text-[10px] font-medium rounded-md bg-black/60 text-white backdrop-blur-sm flex items-center gap-1.5">
+            <span className="w-4 h-4 rounded-full bg-primary text-[8px] font-bold flex items-center justify-center shrink-0">
+              {ownerName?.charAt(0).toUpperCase()}
+            </span>
+            <span className="truncate">aus Profil von {ownerName}</span>
+          </div>
         )}
       </div>
 
