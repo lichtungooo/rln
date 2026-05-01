@@ -1,0 +1,669 @@
+import { useMemo, useState } from "react"
+import {
+  Plus,
+  CheckCircle2,
+  Circle,
+  Trophy,
+  MapPin,
+  Sparkles,
+  ChevronLeft,
+  Trash2,
+  Hammer,
+} from "lucide-react"
+import {
+  Button,
+  Input,
+  Label,
+  Textarea,
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  useItems,
+  useCurrentUser,
+  useCreateItem,
+  useDeleteItem,
+} from "@real-life-stack/toolkit"
+import type { Item } from "@real-life-stack/data-interface"
+import type { ModuleViewProps } from "../registry"
+import {
+  GAMIFICATION_ITEM_TYPES,
+  BEREICH_BY_ID,
+  type SkillData,
+  type AvatarItemData,
+  type TreeBereichId,
+  useGamificationSeed,
+} from "../gamification"
+import { useQuests } from "./use-quests"
+import type { QuestData } from "./quest-engine"
+
+/**
+ * QuestView — die Sicht aufs Quest-Modul.
+ *
+ * Drei Modi:
+ *   - Liste (default): alle Quests mit Status (offen/erledigt) + Belohnungen
+ *   - Detail: Eine Quest mit Abschluss-Knopf + voller Beschreibung
+ *   - Form: neue Quest anlegen
+ *
+ * Phase B1: nur Self-Report-Verification (Klick "Erledigt"). QR + Peer +
+ * Attestation kommen in B2.
+ */
+
+export interface QuestModuleConfig {
+  /** Default-Verifikation fuer neue Quests */
+  defaultVerification?: "self" | "qr" | "peer" | "attestation"
+  /** Maximale XP pro Quest (Anti-Grinding) */
+  maxXpPerQuest?: number
+}
+
+export const questDefaultConfig: QuestModuleConfig = {
+  defaultVerification: "self",
+  maxXpPerQuest: 200,
+}
+
+export function QuestView(_props: ModuleViewProps<QuestModuleConfig>) {
+  const [activeQuestId, setActiveQuestId] = useState<string | null>(null)
+  const [creating, setCreating] = useState(false)
+  const { quests, isCompleted, complete, uncomplete } = useQuests()
+  const { data: skills } = useItems({ type: GAMIFICATION_ITEM_TYPES.skill })
+  const { data: avatarItems } = useItems({ type: GAMIFICATION_ITEM_TYPES.avatarItem })
+  const { seed, busy: seeding, status: seedStatus } = useGamificationSeed()
+
+  const activeQuest = useMemo(() => {
+    if (!activeQuestId) return null
+    return quests.find((q) => q.id === activeQuestId) ?? null
+  }, [activeQuestId, quests])
+
+  // Detail-Modus
+  if (activeQuest) {
+    return (
+      <div className="container mx-auto max-w-3xl p-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setActiveQuestId(null)}
+          className="mb-4"
+        >
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          Zurueck zur Liste
+        </Button>
+        <QuestDetail
+          quest={activeQuest}
+          skills={skills}
+          avatarItems={avatarItems}
+          isCompleted={isCompleted(activeQuest.id)}
+          onComplete={() => complete(activeQuest, "self")}
+          onUncomplete={() => uncomplete(activeQuest.id)}
+        />
+      </div>
+    )
+  }
+
+  // Form-Modus
+  if (creating) {
+    return (
+      <div className="container mx-auto max-w-3xl p-4">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setCreating(false)}
+          className="mb-4"
+        >
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          Zurueck zur Liste
+        </Button>
+        <QuestForm
+          skills={skills}
+          avatarItems={avatarItems}
+          onCreated={(id) => {
+            setCreating(false)
+            setActiveQuestId(id)
+          }}
+          onCancel={() => setCreating(false)}
+        />
+      </div>
+    )
+  }
+
+  // Liste-Modus
+  return (
+    <div className="container mx-auto max-w-4xl p-4 space-y-4">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold mb-1">Quests</h1>
+          <p className="text-sm text-muted-foreground">
+            Klare Aufgaben mit klarer Belohnung — XP fuer deine Skills, Items
+            fuer deinen Avatar.
+          </p>
+        </div>
+        <Button onClick={() => setCreating(true)} size="sm">
+          <Plus className="h-4 w-4 mr-1" />
+          Neue Quest
+        </Button>
+      </div>
+
+      {/* Seed-Hinweis wenn keine Skills vorhanden */}
+      {seedStatus.skillsExisting === 0 && (
+        <Card className="border-dashed border-2 border-primary/40">
+          <CardContent className="p-5 flex items-start gap-3">
+            <Hammer className="h-6 w-6 text-primary shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h3 className="font-semibold mb-1">Skills + Avatar-Items fehlen noch</h3>
+              <p className="text-xs text-muted-foreground mb-3">
+                {seedStatus.skillsTodo} Macher-Skills (Holz, Metall, Schweissen, ...) und{" "}
+                {seedStatus.itemsTodo} Avatar-Items koennen mit einem Klick angelegt werden.
+              </p>
+              <Button size="sm" onClick={seed} disabled={seeding}>
+                {seeding ? "Lade..." : "Macher-Skills anlegen"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {quests.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center text-muted-foreground">
+            <Trophy className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
+            <p className="text-sm">Noch keine Quest. Lege die erste an mit "+ Neue Quest".</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {quests
+            .slice()
+            .sort((a, b) => {
+              // Offene Quests zuerst, dann erledigte
+              const aDone = isCompleted(a.id) ? 1 : 0
+              const bDone = isCompleted(b.id) ? 1 : 0
+              if (aDone !== bDone) return aDone - bDone
+              return a.createdAt.localeCompare(b.createdAt)
+            })
+            .map((q) => (
+              <QuestCard
+                key={q.id}
+                quest={q}
+                skills={skills}
+                avatarItems={avatarItems}
+                completed={isCompleted(q.id)}
+                onClick={() => setActiveQuestId(q.id)}
+              />
+            ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ============================================================
+// QuestCard — kompakter Eintrag in der Liste
+// ============================================================
+
+function QuestCard({
+  quest,
+  skills,
+  avatarItems,
+  completed,
+  onClick,
+}: {
+  quest: Item
+  skills: Item[]
+  avatarItems: Item[]
+  completed: boolean
+  onClick: () => void
+}) {
+  const data = quest.data as QuestData
+  const skillXp = data.skillXp ?? {}
+  const bereichXp = data.bereichXp ?? {}
+  const rewardItems = data.rewardItems ?? []
+
+  const skillBadges = Object.entries(skillXp).map(([skillId, xp]) => {
+    const skill = skills.find((s) => s.id === skillId)
+    const skillData = skill?.data as SkillData | undefined
+    const bereich = skillData ? BEREICH_BY_ID[skillData.bereichId] : null
+    return {
+      label: skillData?.name ?? skillId,
+      xp,
+      color: skillData?.color ?? bereich?.color ?? "#888",
+    }
+  })
+
+  const totalXp =
+    Object.values(skillXp).reduce((a, b) => a + b, 0) +
+    Object.values(bereichXp).reduce((a, b) => a + (b ?? 0), 0)
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`text-left bg-card border rounded-lg p-4 transition-all hover:scale-[1.01] hover:shadow-md ${
+        completed ? "opacity-60" : ""
+      }`}
+    >
+      <div className="flex items-start gap-2 mb-2">
+        {completed ? (
+          <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+        ) : (
+          <Circle className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
+        )}
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-sm leading-tight">{data.title}</h3>
+          {data.description && (
+            <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+              {data.description}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* Belohnungen */}
+      <div className="space-y-1.5 mt-3">
+        {totalXp > 0 && (
+          <div className="flex items-center gap-1.5 text-xs">
+            <Sparkles className="h-3 w-3 text-primary shrink-0" />
+            <span className="font-semibold text-primary">+{totalXp} XP</span>
+            <div className="flex flex-wrap gap-1">
+              {skillBadges.slice(0, 3).map((b) => (
+                <span
+                  key={b.label}
+                  className="px-1.5 py-0 rounded-full text-[9px] text-white"
+                  style={{ background: b.color }}
+                >
+                  {b.label} +{b.xp}
+                </span>
+              ))}
+              {skillBadges.length > 3 && (
+                <span className="text-[9px] text-muted-foreground">
+                  +{skillBadges.length - 3}
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+        {rewardItems.length > 0 && (
+          <div className="flex items-center gap-1.5 text-xs">
+            <Trophy className="h-3 w-3 text-amber-500 shrink-0" />
+            <span className="text-muted-foreground">
+              {rewardItems.length} Item{rewardItems.length === 1 ? "" : "s"}
+            </span>
+          </div>
+        )}
+        {data.location?.address && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <MapPin className="h-3 w-3 shrink-0" />
+            <span className="truncate">{data.location.address}</span>
+          </div>
+        )}
+      </div>
+    </button>
+  )
+}
+
+// ============================================================
+// QuestDetail — Volle Quest mit Abschluss-Knopf
+// ============================================================
+
+function QuestDetail({
+  quest,
+  skills,
+  avatarItems,
+  isCompleted,
+  onComplete,
+  onUncomplete,
+}: {
+  quest: Item
+  skills: Item[]
+  avatarItems: Item[]
+  isCompleted: boolean
+  onComplete: () => Promise<void>
+  onUncomplete: () => Promise<void>
+}) {
+  const data = quest.data as QuestData
+  const [busy, setBusy] = useState(false)
+
+  const handleComplete = async () => {
+    setBusy(true)
+    try {
+      await onComplete()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleUncomplete = async () => {
+    if (!confirm("Quest wieder oeffnen? XP bleiben — aber sie kann erneut abgeschlossen werden.")) return
+    setBusy(true)
+    try {
+      await onUncomplete()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start gap-3">
+          {isCompleted ? (
+            <CheckCircle2 className="h-7 w-7 text-primary shrink-0" />
+          ) : (
+            <Circle className="h-7 w-7 text-muted-foreground shrink-0" />
+          )}
+          <div className="flex-1">
+            <CardTitle className="text-xl">{data.title}</CardTitle>
+            {data.description && (
+              <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                {data.description}
+              </p>
+            )}
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-5">
+        {data.markdownBody && (
+          <div className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap border-l-4 border-primary/30 pl-3">
+            {data.markdownBody}
+          </div>
+        )}
+
+        {/* Skill-XP-Verteilung */}
+        {data.skillXp && Object.keys(data.skillXp).length > 0 && (
+          <div>
+            <h4 className="text-xs font-semibold uppercase text-muted-foreground tracking-wider mb-2">
+              Skill-XP
+            </h4>
+            <div className="space-y-1.5">
+              {Object.entries(data.skillXp).map(([skillId, xp]) => {
+                const skill = skills.find((s) => s.id === skillId)
+                const skillData = skill?.data as SkillData | undefined
+                const bereich = skillData ? BEREICH_BY_ID[skillData.bereichId] : null
+                return (
+                  <div key={skillId} className="flex items-center justify-between gap-2 p-2 rounded border">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-2 h-2 rounded-full shrink-0"
+                        style={{ background: skillData?.color ?? bereich?.color ?? "#888" }}
+                      />
+                      <span className="text-sm font-medium">{skillData?.name ?? skillId}</span>
+                      {bereich && (
+                        <span className="text-[10px] text-muted-foreground">({bereich.label})</span>
+                      )}
+                    </div>
+                    <span className="text-sm font-bold text-primary">+{xp}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Direkt-Bereich-XP */}
+        {data.bereichXp && Object.keys(data.bereichXp).length > 0 && (
+          <div>
+            <h4 className="text-xs font-semibold uppercase text-muted-foreground tracking-wider mb-2">
+              Bereich-XP (zusaetzlich)
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {Object.entries(data.bereichXp).map(([bId, xp]) => {
+                const bereich = BEREICH_BY_ID[bId as TreeBereichId]
+                return (
+                  <span
+                    key={bId}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium text-white"
+                    style={{ background: bereich.color }}
+                  >
+                    {bereich.label} +{xp}
+                  </span>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Avatar-Items als Belohnung */}
+        {data.rewardItems && data.rewardItems.length > 0 && (
+          <div>
+            <h4 className="text-xs font-semibold uppercase text-muted-foreground tracking-wider mb-2">
+              Belohnung
+            </h4>
+            <div className="flex flex-wrap gap-2">
+              {data.rewardItems.map((itemId) => {
+                const itemDef = avatarItems.find((it) => it.id === itemId)
+                const itemData = itemDef?.data as AvatarItemData | undefined
+                return (
+                  <span
+                    key={itemId}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border-2"
+                    style={{
+                      borderColor: itemData?.color ?? "#FBBF24",
+                      color: itemData?.color ?? "#FBBF24",
+                    }}
+                    title={itemData?.condition}
+                  >
+                    <Trophy className="h-3 w-3" />
+                    {itemData?.name ?? itemId}
+                    {itemData?.rarity && (
+                      <span className="text-[9px] uppercase opacity-80">{itemData.rarity}</span>
+                    )}
+                  </span>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Standort */}
+        {data.location?.address && (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <MapPin className="h-4 w-4" />
+            <span>{data.location.address}</span>
+          </div>
+        )}
+      </CardContent>
+
+      <div className="border-t p-4 flex justify-end gap-2 bg-muted/20">
+        {isCompleted ? (
+          <>
+            <span className="flex-1 text-sm text-muted-foreground self-center">
+              ✓ Quest erledigt — die XP sind gutgeschrieben.
+            </span>
+            <Button variant="ghost" size="sm" onClick={handleUncomplete} disabled={busy}>
+              Wieder oeffnen
+            </Button>
+          </>
+        ) : (
+          <Button size="lg" onClick={handleComplete} disabled={busy}>
+            <CheckCircle2 className="h-4 w-4 mr-2" />
+            {busy ? "Schliesse ab..." : "Quest abschliessen"}
+          </Button>
+        )}
+      </div>
+    </Card>
+  )
+}
+
+// ============================================================
+// QuestForm — neue Quest anlegen
+// ============================================================
+
+function QuestForm({
+  skills,
+  avatarItems,
+  onCreated,
+  onCancel,
+}: {
+  skills: Item[]
+  avatarItems: Item[]
+  onCreated: (id: string) => void
+  onCancel: () => void
+}) {
+  const { data: currentUser } = useCurrentUser()
+  const { mutate: createItem } = useCreateItem()
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [skillXp, setSkillXp] = useState<Record<string, number>>({})
+  const [rewardItemIds, setRewardItemIds] = useState<Set<string>>(new Set())
+  const [busy, setBusy] = useState(false)
+
+  const totalXp = Object.values(skillXp).reduce((a, b) => a + b, 0)
+
+  const setXpForSkill = (skillId: string, xp: number) => {
+    if (xp <= 0) {
+      const next = { ...skillXp }
+      delete next[skillId]
+      setSkillXp(next)
+    } else {
+      setSkillXp({ ...skillXp, [skillId]: xp })
+    }
+  }
+
+  const toggleReward = (itemId: string) => {
+    const next = new Set(rewardItemIds)
+    if (next.has(itemId)) next.delete(itemId)
+    else next.add(itemId)
+    setRewardItemIds(next)
+  }
+
+  const handleCreate = async () => {
+    if (!currentUser?.id || !title.trim()) return
+    setBusy(true)
+    try {
+      const data: QuestData = {
+        title: title.trim(),
+        description: description.trim() || undefined,
+        skillXp: Object.keys(skillXp).length > 0 ? skillXp : undefined,
+        rewardItems: rewardItemIds.size > 0 ? Array.from(rewardItemIds) : undefined,
+        verification: "self",
+      }
+      const created = await createItem({
+        type: GAMIFICATION_ITEM_TYPES.quest,
+        createdBy: currentUser.id,
+        data: data as unknown as Record<string, unknown>,
+      })
+      if (created) onCreated(created.id)
+      else onCancel()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-lg">Neue Quest</CardTitle>
+        <p className="text-xs text-muted-foreground">
+          Eine Quest ist eine klare Aufgabe mit XP-Belohnung und ggf. einem Avatar-Item.
+        </p>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        <div>
+          <Label className="text-xs">Titel</Label>
+          <Input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="z.B. Erste Schweiss-Naht legen"
+          />
+        </div>
+
+        <div>
+          <Label className="text-xs">Beschreibung</Label>
+          <Textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Was ist zu tun? Warum lohnt es sich?"
+            className="min-h-20"
+          />
+        </div>
+
+        {/* Skills mit XP-Inputs */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <Label className="text-xs">Skill-XP-Verteilung</Label>
+            <span className="text-xs text-primary font-semibold">Gesamt: +{totalXp} XP</span>
+          </div>
+          {skills.length === 0 ? (
+            <p className="text-xs text-muted-foreground border border-dashed rounded p-3 text-center">
+              Erst Skills anlegen (in der Quest-Liste).
+            </p>
+          ) : (
+            <div className="space-y-1.5 max-h-72 overflow-y-auto border rounded p-2">
+              {skills.map((skillItem) => {
+                const skillData = skillItem.data as SkillData
+                const bereich = BEREICH_BY_ID[skillData.bereichId]
+                const xp = skillXp[skillItem.id] ?? 0
+                return (
+                  <div
+                    key={skillItem.id}
+                    className="flex items-center gap-2 p-1.5 rounded hover:bg-muted/30"
+                  >
+                    <div
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ background: skillData.color ?? bereich.color }}
+                    />
+                    <span className="text-sm flex-1 truncate">
+                      {skillData.name}
+                      <span className="text-[10px] text-muted-foreground ml-1">
+                        ({bereich.label})
+                      </span>
+                    </span>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="500"
+                      step="5"
+                      value={xp || ""}
+                      onChange={(e) => setXpForSkill(skillItem.id, Number(e.target.value) || 0)}
+                      className="w-20 h-7 text-xs"
+                      placeholder="0"
+                    />
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Avatar-Items als Belohnung */}
+        {avatarItems.length > 0 && (
+          <div>
+            <Label className="text-xs">Belohnungs-Item (optional)</Label>
+            <div className="flex flex-wrap gap-1.5">
+              {avatarItems.map((itemDef) => {
+                const itemData = itemDef.data as AvatarItemData
+                const isOn = rewardItemIds.has(itemDef.id)
+                return (
+                  <button
+                    key={itemDef.id}
+                    type="button"
+                    onClick={() => toggleReward(itemDef.id)}
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium border-2 transition-colors ${
+                      isOn ? "text-white" : "text-muted-foreground hover:text-foreground"
+                    }`}
+                    style={{
+                      borderColor: itemData.color ?? "#FBBF24",
+                      background: isOn ? (itemData.color ?? "#FBBF24") : "transparent",
+                    }}
+                  >
+                    {itemData.name}
+                    <span className="text-[9px] uppercase ml-1 opacity-70">{itemData.rarity}</span>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+      </CardContent>
+
+      <div className="border-t p-4 flex justify-end gap-2 bg-muted/20">
+        <Button variant="ghost" size="sm" onClick={onCancel} disabled={busy}>
+          Abbrechen
+        </Button>
+        <Button size="sm" onClick={handleCreate} disabled={busy || !title.trim()}>
+          {busy ? "Lege an..." : "Quest anlegen"}
+        </Button>
+      </div>
+    </Card>
+  )
+}
