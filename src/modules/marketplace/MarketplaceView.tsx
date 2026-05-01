@@ -35,6 +35,7 @@ import type { User } from "@real-life-stack/data-interface"
 import type { Item } from "@real-life-stack/data-interface"
 import type { ModuleViewProps } from "../registry"
 import { TagInput } from "../profile/TagInput"
+import { ImageGalleryInput } from "./ImageGalleryInput"
 import {
   marketplaceSchema,
   PRICE_TYPE_LABEL,
@@ -847,13 +848,20 @@ function MarketplaceDetail({
   const data = item.data as MarketplaceData
   const isNeed = data.kind === "need"
   const priceType = data.priceType
+  const images = data.images ?? []
+  const [activeImage, setActiveImage] = useState(0)
+  const safeIndex = Math.min(activeImage, Math.max(0, images.length - 1))
 
   return (
     <Card>
       {/* Bild-Sektion */}
       <div className="relative aspect-[16/9] bg-gradient-to-br from-muted/40 to-muted/80 overflow-hidden rounded-t-xl">
-        {data.images?.[0] ? (
-          <img src={data.images[0]} alt={data.title} className="absolute inset-0 w-full h-full object-cover" />
+        {images[safeIndex] ? (
+          <img
+            src={images[safeIndex]}
+            alt={data.title}
+            className="absolute inset-0 w-full h-full object-cover"
+          />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center">
             <CategoryIcon category={data.category} className="h-24 w-24 text-muted-foreground/30" />
@@ -875,6 +883,24 @@ function MarketplaceDetail({
           />
         )}
       </div>
+
+      {/* Thumbnail-Strip wenn mehrere Bilder */}
+      {images.length > 1 && (
+        <div className="flex gap-2 p-3 overflow-x-auto bg-muted/20">
+          {images.map((url, idx) => (
+            <button
+              key={url.slice(0, 30) + idx}
+              type="button"
+              onClick={() => setActiveImage(idx)}
+              className={`shrink-0 w-16 h-16 rounded-md overflow-hidden border-2 transition-all ${
+                idx === safeIndex ? "border-primary" : "border-transparent hover:border-muted-foreground/40"
+              }`}
+            >
+              <img src={url} alt="" className="w-full h-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
 
       <CardHeader>
         <CardTitle className="text-2xl leading-tight">{data.title}</CardTitle>
@@ -964,6 +990,7 @@ function MarketplaceForm({
   const [priceAmount, setPriceAmount] = useState<number | "">("")
   const [priceText, setPriceText] = useState("")
   const [hashtags, setHashtags] = useState<string[]>([])
+  const [images, setImages] = useState<string[]>([])
   const [address, setAddress] = useState("")
   const [busy, setBusy] = useState(false)
 
@@ -987,6 +1014,7 @@ function MarketplaceForm({
             ? ((condition || undefined) as ItemCondition | undefined)
             : undefined,
         hashtags: hashtags.length > 0 ? hashtags : undefined,
+        images: images.length > 0 ? images : undefined,
         location: address.trim() ? { lat: 0, lng: 0, address: address.trim() } : undefined,
       }
       const created = await createItem(data)
@@ -1083,6 +1111,12 @@ function MarketplaceForm({
             placeholder="Mehr Details — Zustand, Zubehoer, Bedingungen, Zeitraum, Lieferung."
             className="min-h-24"
           />
+        </div>
+
+        {/* Bilder */}
+        <div>
+          <Label className="text-xs mb-1.5 block">Bilder</Label>
+          <ImageGalleryInput value={images} onChange={setImages} />
         </div>
 
         {/* Kategorie */}
