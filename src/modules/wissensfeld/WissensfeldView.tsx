@@ -891,6 +891,7 @@ function FrageForm({
   const [tags, setTags] = useState<string[]>([])
   const [activeFelder, setActiveFelder] = useState<Set<string>>(new Set())
   const [circleOrigin, setCircleOrigin] = useState("")
+  const [suggestedAnswers, setSuggestedAnswers] = useState<string[]>([""])
   const [busy, setBusy] = useState(false)
 
   const toggleFeld = (id: string) => {
@@ -900,15 +901,31 @@ function FrageForm({
     setActiveFelder(next)
   }
 
+  const updateSuggested = (idx: number, value: string) => {
+    const next = [...suggestedAnswers]
+    next[idx] = value
+    // Wenn der letzte gefuellt wird, neuen leeren anhaengen — bis max 5
+    if (idx === next.length - 1 && value.trim() && next.length < 5) {
+      next.push("")
+    }
+    setSuggestedAnswers(next)
+  }
+  const removeSuggested = (idx: number) => {
+    const next = suggestedAnswers.filter((_, i) => i !== idx)
+    setSuggestedAnswers(next.length === 0 ? [""] : next)
+  }
+
   const handleCreate = async () => {
     if (!content.trim()) return
     setBusy(true)
     try {
+      const cleanedSuggested = suggestedAnswers.map((s) => s.trim()).filter(Boolean)
       await onCreate({
         content: content.trim(),
         tags,
         circleOrigin: circleOrigin.trim() || undefined,
         felder: activeFelder.size > 0 ? Array.from(activeFelder) : undefined,
+        suggestedAnswers: cleanedSuggested.length > 0 ? cleanedSuggested : undefined,
       })
     } finally {
       setBusy(false)
@@ -992,6 +1009,46 @@ function FrageForm({
             onChange={(e) => setCircleOrigin(e.target.value)}
             placeholder="z.B. 'Bewusstseinskreis Herzfeld, 28. April'"
           />
+        </div>
+
+        {/* Vorformulierte Antwort-Impulse — Einladung + sanfte Lenkung */}
+        <div>
+          <Label className="text-xs">Antwort-Impulse (optional, bis zu 5)</Label>
+          <p className="text-[10px] text-muted-foreground mt-0.5 mb-2">
+            Vorformulierte Antworten als Einladung — sie zeigen Wege, ohne den
+            Raum zu schliessen. Wer sich nicht wiederfindet, traegt eine eigene
+            Antwort. Die plausibelste oben — sie traegt den Spirit der Frage.
+          </p>
+          <div className="space-y-1.5">
+            {suggestedAnswers.map((s, idx) => (
+              <div key={idx} className="flex items-start gap-2">
+                <span className="text-[10px] text-muted-foreground/60 mt-2 w-4 shrink-0">
+                  {idx + 1}.
+                </span>
+                <Textarea
+                  value={s}
+                  onChange={(e) => updateSuggested(idx, e.target.value)}
+                  placeholder={
+                    idx === 0
+                      ? "Eine Einladung — die plausibelste, ehrlichste Antwort"
+                      : "Weitere Einladung..."
+                  }
+                  className="min-h-[2.25rem] py-1.5 text-sm flex-1"
+                  rows={1}
+                />
+                {(s.trim() || idx < suggestedAnswers.length - 1) && (
+                  <button
+                    type="button"
+                    onClick={() => removeSuggested(idx)}
+                    className="text-muted-foreground/50 hover:text-destructive mt-2 shrink-0"
+                    title="Entfernen"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       </CardContent>
 
