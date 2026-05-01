@@ -16,7 +16,7 @@ export const marketplaceModule: ModuleDefinition = {
   label: "Marktplatz",
   icon: ShoppingBag,
   View: MarketplaceView,
-  itemTypes: [marketplaceSchema.itemType],
+  itemTypes: [marketplaceSchema.itemType, "marketplace-booking"],
   requiredCapabilities: ["ItemWriter"],
 }
 

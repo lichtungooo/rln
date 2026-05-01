@@ -45,6 +45,7 @@ import {
   type ItemCondition,
   type MarketplaceCategory,
 } from "./marketplace-schema"
+import { LendCalendar } from "./LendCalendar"
 
 /**
  * MarketplaceView — Marktplatz mit Kleinanzeigen-Optik.
@@ -127,7 +128,7 @@ function CategoryIcon({
   return <Icon className={className} />
 }
 
-export function MarketplaceView({ spaceId: _spaceId }: ModuleViewProps) {
+export function MarketplaceView({ spaceId }: ModuleViewProps) {
   const { data: items } = useItems({ type: MARKETPLACE_ITEM_TYPE })
   const { data: currentUser } = useCurrentUser()
   const { mutate: createItem } = useCreateItem()
@@ -241,6 +242,7 @@ export function MarketplaceView({ spaceId: _spaceId }: ModuleViewProps) {
         </Button>
         <MarketplaceDetail
           item={activeItem}
+          spaceId={spaceId}
           isOwner={activeItem.createdBy === currentUser?.id}
           onDelete={async () => {
             if (!confirm("Wirklich loeschen?")) return
@@ -617,10 +619,12 @@ function PriceBadge({
 
 function MarketplaceDetail({
   item,
+  spaceId,
   isOwner,
   onDelete,
 }: {
   item: Item
+  spaceId: string | null
   isOwner: boolean
   onDelete: () => Promise<void>
 }) {
@@ -702,6 +706,11 @@ function MarketplaceDetail({
             <MapPin className="h-4 w-4" />
             <span>{data.location.address}</span>
           </div>
+        )}
+
+        {/* Verleih-Kalender bei priceType=lend */}
+        {priceType === "lend" && (
+          <LendCalendar itemId={item.id} ownerId={item.createdBy} spaceId={spaceId} />
         )}
       </CardContent>
 
