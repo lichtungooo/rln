@@ -24,7 +24,6 @@ import {
   NavbarStart,
   NavbarCenter,
   NavbarEnd,
-  ModuleTabs,
   BottomNav,
   UserMenu,
   Button,
@@ -73,6 +72,7 @@ import { SpaceSettings, type SpaceSettingsTab } from '../settings/SpaceSettings'
 import { MacherWorkspaceSwitcher } from '../spaces/MacherWorkspaceSwitcher'
 import { findGroupBySlugOrId, getSpacePathSegment, getSpaceMeta, generateSlug, isSlugFree } from '../spaces/space-data'
 import { SpaceHierarchyBar } from '../spaces/SpaceHierarchyBar'
+import { OpenModuleTabs } from '../components/OpenModuleTabs'
 
 registerModule(mapModule)
 registerModule(kanbanModule)
@@ -91,6 +91,7 @@ registerModule(valluetModule)
 const STORAGE_KEY_CONNECTOR = 'macher-connector'
 const STORAGE_KEY_GROUP = 'macher-active-group'
 const STORAGE_KEY_MODULE = 'macher-active-module'
+const STORAGE_KEY_OPEN_MODULES = 'macher-open-modules'
 
 const CONNECTOR_OPTIONS: ConnectorOption[] = [
   { id: 'local', name: 'Lokal', description: 'IndexedDB, persistent' },
@@ -314,6 +315,71 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
     [moduleDefs]
   )
 
+  // Offene Module — Browser-Style-Tabs. Liste wird im localStorage gehalten.
+  // Aktives Modul wird automatisch aufgenommen (rechts angehaengt) wenn es
+  // noch nicht offen ist.
+  const [openModuleIds, setOpenModuleIds] = useState<string[]>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY_OPEN_MODULES)
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed) && parsed.every((id) => typeof id === 'string')) {
+          return parsed
+        }
+      }
+    } catch {
+      // egal — wir fallen auf Default zurueck
+    }
+    return []
+  })
+
+  // Persistieren — wenn sich die Liste aendert
+  useEffect(() => {
+    localStorage.setItem(STORAGE_KEY_OPEN_MODULES, JSON.stringify(openModuleIds))
+  }, [openModuleIds])
+
+  // Aktives Modul muss immer in der Liste sein — rechts anhaengen, falls
+  // noch nicht offen. Auch ungueltige IDs (Modul nicht mehr verfuegbar)
+  // werden hier herausgefiltert.
+  useEffect(() => {
+    const valid = new Set(moduleDefs.map((m) => m.id))
+    setOpenModuleIds((prev) => {
+      const filtered = prev.filter((id) => valid.has(id))
+      if (activeModule && valid.has(activeModule) && !filtered.includes(activeModule)) {
+        return [...filtered, activeModule]
+      }
+      if (filtered.length !== prev.length) return filtered
+      return prev
+    })
+  }, [activeModule, moduleDefs])
+
+  // Liste der offenen Module als angereicherte Definitionen
+  const openModules = useMemo(() => {
+    const byId = new Map(moduleDefs.map((m) => [m.id, m]))
+    return openModuleIds
+      .map((id) => byId.get(id))
+      .filter((m): m is (typeof moduleDefs)[number] => Boolean(m))
+      .map((m) => ({ id: m.id, label: m.label, icon: m.icon }))
+  }, [openModuleIds, moduleDefs])
+
+  const handleCloseTab = useCallback(
+    (id: string) => {
+      setOpenModuleIds((prev) => {
+        if (prev.length <= 1) return prev
+        const idx = prev.indexOf(id)
+        if (idx < 0) return prev
+        const next = prev.filter((x) => x !== id)
+        // Wenn der aktive Tab geschlossen wird, auf Nachbar springen
+        if (id === activeModule && activeWorkspace) {
+          const fallback = next[idx] ?? next[idx - 1] ?? next[0]
+          if (fallback) navigate(buildSpacePath(activeWorkspace.id, fallback))
+        }
+        return next
+      })
+    },
+    [activeModule, activeWorkspace, navigate, buildSpacePath],
+  )
+
   // Aktive Modul-Definition fuer Render
   const activeModuleDef = useMemo(
     () => moduleDefs.find((m) => m.id === activeModule) ?? null,
@@ -423,10 +489,13 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
           )}
         </NavbarStart>
         <NavbarCenter>
-          <ModuleTabs
-            modules={modules}
-            activeModule={activeModule}
-            onModuleChange={handleModuleChange}
+          <OpenModuleTabs
+            allModules={modules}
+            openModules={openModules}
+            activeId={activeModule}
+            onSelect={handleModuleChange}
+            onClose={handleCloseTab}
+            onOpen={handleModuleChange}
           />
         </NavbarCenter>
         <NavbarEnd>
