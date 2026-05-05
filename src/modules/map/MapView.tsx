@@ -1,9 +1,10 @@
 import { useMemo, useState, useCallback, useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { Settings, Plus, X, Search as SearchIcon } from "lucide-react"
+import { Settings, Plus, X, SlidersHorizontal, ZoomIn, ZoomOut } from "lucide-react"
 import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from "react-leaflet"
 import L from "leaflet"
 import { useItems, useCreateItem, useCurrentUser, Button, AdaptivePanel } from "@real-life-stack/toolkit"
+import type { Item } from "@real-life-stack/data-interface"
 import type { ModuleViewProps } from "../registry"
 import { useIsSpaceAdmin } from "../use-module-config"
 import { QuickCreateForm } from "./QuickCreateForm"
@@ -265,11 +266,29 @@ export function MapView({ spaceId, activeGroup, config, isPreview, onOpenSetting
   const [pickedLocation, setPickedLocation] = useState<{ lat: number; lng: number } | null>(null)
   const [actionMenuOpen, setActionMenuOpen] = useState(false)
 
-  // Karten-Suche (#hashtag, @user, Freitext)
-  const [searchQuery, setSearchQuery] = useState("")
-
   // FlyTo-Ziel (z.B. wenn ein Event aus dem Kalender-Widget angeklickt wird)
   const [flyTarget, setFlyTarget] = useState<{ lat: number; lng: number; itemId?: string } | null>(null)
+
+  // Layer-Filter — sichtbare Item-Typen auf der Karte. Persistiert lokal.
+  const [hiddenLayers, setHiddenLayers] = useState<Set<string>>(() => {
+    try {
+      const raw = localStorage.getItem('macher-map-hidden-layers')
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) return new Set(parsed)
+      }
+    } catch {
+      /* leer lassen */
+    }
+    return new Set()
+  })
+  useEffect(() => {
+    localStorage.setItem(
+      'macher-map-hidden-layers',
+      JSON.stringify(Array.from(hiddenLayers)),
+    )
+  }, [hiddenLayers])
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false)
 
   const pinTypes = cfg.pinTypes ?? mapDefaultConfig.pinTypes!
   const tileUrl = cfg.tileUrl ?? TILE_PROVIDERS[cfg.tileProvider ?? "osm-de"].url
@@ -313,16 +332,26 @@ export function MapView({ spaceId, activeGroup, config, isPreview, onOpenSetting
     [placeItems, eventItems, filteredOfferItems, questItems, profileItems]
   )
 
-  const parsedSearch = useMemo(() => parseSearchQuery(searchQuery), [searchQuery])
+  // Item-Typ → Layer-ID
+  const itemToLayer = useCallback((item: Item): string => {
+    if (item.type === 'place') return 'orte'
+    if (item.type === 'event') return 'termine'
+    if (item.type === 'profile') return 'menschen'
+    if (item.type === 'offer') {
+      const kind = (item.data as Record<string, unknown>).kind
+      return kind === 'need' ? 'gesuche' : 'angebote'
+    }
+    if (item.type === 'quest') return 'quests'
+    return 'sonstige'
+  }, [])
 
   // Marker erzeugen — Items mit gueltigem location-Field oder data.location
   const markers = useMemo(() => {
-    const searchActive = cfg.search?.enabled === true
     return allItems
       .map((item) => {
         const loc = (item.data.location as { lat?: number; lng?: number; address?: string } | undefined) ?? null
         if (!loc || typeof loc.lat !== "number" || typeof loc.lng !== "number") return null
-        if (searchActive && !itemMatchesSearch(item, parsedSearch)) return null
+        if (hiddenLayers.has(itemToLayer(item))) return null
         const pinKey = effectivePinKey(item)
         const style = resolvePinStyle(pinKey, cfg)
         // User-Pins (type "profile") zeigen Name aus data.name oder data.title
@@ -396,7 +425,7 @@ export function MapView({ spaceId, activeGroup, config, isPreview, onOpenSetting
         }
       })
       .filter((m): m is NonNullable<typeof m> => m !== null)
-  }, [allItems, cfg, parsedSearch])
+  }, [allItems, cfg, hiddenLayers, itemToLayer])
 
   const center: [number, number] = markers.length > 0
     ? [
@@ -475,7 +504,7 @@ export function MapView({ spaceId, activeGroup, config, isPreview, onOpenSetting
       {/* Empty-State: keine Pins → Demo-Banner mit Lade-Knopf (nur fuer Admins) */}
       {!isPreview && activeGroup && (
         <EmptyMapBanner
-          visible={markers.length === 0 && !creatingType && !searchQuery}
+          visible={markers.length === 0 && !creatingType}
           isAdmin={isAdmin}
         />
       )}
@@ -487,62 +516,21 @@ export function MapView({ spaceId, activeGroup, config, isPreview, onOpenSetting
         />
       )}
 
-      {/* Karten-Suche oben links (konfigurierbar, nicht im Preview) */}
-      {!isPreview && cfg.search?.enabled && !creatingType && (
-        <div className="absolute top-3 left-3 z-[1000] flex items-center bg-background/95 backdrop-blur rounded-md shadow-md border">
-          <SearchIcon
-            className={`h-4 w-4 ml-2.5 shrink-0 transition-colors ${
-              searchQuery ? "text-primary" : "text-muted-foreground"
-            }`}
-          />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={cfg.search?.placeholder ?? "Suche... #hashtag @user"}
-            className="px-2 py-1.5 text-sm bg-transparent outline-none w-48 sm:w-64"
-            aria-label="Karte durchsuchen"
-          />
-          {searchQuery && (
-            <>
-              <span
-                className="text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded mr-1 shrink-0"
-                title={`${markers.length} Treffer`}
-              >
-                {markers.length}
-              </span>
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="h-8 w-8 inline-flex items-center justify-center text-muted-foreground hover:text-foreground"
-                title="Suche leeren"
-                aria-label="Suche leeren"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            </>
-          )}
-        </div>
-      )}
-
-      {/* Such-Status: keine Treffer */}
-      {!isPreview && cfg.search?.enabled && searchQuery && markers.length === 0 && (
-        <div className="absolute top-14 left-3 z-[1000] bg-background/95 backdrop-blur rounded-md shadow-md border px-3 py-1.5 text-xs text-muted-foreground">
-          Keine Treffer fuer <code className="text-foreground">{searchQuery}</code>
-        </div>
-      )}
-
       <MapContainer
         center={center}
         zoom={zoom}
         className="h-full w-full"
-        zoomControl={true}
+        zoomControl={false}
       >
         <TileLayer
           key={tileUrl}
           url={tileUrl}
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         />
+
+        {/* invalidateSize bei Container-Resize — Karte rendert auch dann
+            korrekt, wenn sie initial mit display:none gemountet wurde. */}
+        <MapResizeWatcher />
 
         {/* Map-Click-Handler — nur wenn Quick-Create aktiv */}
         {creatingType && <MapClickHandler onClick={handleMapClick} />}
@@ -588,6 +576,21 @@ export function MapView({ spaceId, activeGroup, config, isPreview, onOpenSetting
             </Popup>
           </Marker>
         ))}
+
+        {/* Eigene Zoom-Controls + Filter — mittig links statt oben rechts */}
+        <MapSideControls
+          hiddenLayers={hiddenLayers}
+          onToggleLayer={(id) => {
+            setHiddenLayers((prev) => {
+              const next = new Set(prev)
+              if (next.has(id)) next.delete(id)
+              else next.add(id)
+              return next
+            })
+          }}
+          filterMenuOpen={filterMenuOpen}
+          setFilterMenuOpen={setFilterMenuOpen}
+        />
       </MapContainer>
 
       {/* Action-Button unten rechts + Multi-Action-Menu */}
@@ -926,4 +929,145 @@ function MapFlyTo({ target }: { target: { lat: number; lng: number } | null }) {
     }
   }, [target, map])
   return null
+}
+
+// ============================================================
+// MapResizeWatcher — ruft invalidateSize bei Container-Resize.
+// Loest das Problem, wenn die Karte initial mit display:none gemountet
+// wird (Tabs-Pattern) und Leaflet keine Groesse fuer die Tiles kennt.
+// ============================================================
+
+function MapResizeWatcher() {
+  const map = useMap()
+  useEffect(() => {
+    const container = map.getContainer()
+    map.invalidateSize()
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize()
+    })
+    observer.observe(container)
+    return () => observer.disconnect()
+  }, [map])
+  return null
+}
+
+// ============================================================
+// MapSideControls — eigene Zoom + Filter mittig am linken Rand.
+// ============================================================
+
+const LAYER_OPTIONS: Array<{ id: string; label: string }> = [
+  { id: 'orte', label: 'Orte' },
+  { id: 'termine', label: 'Termine' },
+  { id: 'menschen', label: 'Menschen' },
+  { id: 'angebote', label: 'Angebote' },
+  { id: 'gesuche', label: 'Gesuche' },
+  { id: 'quests', label: 'Quests' },
+]
+
+function MapSideControls({
+  hiddenLayers,
+  onToggleLayer,
+  filterMenuOpen,
+  setFilterMenuOpen,
+}: {
+  hiddenLayers: Set<string>
+  onToggleLayer: (id: string) => void
+  filterMenuOpen: boolean
+  setFilterMenuOpen: (open: boolean) => void
+}) {
+  const map = useMap()
+  return (
+    <div
+      className="leaflet-control absolute left-2 top-1/2 z-[1000] flex -translate-y-1/2 flex-col gap-1.5"
+      onMouseDown={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      onDoubleClick={(e) => e.stopPropagation()}
+      onWheel={(e) => e.stopPropagation()}
+    >
+      {/* Filter-Button */}
+      <div className="relative">
+        <button
+          type="button"
+          onClick={() => setFilterMenuOpen(!filterMenuOpen)}
+          title="Layer filtern"
+          aria-label="Layer filtern"
+          className={`flex h-8 w-8 items-center justify-center rounded-md border bg-background/95 shadow-md backdrop-blur transition hover:bg-muted ${
+            filterMenuOpen
+              ? 'border-primary/60 text-primary'
+              : 'border-border/60 text-foreground'
+          }`}
+        >
+          <SlidersHorizontal className="h-3.5 w-3.5" />
+          {hiddenLayers.size > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-3.5 min-w-[0.875rem] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
+              {hiddenLayers.size}
+            </span>
+          )}
+        </button>
+        {filterMenuOpen && (
+          <div className="absolute left-10 top-0 z-[1001] w-44 rounded-md border border-border/60 bg-popover shadow-lg">
+            <div className="border-b border-border/40 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              Auf der Karte zeigen
+            </div>
+            <ul className="py-1">
+              {LAYER_OPTIONS.map((layer) => {
+                const visible = !hiddenLayers.has(layer.id)
+                return (
+                  <li key={layer.id}>
+                    <button
+                      type="button"
+                      onClick={() => onToggleLayer(layer.id)}
+                      className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-xs hover:bg-muted/60"
+                    >
+                      <span
+                        className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border transition ${
+                          visible
+                            ? 'border-primary bg-primary text-primary-foreground'
+                            : 'border-border/60 bg-background'
+                        }`}
+                      >
+                        {visible && (
+                          <svg
+                            viewBox="0 0 16 16"
+                            className="h-2.5 w-2.5"
+                            fill="currentColor"
+                          >
+                            <path d="M13.5 4L6 11.5 2.5 8" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                        )}
+                      </span>
+                      <span className="text-foreground">{layer.label}</span>
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      {/* Zoom-Controls */}
+      <div className="overflow-hidden rounded-md border border-border/60 bg-background/95 shadow-md backdrop-blur">
+        <button
+          type="button"
+          onClick={() => map.zoomIn()}
+          title="Hineinzoomen"
+          aria-label="Hineinzoomen"
+          className="flex h-8 w-8 items-center justify-center text-foreground transition hover:bg-muted"
+        >
+          <ZoomIn className="h-3.5 w-3.5" />
+        </button>
+        <div className="h-px bg-border/40" />
+        <button
+          type="button"
+          onClick={() => map.zoomOut()}
+          title="Herauszoomen"
+          aria-label="Herauszoomen"
+          className="flex h-8 w-8 items-center justify-center text-foreground transition hover:bg-muted"
+        >
+          <ZoomOut className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
+  )
 }
