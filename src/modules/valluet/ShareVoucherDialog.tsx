@@ -24,6 +24,7 @@ import {
 } from '@real-life-stack/toolkit'
 import { QrCode, Copy, Check } from 'lucide-react'
 import { getCurrencyMeta, type VoucherData } from './types'
+import { useCurrencies } from './use-currencies'
 
 interface ShareVoucherDialogProps {
   open: boolean
@@ -43,6 +44,7 @@ export function ShareVoucherDialog({
   const [isMarking, setIsMarking] = useState(false)
   const { mutate: updateItem } = useUpdateItem()
   const { data: currentUser } = useCurrentUser()
+  const { map: currencyMap } = useCurrencies()
 
   // QR-Code generieren wenn ein Voucher geladen ist
   useEffect(() => {
@@ -146,7 +148,7 @@ export function ShareVoucherDialog({
   if (!voucher) return null
 
   const data = voucher.data as Partial<VoucherData>
-  const meta = getCurrencyMeta(data.currency ?? 'dank')
+  const meta = getCurrencyMeta(data.currency ?? 'dank', currencyMap)
   const amount = typeof data.amount === 'number' ? data.amount : 0
 
   return (

@@ -1,20 +1,22 @@
 /**
  * Schoepfungs-Dialog — neuen Voucher anlegen.
  *
- * Aktuell nur die Waehrung "Dank". Spaeter kommen weitere Wertformen
- * (Werkstatt-Coin, Lichtschein, Hofgulden, eigene Kreis-Tokens).
+ * Wertform aus dem Hook useCurrencies — Default-Waehrungen plus die
+ * eigenen, im Space angelegten Wertformen. Stueckelung und Gueltigkeit
+ * kommen pro Waehrung aus der CurrencyMeta, mit Fallback auf die
+ * System-Defaults.
  */
 
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button, useCreateItem, useCurrentUser } from '@real-life-stack/toolkit'
 import { X, Sparkles } from 'lucide-react'
 import {
-  CURRENCY_META,
   DEFAULT_CURRENCY,
-  STUECKELUNGEN,
-  GUELTIGKEIT_JAHRE,
   getCurrencyMeta,
+  getStueckelungen,
+  getGueltigkeitJahre,
 } from './types'
+import { useCurrencies } from './use-currencies'
 import {
   getOrCreateValluetKeyPair,
   signVoucherCore,
@@ -31,12 +33,34 @@ export function CreateVoucherDialog({
   open,
   onOpenChange,
 }: CreateVoucherDialogProps) {
+  const { list, map } = useCurrencies()
   const [currency, setCurrency] = useState(DEFAULT_CURRENCY)
   const [amount, setAmount] = useState<number>(15)
   const [note, setNote] = useState('')
   const [isSchoepfend, setIsSchoepfend] = useState(false)
   const { mutate: createItem } = useCreateItem()
   const { data: currentUser } = useCurrentUser()
+
+  const gewaehlt = useMemo(() => getCurrencyMeta(currency, map), [currency, map])
+  const stueckelungen = useMemo(() => getStueckelungen(gewaehlt), [gewaehlt])
+  const gueltigkeitJahre = useMemo(
+    () => getGueltigkeitJahre(gewaehlt),
+    [gewaehlt],
+  )
+
+  // Wenn die gewaehlte Waehrung verschwindet (z.B. geloescht), zurueck auf Default.
+  useEffect(() => {
+    if (!map[currency]) setCurrency(DEFAULT_CURRENCY)
+  }, [map, currency])
+
+  // Beim Wechsel der Wertform sinnvolle Stueckelung waehlen.
+  useEffect(() => {
+    if (!stueckelungen.includes(amount)) {
+      const mid = stueckelungen[Math.floor(stueckelungen.length / 2)] ?? amount
+      setAmount(mid)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currency])
 
   const reset = () => {
     setCurrency(DEFAULT_CURRENCY)
@@ -58,7 +82,7 @@ export function CreateVoucherDialog({
     try {
       const jetzt = new Date()
       const verfall = new Date(jetzt)
-      verfall.setFullYear(verfall.getFullYear() + GUELTIGKEIT_JAHRE)
+      verfall.setFullYear(verfall.getFullYear() + gueltigkeitJahre)
 
       // Schluessel laden (oder beim ersten Mal erzeugen)
       const keyPair = await getOrCreateValluetKeyPair()
@@ -100,9 +124,6 @@ export function CreateVoucherDialog({
 
   if (!open) return null
 
-  const optionen = Object.values(CURRENCY_META)
-  const gewaehlt = getCurrencyMeta(currency)
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
@@ -137,25 +158,35 @@ export function CreateVoucherDialog({
               Wertform
             </label>
             <div className="flex flex-wrap gap-2">
-              {optionen.map((opt) => (
-                <button
-                  key={opt.id}
-                  type="button"
-                  onClick={() => setCurrency(opt.id)}
-                  className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition ${
-                    currency === opt.id
-                      ? 'border-amber-500 bg-amber-50 text-amber-900 dark:bg-amber-950/40 dark:text-amber-100'
-                      : 'border-border/60 text-muted-foreground hover:border-border'
-                  }`}
-                >
-                  <span className="text-base">{opt.symbol}</span>
-                  <span className="font-medium">{opt.label}</span>
-                </button>
-              ))}
+              {list.map((entry) => {
+                const opt = entry.meta
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setCurrency(opt.id)}
+                    className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition ${
+                      currency === opt.id
+                        ? 'border-primary'
+                        : 'border-border/60 text-muted-foreground hover:border-border'
+                    }`}
+                    style={
+                      currency === opt.id
+                        ? { backgroundColor: opt.bg, color: opt.color }
+                        : undefined
+                    }
+                  >
+                    <span className="text-base font-bold">{opt.symbol}</span>
+                    <span className="font-medium">{opt.label}</span>
+                  </button>
+                )
+              })}
             </div>
-            <p className="mt-1 text-[11px] text-muted-foreground">
-              {gewaehlt.beschreibung}
-            </p>
+            {gewaehlt.beschreibung && (
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                {gewaehlt.beschreibung}
+              </p>
+            )}
           </div>
 
           {/* Anzahl */}
@@ -164,7 +195,7 @@ export function CreateVoucherDialog({
               Anzahl
             </label>
             <div className="mb-2 flex flex-wrap gap-2">
-              {STUECKELUNGEN.map((s) => (
+              {stueckelungen.map((s) => (
                 <button
                   key={s}
                   type="button"
@@ -204,16 +235,25 @@ export function CreateVoucherDialog({
           </div>
 
           {/* Vorschau */}
-          <div className="rounded-lg border border-amber-500/30 bg-amber-50/40 p-3 dark:bg-amber-950/20">
+          <div
+            className="rounded-lg border p-3"
+            style={{
+              borderColor: gewaehlt.color + '40',
+              backgroundColor: gewaehlt.bg,
+            }}
+          >
             <p className="text-xs text-muted-foreground">Du schoepfst gerade:</p>
-            <p className="mt-1 text-base font-semibold text-foreground">
+            <p
+              className="mt-1 text-base font-semibold"
+              style={{ color: gewaehlt.color }}
+            >
               {amount} {gewaehlt.label}
             </p>
             <p className="mt-1 text-[11px] text-muted-foreground">
-              Gueltig {GUELTIGKEIT_JAHRE} Jahre — bis{' '}
+              Gueltig {gueltigkeitJahre} Jahre — bis{' '}
               {new Date(
                 new Date().setFullYear(
-                  new Date().getFullYear() + GUELTIGKEIT_JAHRE,
+                  new Date().getFullYear() + gueltigkeitJahre,
                 ),
               ).toLocaleDateString('de-DE')}
             </p>

@@ -47,6 +47,7 @@ import {
 } from './types'
 import { verifyVoucherCore, shortenKey, type VoucherCore } from './signing'
 import { useTrustLevel, describeTrustLevel } from './use-trust-level'
+import { useCurrencies } from './use-currencies'
 
 interface ReceiveVoucherDialogProps {
   open: boolean
@@ -438,7 +439,8 @@ function PreviewAndConfirm({
   isReceiving: boolean
 }) {
   const { payload, signatureValid } = validated
-  const meta = getCurrencyMeta(payload.voucher.currency)
+  const { map: currencyMap } = useCurrencies()
+  const meta = getCurrencyMeta(payload.voucher.currency, currencyMap)
   const validUntil = new Date(payload.voucher.validUntil)
   const creatorShort = shortenKey(payload.voucher.creator, 12)
   const trust = useTrustLevel(
@@ -565,8 +567,9 @@ function ReceivedSuccess({
 }: {
   payload: VoucherSharePayload | null
 }) {
+  const { map: currencyMap } = useCurrencies()
   if (!payload) return null
-  const meta = getCurrencyMeta(payload.voucher.currency)
+  const meta = getCurrencyMeta(payload.voucher.currency, currencyMap)
   return (
     <div className="flex flex-col items-center gap-3 py-8 text-center">
       <div

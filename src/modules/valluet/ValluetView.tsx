@@ -18,16 +18,20 @@ import {
   ArrowDownLeft,
   ClipboardPaste,
   ShieldCheck,
+  Settings,
 } from 'lucide-react'
 import type { ModuleViewProps } from '../registry'
 import { CreateVoucherDialog } from './CreateVoucherDialog'
 import { ShareVoucherDialog } from './ShareVoucherDialog'
 import { ReceiveVoucherDialog } from './ReceiveVoucherDialog'
+import { CurrencyManagerPanel } from './CurrencyManagerPanel'
 import {
   DEFAULT_CURRENCY,
   getCurrencyMeta,
+  type CurrencyMeta,
   type VoucherData,
 } from './types'
+import { useCurrencies } from './use-currencies'
 import { useTrustLevel, describeTrustLevel } from './use-trust-level'
 
 type FilterTab = 'alle' | 'neu' | 'empfangen' | 'ausgegeben'
@@ -35,8 +39,10 @@ type FilterTab = 'alle' | 'neu' | 'empfangen' | 'ausgegeben'
 export function ValluetView(_props: ModuleViewProps) {
   const { data: currentUser } = useCurrentUser()
   const { data: alleVouchers } = useItems({ type: 'voucher' })
+  const { map: currencyMap } = useCurrencies()
   const [createOpen, setCreateOpen] = useState(false)
   const [receiveOpen, setReceiveOpen] = useState(false)
+  const [managerOpen, setManagerOpen] = useState(false)
   const [shareVoucher, setShareVoucher] = useState<Item | null>(null)
   const [filter, setFilter] = useState<FilterTab>('alle')
 
@@ -103,6 +109,14 @@ export function ValluetView(_props: ModuleViewProps) {
           </div>
           <div className="flex items-center gap-2">
             <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setManagerOpen(true)}
+              title="Wertformen verwalten"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+            <Button
               variant="outline"
               onClick={() => setReceiveOpen(true)}
               className="gap-2"
@@ -121,7 +135,7 @@ export function ValluetView(_props: ModuleViewProps) {
         {Object.keys(summenJeWaehrung).length > 0 && (
           <div className="mt-3 flex flex-wrap gap-2">
             {Object.entries(summenJeWaehrung).map(([currency, summe]) => {
-              const meta = getCurrencyMeta(currency)
+              const meta = getCurrencyMeta(currency, currencyMap)
               return (
                 <div
                   key={currency}
@@ -172,6 +186,7 @@ export function ValluetView(_props: ModuleViewProps) {
                   <VoucherRow
                     key={v.id}
                     voucher={v}
+                    currencyMap={currencyMap}
                     onShare={() => setShareVoucher(v)}
                   />
                 ))}
@@ -190,6 +205,7 @@ export function ValluetView(_props: ModuleViewProps) {
         }}
         voucher={shareVoucher}
       />
+      <CurrencyManagerPanel open={managerOpen} onOpenChange={setManagerOpen} />
     </div>
   )
 }
@@ -259,16 +275,18 @@ function EmptyState({ onCreate }: { onCreate: () => void }) {
 
 function VoucherRow({
   voucher,
+  currencyMap,
   onShare,
 }: {
   voucher: Item
+  currencyMap: Record<string, CurrencyMeta>
   onShare: () => void
 }) {
   const data = voucher.data as Partial<VoucherData>
   const currency = data.currency ?? DEFAULT_CURRENCY
   const amount = typeof data.amount === 'number' ? data.amount : 0
   const note = typeof data.note === 'string' ? data.note : ''
-  const meta = getCurrencyMeta(currency)
+  const meta = getCurrencyMeta(currency, currencyMap)
   const status = data.status ?? 'neu'
   const isShared = status === 'ausgegeben'
   const isReceived = status === 'empfangen'

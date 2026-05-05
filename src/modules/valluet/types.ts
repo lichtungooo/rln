@@ -9,6 +9,9 @@
  *   validUntil:  ISO-Zeitstempel des Verfalls
  *   status:      "neu" | "ausgegeben" | "empfangen"
  *
+ * CurrencyMeta (Item-Typ "currency-meta"): die Wertform selbst —
+ * pro Space anlegbar, mit eigener Stueckelung, Farbe, Symbol.
+ *
  * Trust-Anker: keine Buergen-Multi-Sig.
  * Vertrauen kommt aus dem Web of Trust — Begegnungen, QR-Scans, Trust-Distanz.
  */
@@ -97,6 +100,13 @@ export function isVoucherSharePayload(
   )
 }
 
+/**
+ * Wertform — Beschreibung einer Waehrung.
+ *
+ * Default-Waehrung "dank" lebt im Code. Alle anderen leben als Items vom
+ * Typ "currency-meta" im WoT — pro Space anlegbar, mit eigenem Symbol,
+ * Stueckelung und Gueltigkeit.
+ */
 export interface CurrencyMeta {
   id: string
   label: string
@@ -104,9 +114,24 @@ export interface CurrencyMeta {
   color: string
   bg: string
   beschreibung: string
+  /** Empfohlene Stueckelung beim Schoepfen. Default falls leer: STUECKELUNGEN_FALLBACK. */
+  stueckelungen?: number[]
+  /** Gueltigkeit in Jahren. Default falls leer: GUELTIGKEIT_FALLBACK. */
+  gueltigkeitJahre?: number
 }
 
-export const CURRENCY_META: Record<string, CurrencyMeta> = {
+export const CURRENCY_META_ITEM_TYPE = 'currency-meta'
+
+export const STUECKELUNGEN_FALLBACK = [1, 5, 15, 30, 60, 120]
+export const GUELTIGKEIT_FALLBACK = 5
+
+export const DEFAULT_CURRENCY = 'dank'
+
+/**
+ * Kern-Wertformen, die das System immer mitbringt. Andere Wertformen
+ * werden pro Space als Items vom Typ "currency-meta" angelegt.
+ */
+export const DEFAULT_CURRENCIES: Record<string, CurrencyMeta> = {
   dank: {
     id: 'dank',
     label: 'Dank',
@@ -114,22 +139,40 @@ export const CURRENCY_META: Record<string, CurrencyMeta> = {
     color: '#E8B547',
     bg: 'rgba(232, 181, 71, 0.12)',
     beschreibung: 'persoenliche Wertschaetzung',
+    stueckelungen: STUECKELUNGEN_FALLBACK,
+    gueltigkeitJahre: GUELTIGKEIT_FALLBACK,
   },
 }
 
-export const DEFAULT_CURRENCY = 'dank'
-export const STUECKELUNGEN = [1, 5, 15, 30, 60, 120]
-export const GUELTIGKEIT_JAHRE = 5
-
-export function getCurrencyMeta(currency: string): CurrencyMeta {
-  return (
-    CURRENCY_META[currency] ?? {
-      id: currency,
-      label: currency,
-      symbol: '◇',
-      color: '#888',
-      bg: 'rgba(136, 136, 136, 0.12)',
-      beschreibung: '',
-    }
-  )
+/**
+ * Liefert Meta-Infos fuer eine Waehrung. currencies optional — ohne Liste
+ * wird nur in den Default-Waehrungen gesucht; sonst wird die Liste vorgezogen.
+ */
+export function getCurrencyMeta(
+  currency: string,
+  currencies?: Record<string, CurrencyMeta>,
+): CurrencyMeta {
+  if (currencies && currencies[currency]) return currencies[currency]
+  if (DEFAULT_CURRENCIES[currency]) return DEFAULT_CURRENCIES[currency]
+  return {
+    id: currency,
+    label: currency,
+    symbol: '◇',
+    color: '#888',
+    bg: 'rgba(136, 136, 136, 0.12)',
+    beschreibung: '',
+  }
 }
+
+export function getStueckelungen(meta: CurrencyMeta): number[] {
+  return meta.stueckelungen?.length ? meta.stueckelungen : STUECKELUNGEN_FALLBACK
+}
+
+export function getGueltigkeitJahre(meta: CurrencyMeta): number {
+  return meta.gueltigkeitJahre ?? GUELTIGKEIT_FALLBACK
+}
+
+// Backwards-Kompatibilitaet — alte Imports laufen weiter.
+export const CURRENCY_META = DEFAULT_CURRENCIES
+export const STUECKELUNGEN = STUECKELUNGEN_FALLBACK
+export const GUELTIGKEIT_JAHRE = GUELTIGKEIT_FALLBACK
