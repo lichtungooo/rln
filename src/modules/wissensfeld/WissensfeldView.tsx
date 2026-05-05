@@ -35,8 +35,9 @@ import {
 import { useWissensfeld } from "./use-wissensfeld"
 import { KonsentSection } from "./KonsentSection"
 import { ErkenntnisSection } from "./ErkenntnisSection"
+import { SpiritSection } from "./SpiritSection"
 
-type WissensfeldTab = "fragen" | "erkenntnisse" | "konsent"
+type WissensfeldTab = "fragen" | "erkenntnisse" | "konsent" | "spirit"
 
 /**
  * WissensfeldView — Spiegel des kollektiven Bewusstseins.
@@ -66,7 +67,7 @@ const FELD_BY_ID: Record<string, ThemenFeld> = Object.fromEntries(
   THEMEN_FELDER.map((f) => [f.id, f])
 )
 
-export function WissensfeldView(_props: ModuleViewProps) {
+export function WissensfeldView({ activeGroup }: ModuleViewProps) {
   const [activeTab, setActiveTab] = useState<WissensfeldTab>("fragen")
   const [activeFrageId, setActiveFrageId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
@@ -244,12 +245,12 @@ export function WissensfeldView(_props: ModuleViewProps) {
         )}
       </div>
 
-      {/* Tab-Switcher: Fragen / Erkenntnisse / Konsent */}
-      <div className="grid grid-cols-3 gap-1 p-1 rounded-lg bg-muted">
+      {/* Tab-Switcher: Fragen / Erkenntnisse / Konsent / Spirit */}
+      <div className="grid grid-cols-4 gap-1 p-1 rounded-lg bg-muted">
         <button
           type="button"
           onClick={() => setActiveTab("fragen")}
-          className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-semibold transition-all ${
+          className={`flex items-center justify-center gap-2 px-2 py-2 rounded-md text-sm font-semibold transition-all ${
             activeTab === "fragen" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
           }`}
           style={activeTab === "fragen" ? { color: "#E8751A" } : undefined}
@@ -261,7 +262,7 @@ export function WissensfeldView(_props: ModuleViewProps) {
         <button
           type="button"
           onClick={() => setActiveTab("erkenntnisse")}
-          className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-semibold transition-all ${
+          className={`flex items-center justify-center gap-2 px-2 py-2 rounded-md text-sm font-semibold transition-all ${
             activeTab === "erkenntnisse" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
           }`}
           style={activeTab === "erkenntnisse" ? { color: "#FBBF24" } : undefined}
@@ -273,7 +274,7 @@ export function WissensfeldView(_props: ModuleViewProps) {
         <button
           type="button"
           onClick={() => setActiveTab("konsent")}
-          className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-semibold transition-all ${
+          className={`flex items-center justify-center gap-2 px-2 py-2 rounded-md text-sm font-semibold transition-all ${
             activeTab === "konsent" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
           }`}
           style={activeTab === "konsent" ? { color: "#10B981" } : undefined}
@@ -281,6 +282,17 @@ export function WissensfeldView(_props: ModuleViewProps) {
           <Scale className="h-4 w-4" />
           <span className="hidden sm:inline">Konsent</span>
           <span className="text-[10px] opacity-70">({vorschlaege.length})</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("spirit")}
+          className={`flex items-center justify-center gap-2 px-2 py-2 rounded-md text-sm font-semibold transition-all ${
+            activeTab === "spirit" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
+          }`}
+          style={activeTab === "spirit" ? { color: "#A855F7" } : undefined}
+        >
+          <Sparkles className="h-4 w-4" />
+          <span className="hidden sm:inline">Spirit</span>
         </button>
       </div>
 
@@ -310,6 +322,21 @@ export function WissensfeldView(_props: ModuleViewProps) {
           onOpenStimmungsbild={openStimmungsbild}
           onSignalStimmungsbild={signalStimmungsbild}
           onRemoveStimmungsbild={removeStimmungsbild}
+        />
+      )}
+
+      {activeTab === "spirit" && (
+        <SpiritSection
+          spaceName={activeGroup?.name ?? "diesem Space"}
+          fragen={fragen}
+          antwortenByFrage={antwortenByFrage}
+          erkenntnisse={erkenntnisse}
+          stimmungsbilder={stimmungsbilder}
+          entscheidungen={entscheidungen}
+          onSelectFrage={(id) => {
+            setActiveTab("fragen")
+            setActiveFrageId(id)
+          }}
         />
       )}
 
