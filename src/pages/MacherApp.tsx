@@ -24,7 +24,6 @@ import {
   NavbarStart,
   NavbarCenter,
   NavbarEnd,
-  BottomNav,
   UserMenu,
   Button,
   GroupDialog,
@@ -73,6 +72,8 @@ import { MacherWorkspaceSwitcher } from '../spaces/MacherWorkspaceSwitcher'
 import { findGroupBySlugOrId, getSpacePathSegment, getSpaceMeta, generateSlug, isSlugFree } from '../spaces/space-data'
 import { SpaceHierarchyBar } from '../spaces/SpaceHierarchyBar'
 import { OpenModuleTabs } from '../components/OpenModuleTabs'
+import { MobileTabBar } from '../components/MobileTabBar'
+import { useEdgeSwipe } from '../components/use-edge-swipe'
 
 registerModule(mapModule)
 registerModule(kanbanModule)
@@ -362,6 +363,19 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
       .map((m) => ({ id: m.id, label: m.label, icon: m.icon }))
   }, [openModuleIds, moduleDefs])
 
+  // Module-Definitionen die wir gleichzeitig im DOM halten — alle offenen
+  // plus das aktive (falls noch nicht in openModuleIds wegen Render-Reihenfolge).
+  // Modul bleibt gemountet beim Tab-Wechsel — Scroll, Filter, Map-Zoom alles
+  // erhalten. Wer geschlossen wird, wird unmounted.
+  const modulesToRender = useMemo(() => {
+    const ids = new Set(openModuleIds)
+    if (activeModule) ids.add(activeModule)
+    const byId = new Map(moduleDefs.map((m) => [m.id, m]))
+    return Array.from(ids)
+      .map((id) => byId.get(id))
+      .filter((m): m is (typeof moduleDefs)[number] => Boolean(m))
+  }, [openModuleIds, activeModule, moduleDefs])
+
   const handleCloseTab = useCallback(
     (id: string) => {
       setOpenModuleIds((prev) => {
@@ -378,6 +392,24 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
       })
     },
     [activeModule, activeWorkspace, navigate, buildSpacePath],
+  )
+
+  // Edge-Swipe auf Mobile: nach links → naechster Tab, nach rechts → vorheriger.
+  // Nur Touch-Starts in den ersten 30px vom Bildschirmrand reagieren —
+  // Map-Pan und Modul-interne Gesten bleiben unbeeintraechtigt.
+  const swipeToNeighbor = useCallback(
+    (delta: 1 | -1) => {
+      if (!activeWorkspace) return
+      const idx = openModuleIds.indexOf(activeModule)
+      if (idx < 0 || openModuleIds.length < 2) return
+      const target = openModuleIds[idx + delta]
+      if (target) navigate(buildSpacePath(activeWorkspace.id, target))
+    },
+    [activeWorkspace, openModuleIds, activeModule, navigate, buildSpacePath],
+  )
+  useEdgeSwipe(
+    () => swipeToNeighbor(1),
+    () => swipeToNeighbor(-1),
   )
 
   // Aktive Modul-Definition fuer Render
@@ -536,40 +568,55 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
             }}
           />
         )}
-        {activeModuleDef ? (() => {
-          const View = activeModuleDef.View
-          const moduleConfig = getModuleConfig(activeGroup, activeModuleDef.id, activeModuleDef.defaultConfig)
-          const viewProps = {
-            spaceId: activeWorkspace?.id ?? null,
-            activeGroup,
-            allGroups: groups,
-            config: moduleConfig,
-            onOpenSettings: (tab?: string, moduleId?: string) => {
-              openSpaceSettings(
-                (tab as SpaceSettingsTab) ?? 'general',
-                moduleId ?? null,
-              )
-            },
-          }
-          return activeModuleDef.fullWidth ? (
-            <View {...viewProps} />
-          ) : (
-            <div className="container mx-auto px-4 pt-6 max-w-5xl">
-              <View {...viewProps} />
-            </div>
-          )
-        })() : (
+        {modulesToRender.length === 0 ? (
           <div className="container mx-auto px-4 pt-12 max-w-md text-center">
             <p className="text-lg font-medium text-foreground">Modul nicht gefunden</p>
             <p className="text-sm text-muted-foreground mt-2">Das Modul "{activeModule}" ist nicht registriert.</p>
           </div>
+        ) : (
+          modulesToRender.map((modDef) => {
+            const View = modDef.View
+            const moduleConfig = getModuleConfig(activeGroup, modDef.id, modDef.defaultConfig)
+            const viewProps = {
+              spaceId: activeWorkspace?.id ?? null,
+              activeGroup,
+              allGroups: groups,
+              config: moduleConfig,
+              onOpenSettings: (tab?: string, moduleId?: string) => {
+                openSpaceSettings(
+                  (tab as SpaceSettingsTab) ?? 'general',
+                  moduleId ?? null,
+                )
+              },
+            }
+            const isActive = modDef.id === activeModule
+            // Aria-hidden + display:none halten den Tab-Inhalt im DOM — State,
+            // Scroll, Map-Zoom bleiben erhalten. Sichtbarer Tab nimmt den Platz.
+            return (
+              <div
+                key={modDef.id}
+                aria-hidden={!isActive}
+                className={
+                  modDef.fullWidth
+                    ? 'h-full w-full'
+                    : 'container mx-auto px-4 pt-6 max-w-5xl'
+                }
+                style={isActive ? undefined : { display: 'none' }}
+              >
+                <View {...viewProps} />
+              </div>
+            )
+          })
         )}
       </AppShellMain>
 
-      <BottomNav
-        items={modules.map((m) => ({ id: m.id, label: m.label, icon: m.icon }))}
-        activeItem={activeModule}
-        onItemChange={handleModuleChange}
+      <MobileTabBar
+        allModules={modules}
+        openModules={openModules}
+        activeId={activeModule}
+        onSelect={handleModuleChange}
+        onClose={handleCloseTab}
+        onOpen={handleModuleChange}
       />
 
       {/* Dialogs */}
