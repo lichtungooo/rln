@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Sun, Moon, Plus } from 'lucide-react'
+import { Plus, Settings as SettingsIcon } from 'lucide-react'
 import { LocalConnector } from '@real-life-stack/local-connector'
 import { MockConnector } from '@real-life-stack/mock-connector'
 import type { DataInterface, Group } from '@real-life-stack/data-interface'
@@ -20,10 +20,6 @@ import {
   useRelayStatus,
   AppShell,
   AppShellMain,
-  Navbar,
-  NavbarStart,
-  NavbarCenter,
-  NavbarEnd,
   UserMenu,
   Button,
   GroupDialog,
@@ -74,6 +70,8 @@ import { SpaceHierarchyBar } from '../spaces/SpaceHierarchyBar'
 import { OpenModuleTabs } from '../components/OpenModuleTabs'
 import { MobileTabBar } from '../components/MobileTabBar'
 import { useEdgeSwipe } from '../components/use-edge-swipe'
+import { GlobalSearch } from '../components/GlobalSearch'
+import { FullscreenButton } from '../components/FullscreenButton'
 
 registerModule(mapModule)
 registerModule(kanbanModule)
@@ -183,7 +181,6 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
   const [verifyDialogOpen, setVerifyDialogOpen] = useState(false)
   const [groupDialogOpen, setGroupDialogOpen] = useState(false)
   const [groupDialogMode, setGroupDialogMode] = useState<GroupDialogMode>({ type: 'create' })
-  const [isDark, setIsDark] = useState(false)
   const [spaceSettingsOpen, setSpaceSettingsOpen] = useState(false)
   const [spaceSettingsTab, setSpaceSettingsTab] = useState<SpaceSettingsTab>('general')
   const [spaceSettingsModuleId, setSpaceSettingsModuleId] = useState<string | null>(null)
@@ -495,59 +492,77 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
     }
   }, [connector, updateExtension])
 
-  const toggleTheme = () => {
-    setIsDark(!isDark)
-    document.documentElement.classList.toggle('dark')
-  }
-
   return (
     <AppShell>
-      <Navbar>
-        <NavbarStart>
-          {activeWorkspace ? (
-            <MacherWorkspaceSwitcher
-              workspaces={workspaces}
-              groups={groups}
-              activeWorkspace={activeWorkspace}
-              onWorkspaceChange={handleWorkspaceChange}
-              onCreateWorkspace={openCreateDialog}
-              onEditWorkspace={openEditDialog}
+      <header className="shrink-0 z-40 w-full glass-navbar shadow-navbar">
+        <div className="flex h-11 items-center gap-2 px-2">
+          {/* Links: Workspace-Switcher */}
+          <div className="flex shrink-0 items-center gap-1">
+            {activeWorkspace ? (
+              <MacherWorkspaceSwitcher
+                workspaces={workspaces}
+                groups={groups}
+                activeWorkspace={activeWorkspace}
+                onWorkspaceChange={handleWorkspaceChange}
+                onCreateWorkspace={openCreateDialog}
+                onEditWorkspace={openEditDialog}
+              />
+            ) : (
+              <Button variant="outline" size="sm" onClick={openCreateDialog} className="h-7">
+                <Plus className="h-3.5 w-3.5 mr-1" />
+                <span className="text-xs">Neue Gruppe</span>
+              </Button>
+            )}
+          </div>
+
+          {/* Suche — daneben, vor den Tabs */}
+          <GlobalSearch
+            className="hidden w-56 sm:block lg:w-72"
+            onJump={handleModuleChange}
+          />
+
+          {/* Mitte: offene Tabs + Hamburger */}
+          <div className="hidden min-w-0 flex-1 items-center md:flex">
+            <OpenModuleTabs
+              allModules={modules}
+              openModules={openModules}
+              activeId={activeModule}
+              onSelect={handleModuleChange}
+              onClose={handleCloseTab}
+              onOpen={handleModuleChange}
             />
-          ) : (
-            <Button variant="outline" size="sm" onClick={openCreateDialog}>
-              <Plus className="h-4 w-4 mr-2" />
-              Neue Gruppe
-            </Button>
-          )}
-        </NavbarStart>
-        <NavbarCenter>
-          <OpenModuleTabs
-            allModules={modules}
-            openModules={openModules}
-            activeId={activeModule}
-            onSelect={handleModuleChange}
-            onClose={handleCloseTab}
-            onOpen={handleModuleChange}
-          />
-        </NavbarCenter>
-        <NavbarEnd>
-          {supportsMessaging && <RelayStatusBadgeWrapper />}
-          <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-9 w-9">
-            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </Button>
-          <UserMenu
-            user={userData}
-            onProfile={() => setProfileDialogOpen(true)}
-            onContacts={supportsContacts ? () => setContactsDialogOpen(true) : undefined}
-            contactCount={activeContacts.length}
-            onVerify={() => setVerifyDialogOpen(true)}
-            onLogout={activeConnectorId === 'wot' && isAuthenticatable(connector) ? async () => {
-              await connector.logout()
-              window.location.reload()
-            } : undefined}
-          />
-        </NavbarEnd>
-      </Navbar>
+          </div>
+
+          {/* Spacer fuer Mobile */}
+          <div className="flex-1 md:hidden" />
+
+          {/* Rechts: Status, Vollbild, Einstellungen, User */}
+          <div className="flex shrink-0 items-center gap-0.5">
+            {supportsMessaging && <RelayStatusBadgeWrapper />}
+            <FullscreenButton />
+            <button
+              type="button"
+              onClick={() => openSpaceSettings('general')}
+              title="Einstellungen"
+              aria-label="Einstellungen"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground"
+            >
+              <SettingsIcon className="h-3.5 w-3.5" />
+            </button>
+            <UserMenu
+              user={userData}
+              onProfile={() => setProfileDialogOpen(true)}
+              onContacts={supportsContacts ? () => setContactsDialogOpen(true) : undefined}
+              contactCount={activeContacts.length}
+              onVerify={() => setVerifyDialogOpen(true)}
+              onLogout={activeConnectorId === 'wot' && isAuthenticatable(connector) ? async () => {
+                await connector.logout()
+                window.location.reload()
+              } : undefined}
+            />
+          </div>
+        </div>
+      </header>
 
       {/* HUD oben rechts — Total-Level + XP-Balken, expandierbar zu 7 Bereichen */}
       {activeGroup && (
