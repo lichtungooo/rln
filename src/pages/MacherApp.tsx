@@ -66,6 +66,7 @@ import { skillTreeModule } from '../modules/skill-tree'
 import { dashboardModule } from '../modules/dashboard'
 import { avatarModule } from '../modules/avatar'
 import { wissensfeldModule } from '../modules/wissensfeld'
+import { valluetModule } from '../modules/valluet'
 import { HudBar } from '../modules/gamification/HudBar'
 import { useSpaceTheme } from '../themes/use-space-theme'
 import { SpaceSettings, type SpaceSettingsTab } from '../settings/SpaceSettings'
@@ -85,6 +86,7 @@ registerModule(skillTreeModule)
 registerModule(dashboardModule)
 registerModule(avatarModule)
 registerModule(wissensfeldModule)
+registerModule(valluetModule)
 
 const STORAGE_KEY_CONNECTOR = 'macher-connector'
 const STORAGE_KEY_GROUP = 'macher-active-group'
