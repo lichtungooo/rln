@@ -608,6 +608,8 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
           <HomeView
             userName={userData.name}
             onClose={() => setHomeOpen(false)}
+            onStartHandshake={() => setVerifyDialogOpen(true)}
+            contactCount={activeContacts.length}
           />
         )}
 

@@ -18,9 +18,13 @@ interface HomeViewProps {
   userName: string
   /** Klick auf eine Schnell-Aktion soll Home schliessen und navigieren */
   onClose: () => void
+  /** Handshake starten — oeffnet den Verifikations-Dialog (QR zeigen + scannen) */
+  onStartHandshake: () => void
+  /** Anzahl der bereits verbundenen Kontakte */
+  contactCount?: number
 }
 
-export function HomeView({ userName }: HomeViewProps) {
+export function HomeView({ userName, onStartHandshake, contactCount }: HomeViewProps) {
   const greeting = useMemo(() => {
     const hour = new Date().getHours()
     if (hour < 5) return 'Tiefe Nacht'
@@ -81,17 +85,20 @@ export function HomeView({ userName }: HomeViewProps) {
 
         <button
           type="button"
-          disabled
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-primary/30 px-4 py-3 text-sm font-semibold text-primary-foreground/70"
-          title="Handshake folgt in Phase H3"
+          onClick={onStartHandshake}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
         >
           Handshake starten
           <ArrowRight className="h-4 w-4" />
         </button>
 
-        <p className="mt-2 text-center text-[11px] text-muted-foreground">
-          Funktion folgt in Kuerze.
-        </p>
+        {contactCount !== undefined && contactCount > 0 && (
+          <p className="mt-3 text-center text-[11px] text-muted-foreground">
+            {contactCount === 1
+              ? 'Ein Mensch bereits verbunden.'
+              : `${contactCount} Menschen bereits verbunden.`}
+          </p>
+        )}
       </section>
 
       {/* Hinweis auf weitere Schnellzugriffe */}
