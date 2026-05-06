@@ -72,7 +72,8 @@ import { MobileTabSwitcher } from '../components/MobileTabSwitcher'
 import { useEdgeSwipe } from '../components/use-edge-swipe'
 import { GlobalSearch } from '../components/GlobalSearch'
 import { FullscreenButton } from '../components/FullscreenButton'
-import { Square } from 'lucide-react'
+import { Square, Home } from 'lucide-react'
+import { HomeView } from '../components/HomeView'
 
 registerModule(mapModule)
 registerModule(kanbanModule)
@@ -183,6 +184,7 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
   const [groupDialogOpen, setGroupDialogOpen] = useState(false)
   const [groupDialogMode, setGroupDialogMode] = useState<GroupDialogMode>({ type: 'create' })
   const [mobileSwitcherOpen, setMobileSwitcherOpen] = useState(false)
+  const [homeOpen, setHomeOpen] = useState(false)
   const [spaceSettingsOpen, setSpaceSettingsOpen] = useState(false)
   const [spaceSettingsTab, setSpaceSettingsTab] = useState<SpaceSettingsTab>('general')
   const [spaceSettingsModuleId, setSpaceSettingsModuleId] = useState<string | null>(null)
@@ -418,6 +420,7 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
   )
 
   const handleWorkspaceChange = useCallback((workspace: Workspace) => {
+    setHomeOpen(false)
     const group = groups.find((g) => g.id === workspace.id)
     const mods = (group?.data?.modules as string[] | undefined) ?? ['map', 'kanban', 'marketplace']
     const mod = mods.includes(activeModule) ? activeModule : (mods[0] ?? 'map')
@@ -425,6 +428,7 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
   }, [groups, activeModule, navigate, buildSpacePath])
 
   const handleModuleChange = (moduleId: string) => {
+    setHomeOpen(false)
     if (activeWorkspace) navigate(buildSpacePath(activeWorkspace.id, moduleId))
   }
 
@@ -498,6 +502,19 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
     <AppShell>
       <header className="shrink-0 z-40 w-full glass-navbar shadow-navbar">
         <div className="flex h-11 items-center gap-2 px-2">
+          {/* Haeuschen — global, immer erreichbar */}
+          <button
+            type="button"
+            onClick={() => setHomeOpen(true)}
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition hover:bg-muted ${
+              homeOpen ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground'
+            }`}
+            aria-label="Daheim"
+            title="Daheim"
+          >
+            <Home className="h-4 w-4" />
+          </button>
+
           {/* Links: Workspace-Switcher */}
           <div className="flex shrink-0 items-center gap-1">
             {activeWorkspace ? (
@@ -586,6 +603,20 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
       )}
 
       <AppShellMain withBottomNav={false}>
+        {/* Home — global, oeffnet sich bei Klick aufs Haeuschen */}
+        {homeOpen && (
+          <HomeView
+            userName={userData.name}
+            onClose={() => setHomeOpen(false)}
+          />
+        )}
+
+        {/* Module-Block — bei offener Home per display:none versteckt,
+            damit Modul-State (Map-Zoom, Tab-Inhalte) erhalten bleibt. */}
+        <div
+          className={homeOpen ? '' : 'h-full'}
+          style={homeOpen ? { display: 'none' } : undefined}
+        >
         {activeGroup && (
           <SpaceHierarchyBar
             group={activeGroup}
@@ -636,6 +667,7 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
             )
           })
         )}
+        </div>
       </AppShellMain>
 
       <MobileTabSwitcher
