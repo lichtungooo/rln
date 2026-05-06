@@ -491,19 +491,38 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
   }), [currentUser, masterProfile, extensionData])
 
   const handleSaveProfile = useCallback(async (updates: Record<string, unknown>) => {
+    // Auth-Check vorab — WoT-Methoden werfen 'Not authenticated' wenn die
+    // Identitaet nicht entsperrt ist. Wir fangen das mit klarer Sprache ab.
+    if (activeConnectorId === 'wot' && !currentUser?.id) {
+      throw new Error(
+        'Identitaet nicht entsperrt. Erst mit den 12 Worten anmelden, dann ist das Speichern scharf.'
+      )
+    }
+
     const { master, extension } = splitProfileUpdates(updates)
 
-    // Master-Felder ueber Antons WoT-Connector
-    if (Object.keys(master).length > 0 && hasProfile(connector)) {
-      await connector.updateMyProfile(master)
-      setMasterProfile((prev) => ({ ...prev, ...master }))
-    }
+    try {
+      // Master-Felder ueber Antons WoT-Connector
+      if (Object.keys(master).length > 0 && hasProfile(connector)) {
+        await connector.updateMyProfile(master)
+        setMasterProfile((prev) => ({ ...prev, ...master }))
+      }
 
-    // Extension-Felder als eigenes Item
-    if (Object.keys(extension).length > 0) {
-      await updateExtension(extension)
+      // Extension-Felder als eigenes Item
+      if (Object.keys(extension).length > 0) {
+        await updateExtension(extension)
+      }
+    } catch (err) {
+      // 'Not authenticated' und aehnliche Connector-Fehler in klare Sprache uebersetzen
+      const msg = err instanceof Error ? err.message : String(err)
+      if (/not authenticated|nicht authentifiziert|no identity/i.test(msg)) {
+        throw new Error(
+          'Identitaet nicht entsperrt. Erst mit den 12 Worten anmelden.'
+        )
+      }
+      throw err instanceof Error ? err : new Error(msg)
     }
-  }, [connector, updateExtension])
+  }, [connector, updateExtension, activeConnectorId, currentUser?.id])
 
   return (
     <AppShell>
@@ -854,6 +873,21 @@ function AuthGate({ connector, children }: { connector: DataInterface; children:
     if (!isAuthenticatable(connector)) return true
     return connector.getAuthState().current.status === 'authenticated'
   })
+
+  // Auf Auth-State-Wechsel zur Laufzeit hoeren — z.B. Logout, Auth laed
+  // verzoegert, Identitaet wird auf einem anderen Geraet gewechselt.
+  useEffect(() => {
+    if (!isAuthenticatable(connector)) {
+      setAuthenticated(true)
+      return
+    }
+    const auth = connector.getAuthState()
+    setAuthenticated(auth.current.status === 'authenticated')
+    const unsubscribe = auth.subscribe((state) => {
+      setAuthenticated(state.status === 'authenticated')
+    })
+    return () => unsubscribe()
+  }, [connector])
 
   if (authenticated) return <>{children}</>
 
