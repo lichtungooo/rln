@@ -9,6 +9,7 @@ Repo: github.com/lichtungooo/rln
 > 2. [ARCHITEKTUR.md](ARCHITEKTUR.md) — All-WoT-Entscheidung, Antons Stack
 > 3. [MODULSCHMIEDE.md](MODULSCHMIEDE.md) — Vision: Module als Daten + Konfigurator + AI
 > 4. [MODUL-DEV-GUIDE.md](MODUL-DEV-GUIDE.md) — wie baue ich ein neues Modul
+> 5. [MOBILE.md](MOBILE.md) — Topbar, Vollbild-Switcher, Edge-Swipe (lesen, bevor an Mobile-UI gearbeitet wird)
 
 ---
 
@@ -195,10 +196,13 @@ Pro Space eigene Tonalitaet:
 - [src/settings/SpaceSettings.tsx](src/settings/SpaceSettings.tsx) — Vollbild-Settings mit 7 Tabs
 - [src/spaces/space-data.ts](src/spaces/space-data.ts) — Helper fuer Slug/Hierarchie/Hashtags
 - [src/spaces/MacherWorkspaceSwitcher.tsx](src/spaces/MacherWorkspaceSwitcher.tsx) — hierarchischer Switcher
+- [src/components/MobileTabSwitcher.tsx](src/components/MobileTabSwitcher.tsx) — Mobile Vollbild-Switcher (3 Reiter + Footer)
+- [src/components/OpenModuleTabs.tsx](src/components/OpenModuleTabs.tsx) — Browser-Style Tabs auf Desktop
 - [vite.config.ts](vite.config.ts) — Aliase, fester Port
 - [ARCHITEKTUR.md](ARCHITEKTUR.md) — All-WoT-Entscheidung
 - [MODULSCHMIEDE.md](MODULSCHMIEDE.md) — Modulschmiede-Vision
 - [MODUL-DEV-GUIDE.md](MODUL-DEV-GUIDE.md) — neuen Modul bauen
+- [MOBILE.md](MOBILE.md) — Mobile-Architektur (Topbar, Switcher, Edge-Swipe)
 
 ---
 
