@@ -13,7 +13,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import type { ComponentType, ReactNode, SVGProps } from 'react'
-import { X, Plus, ArrowLeft, Check, Compass, User } from 'lucide-react'
+import { X, Plus, ArrowLeft, Check, Compass, ChevronRight, Pencil, Users, Fingerprint, LogOut } from 'lucide-react'
 
 export interface MobileTab {
   id: string
@@ -43,8 +43,20 @@ interface MobileTabSwitcherProps {
   spaces: MobileSpace[]
   activeSpaceId?: string
   onSelectSpace: (id: string) => void
+  profile: MobileProfile
+  onEditProfile: () => void
+  onOpenContacts?: () => void
+  contactCount?: number
+  onVerifyIdentity?: () => void
+  onLogout?: () => void
   /** Reiter, der beim Oeffnen aktiv ist (default: 'modules') */
   initialView?: SwitcherView
+}
+
+export interface MobileProfile {
+  name: string
+  avatar?: string
+  did?: string
 }
 
 export function MobileTabSwitcher({
@@ -59,6 +71,12 @@ export function MobileTabSwitcher({
   spaces,
   activeSpaceId,
   onSelectSpace,
+  profile,
+  onEditProfile,
+  onOpenContacts,
+  contactCount,
+  onVerifyIdentity,
+  onLogout,
   initialView = 'modules',
 }: MobileTabSwitcherProps) {
   const [view, setView] = useState<SwitcherView>(initialView)
@@ -138,7 +156,33 @@ export function MobileTabSwitcher({
             onClose={onClose}
           />
         )}
-        {view === 'profile' && <ProfileView />}
+        {view === 'profile' && (
+          <ProfileView
+            profile={profile}
+            onEditProfile={() => {
+              onEditProfile()
+              onClose()
+            }}
+            onOpenContacts={
+              onOpenContacts
+                ? () => {
+                    onOpenContacts()
+                    onClose()
+                  }
+                : undefined
+            }
+            contactCount={contactCount}
+            onVerifyIdentity={
+              onVerifyIdentity
+                ? () => {
+                    onVerifyIdentity()
+                    onClose()
+                  }
+                : undefined
+            }
+            onLogout={onLogout}
+          />
+        )}
       </div>
     </div>
   )
@@ -367,8 +411,121 @@ function SpacesView({ spaces, activeSpaceId, onSelectSpace }: SpacesViewProps) {
   )
 }
 
-function ProfileView() {
-  return <PlatzhalterView icon={User} title="Profil" hint="Bald siehst du hier deinen Profil-Bereich — Avatar, Identitaet, freigegebene Inhalte." />
+interface ProfileViewProps {
+  profile: MobileProfile
+  onEditProfile: () => void
+  onOpenContacts?: () => void
+  contactCount?: number
+  onVerifyIdentity?: () => void
+  onLogout?: () => void
+}
+
+function ProfileView({
+  profile,
+  onEditProfile,
+  onOpenContacts,
+  contactCount,
+  onVerifyIdentity,
+  onLogout,
+}: ProfileViewProps) {
+  const initial = profile.name.trim().slice(0, 1).toUpperCase() || '?'
+  const didShort = profile.did
+    ? profile.did.length > 18
+      ? `${profile.did.slice(0, 8)}…${profile.did.slice(-6)}`
+      : profile.did
+    : null
+
+  return (
+    <div className="flex flex-col gap-6">
+      {/* Kopfblock — Avatar + Name + DID */}
+      <div className="flex flex-col items-center gap-3 pt-2 text-center">
+        <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-primary/15 text-primary">
+          {profile.avatar ? (
+            <img src={profile.avatar} alt={profile.name} className="h-full w-full object-cover" />
+          ) : (
+            <span className="text-2xl font-semibold">{initial}</span>
+          )}
+        </div>
+        <div>
+          <div className="text-base font-semibold text-foreground">{profile.name}</div>
+          {didShort && (
+            <div
+              className="mt-1 inline-block rounded-full bg-muted px-2 py-0.5 font-mono text-[10px] text-muted-foreground"
+              title={profile.did}
+            >
+              {didShort}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Aktionen */}
+      <ul className="overflow-hidden rounded-lg border border-border/60 bg-card">
+        <ProfileAction icon={Pencil} label="Profil bearbeiten" onClick={onEditProfile} />
+        {onOpenContacts && (
+          <ProfileAction
+            icon={Users}
+            label="Kontakte"
+            badge={contactCount && contactCount > 0 ? String(contactCount) : undefined}
+            onClick={onOpenContacts}
+          />
+        )}
+        {onVerifyIdentity && (
+          <ProfileAction
+            icon={Fingerprint}
+            label="Identitaet pruefen"
+            onClick={onVerifyIdentity}
+          />
+        )}
+        {onLogout && (
+          <ProfileAction
+            icon={LogOut}
+            label="Abmelden"
+            tone="danger"
+            onClick={onLogout}
+          />
+        )}
+      </ul>
+    </div>
+  )
+}
+
+interface ProfileActionProps {
+  icon: ComponentType<SVGProps<SVGSVGElement>>
+  label: string
+  badge?: string
+  tone?: 'default' | 'danger'
+  onClick: () => void
+}
+
+function ProfileAction({ icon: Icon, label, badge, tone = 'default', onClick }: ProfileActionProps) {
+  const isDanger = tone === 'danger'
+  return (
+    <li className="border-b border-border/40 last:border-b-0">
+      <button
+        type="button"
+        onClick={onClick}
+        className={`flex w-full items-center gap-3 px-3 py-3 text-left transition hover:bg-muted/50 ${
+          isDanger ? 'text-destructive' : 'text-foreground'
+        }`}
+      >
+        <div
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
+            isDanger ? 'bg-destructive/10 text-destructive' : 'bg-muted text-muted-foreground'
+          }`}
+        >
+          <Icon className="h-4 w-4" />
+        </div>
+        <span className="flex-1 text-sm font-medium">{label}</span>
+        {badge && (
+          <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary">
+            {badge}
+          </span>
+        )}
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+      </button>
+    </li>
+  )
 }
 
 interface PlatzhalterViewProps {

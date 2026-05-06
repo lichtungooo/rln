@@ -658,6 +658,25 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
           const ws = workspaces.find((w) => w.id === id)
           if (ws) handleWorkspaceChange(ws)
         }}
+        profile={{
+          name: userData.name,
+          avatar: userData.avatar,
+          did: currentUser?.id,
+        }}
+        onEditProfile={() => setProfileDialogOpen(true)}
+        onOpenContacts={
+          supportsContacts ? () => setContactsDialogOpen(true) : undefined
+        }
+        contactCount={activeContacts.length}
+        onVerifyIdentity={() => setVerifyDialogOpen(true)}
+        onLogout={
+          activeConnectorId === 'wot' && isAuthenticatable(connector)
+            ? async () => {
+                await connector.logout()
+                window.location.reload()
+              }
+            : undefined
+        }
       />
 
       {/* Dialogs */}
