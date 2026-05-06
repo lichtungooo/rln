@@ -64,6 +64,7 @@ import { valluetModule } from '../modules/valluet'
 import { HudBar } from '../modules/gamification/HudBar'
 import { useSpaceTheme } from '../themes/use-space-theme'
 import { SpaceSettings, type SpaceSettingsTab } from '../settings/SpaceSettings'
+import { MobileSpaceSettings } from '../settings/MobileSpaceSettings'
 import { MacherWorkspaceSwitcher } from '../spaces/MacherWorkspaceSwitcher'
 import { findGroupBySlugOrId, getSpacePathSegment, getSpaceMeta, generateSlug, isSlugFree } from '../spaces/space-data'
 import { SpaceHierarchyBar } from '../spaces/SpaceHierarchyBar'
@@ -856,7 +857,8 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
 
       <IncomingEventDialogs onCloseVerifyDialog={() => setVerifyDialogOpen(false)} />
 
-      <SpaceSettings
+      {/* Auf Mobile aufgeraeumte Drilldown-Settings, auf Desktop die volle Sidebar-Variante */}
+      <SettingsByViewport
         open={spaceSettingsOpen}
         onClose={() => setSpaceSettingsOpen(false)}
         spaceId={activeGroup?.id ?? null}
@@ -876,6 +878,42 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
       )}
     </AppShell>
   )
+}
+
+// --- Settings: Mobile-Drilldown vs. Desktop-Sidebar ---
+
+function SettingsByViewport(props: {
+  open: boolean
+  onClose: () => void
+  spaceId: string | null
+  activeGroup: Group | null
+  initialTab: SpaceSettingsTab
+  initialModuleId: string | null
+}) {
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return window.matchMedia('(max-width: 767px)').matches
+  })
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const mq = window.matchMedia('(max-width: 767px)')
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
+
+  if (isMobile) {
+    return (
+      <MobileSpaceSettings
+        open={props.open}
+        onClose={props.onClose}
+        spaceId={props.spaceId}
+        activeGroup={props.activeGroup}
+      />
+    )
+  }
+  return <SpaceSettings {...props} />
 }
 
 // --- Auth Gate ---
