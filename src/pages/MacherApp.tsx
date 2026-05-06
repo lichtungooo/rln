@@ -178,17 +178,35 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
   const { activeContacts, pendingContacts, contacts: allContacts, removeContact, updateContactName, supportsContacts } = useContacts()
   const verification = useVerification()
 
-  const [profileDialogOpen, setProfileDialogOpen] = useState(false)
+  // Profil-Dialog-Status in sessionStorage spiegeln, damit ein
+  // Browser-Remount nach Kamera-Aufruf den Dialog wieder oeffnet.
+  const [profileDialogOpen, setProfileDialogOpen] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return sessionStorage.getItem('macher-profile-dialog-open') === '1'
+  })
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (profileDialogOpen) {
+      sessionStorage.setItem('macher-profile-dialog-open', '1')
+    } else {
+      sessionStorage.removeItem('macher-profile-dialog-open')
+      sessionStorage.removeItem('macher-profile-pending-avatar')
+    }
+  }, [profileDialogOpen])
   const [contactsDialogOpen, setContactsDialogOpen] = useState(false)
   const [verifyDialogOpen, setVerifyDialogOpen] = useState(false)
   const [groupDialogOpen, setGroupDialogOpen] = useState(false)
   const [groupDialogMode, setGroupDialogMode] = useState<GroupDialogMode>({ type: 'create' })
   const [mobileSwitcherOpen, setMobileSwitcherOpen] = useState(false)
   // Auf Mobile: standardmaessig im Home-Bildschirm starten. Wenn der User
-  // explizit eine Modul-URL aufruft (z.B. /macher/karte), Home weglassen.
+  // explizit eine Modul-URL aufruft (z.B. /macher/karte) ODER gerade ein
+  // Dialog mitten im Vorgang ist (z.B. nach Kamera-Aufruf wieder gemountet),
+  // Home weglassen.
   const [homeOpen, setHomeOpen] = useState(() => {
     if (typeof window === 'undefined') return false
     if (!window.matchMedia('(max-width: 767px)').matches) return false
+    // Profil-Dialog mitten im Vorgang? Dann nicht in Home springen.
+    if (sessionStorage.getItem('macher-profile-dialog-open') === '1') return false
     const segments = window.location.pathname.split('/').filter(Boolean)
     return segments.length <= 1
   })

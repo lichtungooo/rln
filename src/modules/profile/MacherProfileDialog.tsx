@@ -37,15 +37,37 @@ export function MacherProfileDialog({
 }: MacherProfileDialogProps) {
   // State pro Feld — initialisiert aus profile
   const [values, setValues] = useState<Record<string, unknown>>(() => initValues(config, profile))
-  const [avatar, setAvatar] = useState(profile.avatar ?? "")
+  // Avatar — falls ein Mobile-Browser-Remount (nach Kamera-Aufruf)
+  // passiert ist, das schwebende Avatar-Bild aus sessionStorage holen.
+  const [avatar, setAvatar] = useState(() => {
+    if (typeof window !== "undefined") {
+      const pending = sessionStorage.getItem("macher-profile-pending-avatar")
+      if (pending) return pending
+    }
+    return profile.avatar ?? ""
+  })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
 
-  // Reset state when profile changes (z.B. neuer Connector geladen)
+  // Avatar in sessionStorage spiegeln, damit ein Browser-Remount nach
+  // Kamera-Aufruf das Bild nicht verliert. Beim ersten Save oder Abbrechen
+  // raeumt der MacherApp-useEffect den Schluessel wieder weg.
+  useEffect(() => {
+    if (typeof window === "undefined") return
+    if (avatar) {
+      sessionStorage.setItem("macher-profile-pending-avatar", avatar)
+    }
+  }, [avatar])
+
+  // Reset state when profile changes (z.B. neuer Connector geladen).
+  // Avatar nicht ueberschreiben wenn ein "pending"-Wert da ist (User
+  // war gerade beim Foto-Auswaehlen, Wert kommt aus sessionStorage).
   useEffect(() => {
     setValues(initValues(config, profile))
-    setAvatar(profile.avatar ?? "")
+    if (typeof window === "undefined" || !sessionStorage.getItem("macher-profile-pending-avatar")) {
+      setAvatar(profile.avatar ?? "")
+    }
   }, [profile, config])
 
   const setField = (id: string, val: unknown) => {
