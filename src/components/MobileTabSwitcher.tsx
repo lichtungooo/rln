@@ -11,14 +11,22 @@
  * Klick auf einen Listen-Eintrag → oeffnet als neuen Tab.
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ComponentType, ReactNode, SVGProps } from 'react'
-import { X, Plus, ArrowLeft, Check, LayoutGrid, User } from 'lucide-react'
+import { X, Plus, ArrowLeft, Check, Compass, User } from 'lucide-react'
 
 export interface MobileTab {
   id: string
   label: string
   icon?: ComponentType<SVGProps<SVGSVGElement>>
+}
+
+export interface MobileSpace {
+  id: string
+  name: string
+  avatar?: string
+  /** scope === 'overview' = Spezial-Karte "Alle Werkstaetten" */
+  scope?: string
 }
 
 type SwitcherView = 'spaces' | 'modules' | 'profile'
@@ -32,6 +40,9 @@ interface MobileTabSwitcherProps {
   onSelect: (id: string) => void
   onCloseTab: (id: string) => void
   onOpen: (id: string) => void
+  spaces: MobileSpace[]
+  activeSpaceId?: string
+  onSelectSpace: (id: string) => void
   /** Reiter, der beim Oeffnen aktiv ist (default: 'modules') */
   initialView?: SwitcherView
 }
@@ -45,6 +56,9 @@ export function MobileTabSwitcher({
   onSelect,
   onCloseTab,
   onOpen,
+  spaces,
+  activeSpaceId,
+  onSelectSpace,
   initialView = 'modules',
 }: MobileTabSwitcherProps) {
   const [view, setView] = useState<SwitcherView>(initialView)
@@ -103,7 +117,16 @@ export function MobileTabSwitcher({
 
       {/* Inhalt — scrollbar */}
       <div className="flex-1 overflow-y-auto px-3 py-4">
-        {view === 'spaces' && <SpacesView />}
+        {view === 'spaces' && (
+          <SpacesView
+            spaces={spaces}
+            activeSpaceId={activeSpaceId}
+            onSelectSpace={(id) => {
+              onSelectSpace(id)
+              onClose()
+            }}
+          />
+        )}
         {view === 'modules' && (
           <ModulesView
             allModules={allModules}
@@ -276,8 +299,72 @@ function ModulesView({
   )
 }
 
-function SpacesView() {
-  return <PlatzhalterView icon={LayoutGrid} title="Spaces" hint="Bald siehst du hier alle deine Spaces als Karten. Wechseln, durchsuchen, neue entdecken." />
+interface SpacesViewProps {
+  spaces: MobileSpace[]
+  activeSpaceId?: string
+  onSelectSpace: (id: string) => void
+}
+
+function SpacesView({ spaces, activeSpaceId, onSelectSpace }: SpacesViewProps) {
+  // Overview-Karte zuerst, dann die uebrigen Spaces
+  const sorted = useMemo(() => {
+    const overview = spaces.filter((s) => s.scope === 'overview')
+    const rest = spaces.filter((s) => s.scope !== 'overview')
+    return [...overview, ...rest]
+  }, [spaces])
+
+  if (sorted.length === 0) {
+    return <PlatzhalterView icon={Compass} title="Spaces" hint="Du hast noch keine Spaces. Lege einen ueber das Plus unten rechts an." />
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-3">
+      {sorted.map((s) => {
+        const isActive = s.id === activeSpaceId
+        const isOverview = s.scope === 'overview'
+        const initial = s.name.trim().slice(0, 1).toUpperCase() || '?'
+        return (
+          <div
+            key={s.id}
+            className={`relative aspect-[4/3] overflow-hidden rounded-xl border bg-muted/40 transition ${
+              isActive ? 'border-primary/60 ring-2 ring-primary/30' : 'border-border/60'
+            }`}
+          >
+            <button
+              type="button"
+              onClick={() => onSelectSpace(s.id)}
+              className="flex h-full w-full flex-col items-center justify-center gap-2 p-3 text-center"
+            >
+              {/* Avatar-Kreis */}
+              <div
+                className={`flex h-12 w-12 items-center justify-center overflow-hidden rounded-full ${
+                  isOverview
+                    ? 'bg-muted text-muted-foreground'
+                    : 'bg-primary/15 text-primary'
+                }`}
+              >
+                {s.avatar ? (
+                  <img src={s.avatar} alt={s.name} className="h-full w-full object-cover" />
+                ) : isOverview ? (
+                  <Compass className="h-6 w-6" />
+                ) : (
+                  <span className="text-lg font-semibold">{initial}</span>
+                )}
+              </div>
+              <span className="line-clamp-2 text-sm font-medium text-foreground">
+                {s.name}
+              </span>
+              {isActive && (
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+                  Aktiv
+                </span>
+              )}
+            </button>
+          </div>
+        )
+      })}
+    </div>
+  )
 }
 
 function ProfileView() {

@@ -647,6 +647,17 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
         onSelect={handleModuleChange}
         onCloseTab={handleCloseTab}
         onOpen={handleModuleChange}
+        spaces={workspaces.map((w) => ({
+          id: w.id,
+          name: w.name,
+          avatar: w.avatar,
+          scope: w.scope,
+        }))}
+        activeSpaceId={activeWorkspace?.id}
+        onSelectSpace={(id) => {
+          const ws = workspaces.find((w) => w.id === id)
+          if (ws) handleWorkspaceChange(ws)
+        }}
       />
 
       {/* Dialogs */}
