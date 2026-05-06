@@ -4,7 +4,9 @@ import {
   useCreateItem,
   useUpdateItem,
   useCurrentUser,
+  useConnector,
 } from "@real-life-stack/toolkit"
+import { isWritable } from "@real-life-stack/data-interface"
 
 /**
  * Felder, die Antons WoT-Connector ueber `updateMyProfile` ZUSAETZLICH erhaelt
@@ -39,10 +41,17 @@ export interface ProfileExtensionData {
 /**
  * Hook fuer das eigene Profile-Extension-Item.
  *
- * Liest alle profile-extension Items, filtert auf das eigene (createdBy === currentUser.id).
- * Beim Update: erstellt das Item falls noch keins existiert, sonst updated es.
+ * Liest alle profile-extension Items, filtert auf das eigene
+ * (createdBy === currentUser.id). Beim Update macht eine **frische Lookup
+ * gegen den Connector**, um eine Race-Condition zu vermeiden, in der die
+ * useItems-Subscription noch nicht synchron ist und ein zweites Item
+ * angelegt wird.
+ *
+ * Falls aus der Vorgeschichte mehrere Extension-Items existieren, wird das
+ * erste verwendet (kein automatisches Cleanup — bewusst konservativ).
  */
 export function useProfileExtension() {
+  const connector = useConnector()
   const { data: extensions } = useItems({ type: "profile-extension" })
   const { data: currentUser } = useCurrentUser()
   const { mutate: createItem } = useCreateItem()
@@ -63,9 +72,17 @@ export function useProfileExtension() {
       if (!currentUser?.id) {
         throw new Error("Kein eingeloggter User")
       }
-      if (myExtension) {
-        await updateItem(myExtension.id, {
-          data: { ...myExtension.data, ...updates },
+      if (!isWritable(connector)) {
+        throw new Error("Connector unterstuetzt das Schreiben nicht")
+      }
+      // Frische Lookup gegen den Connector — verhindert Doppel-Items, falls
+      // die useItems-Subscription beim Save-Zeitpunkt noch nicht synchron ist.
+      const fresh = await connector.getItems({ type: "profile-extension" })
+      const own = fresh.find((e) => e.createdBy === currentUser.id)
+
+      if (own) {
+        await updateItem(own.id, {
+          data: { ...(own.data ?? {}), ...updates },
         })
       } else {
         await createItem({
@@ -75,7 +92,7 @@ export function useProfileExtension() {
         })
       }
     },
-    [myExtension, currentUser?.id, createItem, updateItem]
+    [connector, currentUser?.id, createItem, updateItem]
   )
 
   return { data, update, exists: myExtension !== null }
