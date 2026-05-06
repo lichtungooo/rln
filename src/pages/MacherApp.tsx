@@ -68,10 +68,11 @@ import { MacherWorkspaceSwitcher } from '../spaces/MacherWorkspaceSwitcher'
 import { findGroupBySlugOrId, getSpacePathSegment, getSpaceMeta, generateSlug, isSlugFree } from '../spaces/space-data'
 import { SpaceHierarchyBar } from '../spaces/SpaceHierarchyBar'
 import { OpenModuleTabs } from '../components/OpenModuleTabs'
-import { MobileTabBar } from '../components/MobileTabBar'
+import { MobileTabSwitcher } from '../components/MobileTabSwitcher'
 import { useEdgeSwipe } from '../components/use-edge-swipe'
 import { GlobalSearch } from '../components/GlobalSearch'
 import { FullscreenButton } from '../components/FullscreenButton'
+import { Square } from 'lucide-react'
 
 registerModule(mapModule)
 registerModule(kanbanModule)
@@ -181,6 +182,7 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
   const [verifyDialogOpen, setVerifyDialogOpen] = useState(false)
   const [groupDialogOpen, setGroupDialogOpen] = useState(false)
   const [groupDialogMode, setGroupDialogMode] = useState<GroupDialogMode>({ type: 'create' })
+  const [mobileSwitcherOpen, setMobileSwitcherOpen] = useState(false)
   const [spaceSettingsOpen, setSpaceSettingsOpen] = useState(false)
   const [spaceSettingsTab, setSpaceSettingsTab] = useState<SpaceSettingsTab>('general')
   const [spaceSettingsModuleId, setSpaceSettingsModuleId] = useState<string | null>(null)
@@ -515,13 +517,13 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
             )}
           </div>
 
-          {/* Suche — daneben, vor den Tabs */}
+          {/* Suche — Desktop neben Workspace, vor den Tabs */}
           <GlobalSearch
             className="hidden w-56 sm:block lg:w-72"
             onJump={handleModuleChange}
           />
 
-          {/* Mitte: offene Tabs + Hamburger */}
+          {/* Mitte Desktop: offene Tabs + Hamburger */}
           <div className="hidden min-w-0 flex-1 items-center md:flex">
             <OpenModuleTabs
               allModules={modules}
@@ -533,8 +535,19 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
             />
           </div>
 
-          {/* Spacer fuer Mobile */}
+          {/* Spacer — schiebt rechte Buttons ans Ende auf Mobile */}
           <div className="flex-1 md:hidden" />
+
+          {/* Tab-Counter Mobile — Firefox-Stil, leeres Rechteck. Klick oeffnet Vollbild-Switcher. */}
+          <button
+            type="button"
+            onClick={() => setMobileSwitcherOpen(true)}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-foreground transition hover:bg-muted md:hidden"
+            aria-label="Tabs"
+            title="Tabs"
+          >
+            <Square className="h-4 w-4" strokeWidth={2.5} />
+          </button>
 
           {/* Rechts: Status, Vollbild, Einstellungen, User */}
           <div className="flex shrink-0 items-center gap-0.5">
@@ -572,7 +585,7 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
         />
       )}
 
-      <AppShellMain withBottomNav={!activeModuleDef?.fullWidth}>
+      <AppShellMain withBottomNav={false}>
         {activeGroup && (
           <SpaceHierarchyBar
             group={activeGroup}
@@ -625,12 +638,14 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
         )}
       </AppShellMain>
 
-      <MobileTabBar
+      <MobileTabSwitcher
+        open={mobileSwitcherOpen}
+        onClose={() => setMobileSwitcherOpen(false)}
         allModules={modules}
         openModules={openModules}
         activeId={activeModule}
         onSelect={handleModuleChange}
-        onClose={handleCloseTab}
+        onCloseTab={handleCloseTab}
         onOpen={handleModuleChange}
       />
 
