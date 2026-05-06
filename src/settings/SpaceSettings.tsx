@@ -168,30 +168,31 @@ export function SpaceSettings({
             </Button>
           </div>
 
-          {/* Body: Sidebar + Content */}
-          <div className="flex flex-1 min-h-0 overflow-hidden">
-            {/* Tab-Sidebar */}
-            <nav className="w-44 sm:w-52 border-r bg-muted/20 overflow-y-auto shrink-0">
-              <ul className="p-2 space-y-0.5">
+          {/* Body: Sidebar + Content — auf Mobile gestapelt (Tab-Bar oben),
+              auf Desktop nebeneinander (Sidebar links). */}
+          <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden">
+            {/* Tab-Sidebar — horizontal scrollbar auf Mobile, vertikal auf Desktop. */}
+            <nav className="shrink-0 border-b md:border-b-0 md:border-r md:w-44 lg:w-52 bg-muted/20 overflow-x-auto md:overflow-x-hidden md:overflow-y-auto">
+              <ul className="flex md:block gap-1 md:gap-0 p-2 md:space-y-0.5">
                 {TABS.map((tab) => {
                   const Icon = tab.icon
                   const isActive = activeTab === tab.id
                   return (
-                    <li key={tab.id}>
+                    <li key={tab.id} className="shrink-0 md:shrink">
                       <button
                         type="button"
                         onClick={() => setActiveTab(tab.id)}
-                        className={`w-full text-left px-3 py-2 rounded-md flex items-center gap-2 text-sm transition-colors ${
+                        className={`text-left px-3 py-2 rounded-md flex items-center gap-2 text-sm transition-colors whitespace-nowrap md:w-full md:whitespace-normal ${
                           isActive
                             ? "bg-primary text-primary-foreground"
                             : "text-foreground hover:bg-muted"
                         }`}
                       >
                         <Icon className="h-4 w-4 shrink-0" />
-                        <div className="flex-1 min-w-0">
+                        <div className="md:flex-1 md:min-w-0">
                           <div className="font-medium leading-tight">{tab.label}</div>
                           {tab.hint && (
-                            <div className={`text-[10px] truncate ${
+                            <div className={`hidden md:block text-[10px] truncate ${
                               isActive ? "text-primary-foreground/80" : "text-muted-foreground"
                             }`}>
                               {tab.hint}
