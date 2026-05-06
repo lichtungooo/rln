@@ -9,6 +9,7 @@ import {
   Sparkles,
   Wrench,
   X,
+  Camera,
   PanelRightOpen,
   PanelRightClose,
   Heart,
@@ -126,7 +127,7 @@ export function SpaceSettings({
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
       <DialogContent
-        className="max-w-none w-screen h-screen sm:w-[95vw] sm:h-[92vh] sm:max-w-6xl p-0 gap-0 overflow-hidden"
+        className="max-w-none w-screen h-[100dvh] sm:w-[95vw] sm:h-[92vh] sm:max-w-6xl p-0 gap-0 overflow-hidden"
         onInteractOutside={(e) => e.preventDefault()}
         showCloseButton={false}
       >
@@ -249,7 +250,7 @@ function SplitContent({
   return (
     <div className="flex h-full">
       <div className={`overflow-y-auto ${showPreview ? "flex-1 lg:w-1/2" : "w-full"}`}>
-        <div className="p-4 sm:p-6">{editor}</div>
+        <div className="p-3 sm:p-6 pb-[max(1rem,env(safe-area-inset-bottom))]">{editor}</div>
       </div>
       {showPreview && (
         <div className="hidden lg:flex flex-1 lg:w-1/2 border-l bg-muted/10 overflow-y-auto">
@@ -564,19 +565,24 @@ function GeneralTab({ group }: { group: Group }) {
     JSON.stringify(hashtags) !== JSON.stringify(meta.hashtags ?? [])
 
   return (
-    <div className="max-w-2xl space-y-5">
+    <div className="max-w-2xl space-y-4">
       <div>
-        <h3 className="text-base font-semibold mb-1">Allgemeine Angaben</h3>
+        <h3 className="text-base font-semibold mb-0.5">Allgemein</h3>
         <p className="text-xs text-muted-foreground">
-          Name, Beschreibung, URL-Slug, Eltern-Space und Hashtags. Diese Werte
-          erscheinen im Workspace-Switcher, in Einladungen und im Spaces-
-          Browser.
+          Name, Logo, Beschreibung, URL-Slug, Eltern-Space, Hashtags.
         </p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-3">
+        {/* Avatar zuerst — wie im Profil-Dialog. Tap/Klick oeffnet Auswahl. */}
+        <SpaceAvatarUpload
+          image={image}
+          name={name}
+          onChange={setImage}
+        />
+
         <div>
-          <Label className="text-xs">Name des Space</Label>
+          <Label className="text-xs">Name</Label>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -585,22 +591,12 @@ function GeneralTab({ group }: { group: Group }) {
         </div>
 
         <div>
-          <ImageUploadField
-            mode="cover"
-            value={image}
-            onChange={setImage}
-            label="Logo / Avatar"
-            hint="Erscheint im Workspace-Switcher und in Einladungen. Quadratisch wirkt am besten."
-          />
-        </div>
-
-        <div>
           <Label className="text-xs">Beschreibung</Label>
           <Textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Worum geht es in diesem Space? Wer ist hier zuhause?"
-            className="min-h-20"
+            placeholder="Worum geht es?"
+            className="min-h-16"
           />
         </div>
 
@@ -612,61 +608,45 @@ function GeneralTab({ group }: { group: Group }) {
               onClick={handleAutoSlug}
               className="text-[10px] text-primary hover:underline"
             >
-              Aus Name erzeugen
+              Aus Name
             </button>
           </div>
           <Input
             value={slug}
             onChange={(e) => setSlug(e.target.value.toLowerCase())}
-            placeholder="z.B. macher-berlin-mitte"
+            placeholder="macher-berlin-mitte"
             className={slugError ? "border-destructive" : ""}
           />
-          <div className="flex items-center justify-between mt-1">
-            <p className="text-[10px] text-muted-foreground">
-              {slug
-                ? <>Erscheint als <code className="text-foreground">{`/spaces/${slug}/...`}</code></>
-                : "Leer lassen heisst: URL nutzt die ID."}
-            </p>
-            {slugError && (
-              <p className="text-[10px] text-destructive">{slugError}</p>
-            )}
-          </div>
+          {slugError && (
+            <p className="text-[10px] text-destructive mt-1">{slugError}</p>
+          )}
         </div>
 
         <div>
-          <Label className="text-xs">Eltern-Space (optional)</Label>
+          <Label className="text-xs">Eltern-Space</Label>
           <select
             value={parentSpaceId}
             onChange={(e) => setParentSpaceId(e.target.value)}
             className="w-full h-9 px-3 rounded-md border bg-background text-sm"
           >
-            <option value="">— ohne (Root-Space) —</option>
+            <option value="">— Root-Space —</option>
             {parentOptions.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
               </option>
             ))}
           </select>
-          <p className="text-[10px] text-muted-foreground mt-1">
-            Wenn dieser Space ein Sub-Space von z.B. "Macher" ist, traegt er
-            zur Aggregation in den Macher-Root bei. Der Workspace-Switcher
-            zeigt Sub-Spaces eingeklappt unter dem Root.
-          </p>
         </div>
 
         <div>
-          <Label className="text-xs">Hashtags / Kategorien</Label>
+          <Label className="text-xs">Hashtags</Label>
           <TagInput
             value={hashtags}
             onChange={(next) => setHashtags(next.map((t) => t.replace(/^#/, "").toLowerCase()))}
-            placeholder="handwerk, regional, jugendarbeit ..."
+            placeholder="handwerk, regional ..."
             suggestions={hashtagSuggestions}
             quickSuggestions={8}
           />
-          <p className="text-[10px] text-muted-foreground mt-1">
-            Macht den Space im Spaces-Browser auffindbar. Mehrere Tags sind
-            erlaubt — Enter oder Komma fuegt hinzu.
-          </p>
         </div>
       </div>
 
@@ -676,7 +656,11 @@ function GeneralTab({ group }: { group: Group }) {
         </div>
       )}
 
-      <div className="flex items-center justify-end gap-2 pt-2 border-t">
+      {/* Sticky Save am Boden — auch bei aufgeschlagener Tastatur sichtbar */}
+      <div
+        className="sticky bottom-0 -mx-3 sm:-mx-6 px-3 sm:px-6 py-3 bg-background/95 backdrop-blur border-t flex items-center justify-end gap-2"
+        style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+      >
         {savedAt && !dirty && (
           <span className="text-[11px] text-muted-foreground">Gespeichert.</span>
         )}
@@ -688,6 +672,82 @@ function GeneralTab({ group }: { group: Group }) {
         >
           {saving ? "Speichere..." : "Speichern"}
         </Button>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * SpaceAvatarUpload — kompakte Avatar-Auswahl im Stil des Profil-Dialogs.
+ * Tap/Klick aufs Bild oeffnet File-Picker. Camera-Pin und X-Knopf sind auf
+ * Touch-Geraeten sichtbar (kein Hover noetig).
+ */
+function SpaceAvatarUpload({
+  image,
+  name,
+  onChange,
+}: {
+  image?: string
+  name: string
+  onChange: (value: string | undefined) => void
+}) {
+  const [error, setError] = useState<string | null>(null)
+  const initial = (name?.trim() ?? "?").slice(0, 1).toUpperCase() || "?"
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith("image/")) return
+    try {
+      const { resizeImage } = await import("@real-life-stack/toolkit/lib/image-utils")
+      const base64 = await resizeImage(file, 400, 0.85)
+      onChange(base64)
+      setError(null)
+    } catch {
+      setError("Bild konnte nicht verarbeitet werden")
+    }
+    e.target.value = ""
+  }
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className="relative shrink-0">
+        {image ? (
+          <>
+            <label className="block w-16 h-16 cursor-pointer">
+              <img
+                src={image}
+                alt={name}
+                className="w-16 h-16 rounded-xl object-cover ring-2 ring-background shadow-sm"
+              />
+              <input type="file" accept="image/*" onChange={handleUpload} className="hidden" />
+            </label>
+            <label className="absolute -bottom-0.5 -right-0.5 p-1.5 bg-primary text-primary-foreground border-2 border-background rounded-full shadow-sm cursor-pointer hover:bg-primary/90">
+              <Camera className="h-3 w-3" />
+              <input type="file" accept="image/*" onChange={handleUpload} className="hidden" />
+            </label>
+            <button
+              type="button"
+              onClick={() => onChange(undefined)}
+              className="absolute -top-1 -right-1 p-1 bg-destructive text-white rounded-full shadow-sm hover:bg-destructive/90"
+              aria-label="Bild entfernen"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </>
+        ) : (
+          <label className="w-16 h-16 rounded-xl border-2 border-dashed border-border hover:border-primary/50 bg-muted/30 flex flex-col items-center justify-center cursor-pointer transition-all hover:bg-muted/50">
+            <span className="text-lg font-semibold text-muted-foreground/60">{initial}</span>
+            <input type="file" accept="image/*" onChange={handleUpload} className="hidden" />
+          </label>
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <Label className="text-xs">Logo</Label>
+        <p className="text-[11px] text-muted-foreground">
+          Erscheint im Switcher.
+        </p>
+        {error && <p className="text-[11px] text-destructive mt-0.5">{error}</p>}
       </div>
     </div>
   )
@@ -801,9 +861,9 @@ function ModulesTab({ group, initialOpenModuleId }: { group: Group; initialOpenM
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="max-w-2xl">
-        <h3 className="text-base font-semibold mb-1">Module</h3>
+        <h3 className="text-base font-semibold mb-0.5">Module</h3>
         <p className="text-xs text-muted-foreground">
           Schalte ein, was dieser Space koennen soll. Aktive Module erscheinen
           sofort als Tab in der Navbar oben. Klick auf den Modul-Namen
@@ -811,11 +871,10 @@ function ModulesTab({ group, initialOpenModuleId }: { group: Group; initialOpenM
         </p>
       </div>
 
-      <div className="space-y-2 max-w-2xl">
+      <div className="space-y-1.5 max-w-2xl">
         {sortedModules.map((mod) => {
           const Icon = mod.icon
           const isOn = enabled.includes(mod.id)
-          const isFunction = FUNCTION_MODULE_IDS.includes(mod.id)
           const hasConfig = MODULES_WITH_CONFIG.has(mod.id)
           return (
             <div
@@ -824,8 +883,8 @@ function ModulesTab({ group, initialOpenModuleId }: { group: Group; initialOpenM
                 isOn ? "bg-card" : "bg-muted/20"
               }`}
             >
-              <div className="flex items-center gap-3 p-3">
-                <Icon className={`h-5 w-5 shrink-0 ${isOn ? "text-primary" : "text-muted-foreground"}`} />
+              <div className="flex items-center gap-2.5 px-3 py-2">
+                <Icon className={`h-4 w-4 shrink-0 ${isOn ? "text-primary" : "text-muted-foreground"}`} />
                 <button
                   type="button"
                   onClick={() => (hasConfig && isOn ? openConfig(mod.id) : null)}
@@ -840,12 +899,6 @@ function ModulesTab({ group, initialOpenModuleId }: { group: Group; initialOpenM
                       <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
                     )}
                   </div>
-                  <div className="text-[11px] text-muted-foreground">
-                    {isFunction
-                      ? "Funktions-Modul — erscheint als Tab in der Navbar"
-                      : "Konfigurations-Modul — sichtbar als Tab wenn aktiv"}
-                    {hasConfig && isOn && " · Klick zum Konfigurieren"}
-                  </div>
                 </button>
                 <label className="inline-flex items-center cursor-pointer shrink-0">
                   <input
@@ -855,11 +908,11 @@ function ModulesTab({ group, initialOpenModuleId }: { group: Group; initialOpenM
                     disabled={busy}
                     className="sr-only peer"
                   />
-                  <div className={`relative w-10 h-5 rounded-full transition-colors ${
+                  <div className={`relative w-9 h-5 rounded-full transition-colors ${
                     isOn ? "bg-primary" : "bg-muted-foreground/30"
                   }`}>
                     <div className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                      isOn ? "translate-x-5" : "translate-x-0"
+                      isOn ? "translate-x-4" : "translate-x-0"
                     }`} />
                   </div>
                 </label>
