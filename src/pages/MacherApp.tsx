@@ -184,7 +184,14 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
   const [groupDialogOpen, setGroupDialogOpen] = useState(false)
   const [groupDialogMode, setGroupDialogMode] = useState<GroupDialogMode>({ type: 'create' })
   const [mobileSwitcherOpen, setMobileSwitcherOpen] = useState(false)
-  const [homeOpen, setHomeOpen] = useState(false)
+  // Auf Mobile: standardmaessig im Home-Bildschirm starten. Wenn der User
+  // explizit eine Modul-URL aufruft (z.B. /macher/karte), Home weglassen.
+  const [homeOpen, setHomeOpen] = useState(() => {
+    if (typeof window === 'undefined') return false
+    if (!window.matchMedia('(max-width: 767px)').matches) return false
+    const segments = window.location.pathname.split('/').filter(Boolean)
+    return segments.length <= 1
+  })
   const [spaceSettingsOpen, setSpaceSettingsOpen] = useState(false)
   const [spaceSettingsTab, setSpaceSettingsTab] = useState<SpaceSettingsTab>('general')
   const [spaceSettingsModuleId, setSpaceSettingsModuleId] = useState<string | null>(null)
@@ -502,20 +509,7 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
     <AppShell>
       <header className="shrink-0 z-40 w-full glass-navbar shadow-navbar">
         <div className="flex h-11 items-center gap-2 px-2">
-          {/* Haeuschen — global, immer erreichbar */}
-          <button
-            type="button"
-            onClick={() => setHomeOpen(true)}
-            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition hover:bg-muted ${
-              homeOpen ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground'
-            }`}
-            aria-label="Daheim"
-            title="Daheim"
-          >
-            <Home className="h-4 w-4" />
-          </button>
-
-          {/* Links: Workspace-Switcher */}
+          {/* Links: Workspace-Switcher (Spaces ganz aussen) */}
           <div className="flex shrink-0 items-center gap-1">
             {activeWorkspace ? (
               <MacherWorkspaceSwitcher
@@ -533,6 +527,19 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
               </Button>
             )}
           </div>
+
+          {/* Haeuschen — neben den Spaces, oeffnet die globale Home-Sicht */}
+          <button
+            type="button"
+            onClick={() => setHomeOpen(true)}
+            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition hover:bg-muted ${
+              homeOpen ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground'
+            }`}
+            aria-label="Daheim"
+            title="Daheim"
+          >
+            <Home className="h-4 w-4" />
+          </button>
 
           {/* Suche — Desktop neben Workspace, vor den Tabs */}
           <GlobalSearch
