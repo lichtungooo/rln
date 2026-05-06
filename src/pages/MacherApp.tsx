@@ -746,12 +746,17 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
         onSelect={handleModuleChange}
         onCloseTab={handleCloseTab}
         onOpen={handleModuleChange}
-        spaces={workspaces.map((w) => ({
-          id: w.id,
-          name: w.name,
-          avatar: w.avatar,
-          scope: w.scope,
-        }))}
+        spaces={workspaces.map((w) => {
+          const group = groups.find((g) => g.id === w.id)
+          const meta = group ? getSpaceMeta(group) : undefined
+          return {
+            id: w.id,
+            name: w.name,
+            avatar: w.avatar,
+            scope: w.scope,
+            hashtags: meta?.hashtags ?? [],
+          }
+        })}
         activeSpaceId={activeWorkspace?.id}
         onSelectSpace={(id) => {
           const ws = workspaces.find((w) => w.id === id)

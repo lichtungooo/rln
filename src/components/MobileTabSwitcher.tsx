@@ -13,7 +13,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import type { ComponentType, ReactNode, SVGProps } from 'react'
-import { X, Plus, ArrowLeft, Check, Compass, ChevronRight, Pencil, Users, Fingerprint, LogOut, MoreHorizontal } from 'lucide-react'
+import { X, Plus, ArrowLeft, Check, Compass, ChevronRight, Pencil, Users, Fingerprint, LogOut, MoreHorizontal, Search } from 'lucide-react'
 
 export interface MobileTab {
   id: string
@@ -27,6 +27,8 @@ export interface MobileSpace {
   avatar?: string
   /** scope === 'overview' = Spezial-Karte "Alle Werkstaetten" */
   scope?: string
+  /** Tags fuer Filter im Spaces-Reiter */
+  hashtags?: string[]
 }
 
 type SwitcherView = 'spaces' | 'modules' | 'profile'
@@ -452,64 +454,192 @@ interface SpacesViewProps {
 }
 
 function SpacesView({ spaces, activeSpaceId, onSelectSpace }: SpacesViewProps) {
-  // Overview-Karte zuerst, dann die uebrigen Spaces
-  const sorted = useMemo(() => {
-    const overview = spaces.filter((s) => s.scope === 'overview')
-    const rest = spaces.filter((s) => s.scope !== 'overview')
-    return [...overview, ...rest]
-  }, [spaces])
+  const [query, setQuery] = useState('')
+  const [activeTag, setActiveTag] = useState<string | null>(null)
 
-  if (sorted.length === 0) {
-    return <PlatzhalterView icon={Compass} title="Spaces" hint="Du hast noch keine Spaces. Lege einen ueber das Plus unten rechts an." />
+  const overview = useMemo(() => spaces.filter((s) => s.scope === 'overview'), [spaces])
+  const regular = useMemo(() => spaces.filter((s) => s.scope !== 'overview'), [spaces])
+
+  // Alle Hashtags aus den Spaces sammeln (uniq, sortiert)
+  const allTags = useMemo(() => {
+    const set = new Set<string>()
+    for (const s of regular) {
+      for (const t of s.hashtags ?? []) set.add(t)
+    }
+    return Array.from(set).sort()
+  }, [regular])
+
+  // Filter anwenden — Name-Match + optionaler Tag-Match
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return regular.filter((s) => {
+      if (q && !s.name.toLowerCase().includes(q)) return false
+      if (activeTag && !(s.hashtags ?? []).includes(activeTag)) return false
+      return true
+    })
+  }, [regular, query, activeTag])
+
+  // Wenn keine Filter aktiv: Overview zuerst zeigen. Sonst Overview ausblenden.
+  const showOverview = !query && !activeTag
+  const showFilter = regular.length >= 3 || allTags.length > 0
+
+  if (spaces.length === 0) {
+    return (
+      <PlatzhalterView
+        icon={Compass}
+        title="Spaces"
+        hint="Du hast noch keine Spaces. Lege einen ueber das Plus unten rechts an."
+      />
+    )
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3">
-      {sorted.map((s) => {
-        const isActive = s.id === activeSpaceId
-        const isOverview = s.scope === 'overview'
-        const initial = s.name.trim().slice(0, 1).toUpperCase() || '?'
-        return (
-          <div
-            key={s.id}
-            className={`relative aspect-[4/3] overflow-hidden rounded-xl border bg-muted/40 transition ${
-              isActive ? 'border-primary/60 ring-2 ring-primary/30' : 'border-border/60'
-            }`}
-          >
-            <button
-              type="button"
-              onClick={() => onSelectSpace(s.id)}
-              className="flex h-full w-full flex-col items-center justify-center gap-2 p-3 text-center"
-            >
-              {/* Avatar-Kreis */}
-              <div
-                className={`flex h-12 w-12 items-center justify-center overflow-hidden rounded-full ${
-                  isOverview
-                    ? 'bg-muted text-muted-foreground'
-                    : 'bg-primary/15 text-primary'
-                }`}
-              >
-                {s.avatar ? (
-                  <img src={s.avatar} alt={s.name} className="h-full w-full object-cover" />
-                ) : isOverview ? (
-                  <Compass className="h-6 w-6" />
-                ) : (
-                  <span className="text-lg font-semibold">{initial}</span>
-                )}
-              </div>
-              <span className="line-clamp-2 text-sm font-medium text-foreground">
-                {s.name}
-              </span>
-              {isActive && (
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">
-                  Aktiv
-                </span>
-              )}
-            </button>
+    <div className="space-y-3">
+      {/* Suche + Hashtag-Filter — nur ab 3 Spaces oder wenn Tags da */}
+      {showFilter && (
+        <>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Spaces durchsuchen"
+              className="h-9 w-full rounded-md border border-border/60 bg-background pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
           </div>
-        )
-      })}
+          {allTags.length > 0 && (
+            <div className="flex gap-1.5 overflow-x-auto pb-1">
+              <FilterChip
+                active={activeTag === null}
+                onClick={() => setActiveTag(null)}
+              >
+                Alle
+              </FilterChip>
+              {allTags.map((tag) => (
+                <FilterChip
+                  key={tag}
+                  active={activeTag === tag}
+                  onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+                >
+                  #{tag}
+                </FilterChip>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Karten — Overview zuerst (nur ohne aktiven Filter), dann gefilterte */}
+      <div className="grid grid-cols-2 gap-3">
+        {showOverview && overview.map((s) => (
+          <SpaceCard
+            key={s.id}
+            space={s}
+            isActive={s.id === activeSpaceId}
+            onClick={() => onSelectSpace(s.id)}
+          />
+        ))}
+        {filtered.map((s) => (
+          <SpaceCard
+            key={s.id}
+            space={s}
+            isActive={s.id === activeSpaceId}
+            onClick={() => onSelectSpace(s.id)}
+          />
+        ))}
+      </div>
+
+      {/* Hinweis wenn Filter alles wegfiltert */}
+      {filtered.length === 0 && (query || activeTag) && (
+        <div className="rounded-lg border border-dashed border-border/60 bg-muted/30 px-4 py-6 text-center">
+          <p className="text-xs text-muted-foreground">
+            Kein Space passt zu *
+            {query && <span className="font-mono">{query}</span>}
+            {query && activeTag && ' · '}
+            {activeTag && <span className="font-mono">#{activeTag}</span>}*.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              setQuery('')
+              setActiveTag(null)
+            }}
+            className="mt-2 text-xs font-medium text-primary hover:underline"
+          >
+            Filter zuruecksetzen
+          </button>
+        </div>
+      )}
     </div>
+  )
+}
+
+interface SpaceCardProps {
+  space: MobileSpace
+  isActive: boolean
+  onClick: () => void
+}
+
+function SpaceCard({ space, isActive, onClick }: SpaceCardProps) {
+  const isOverview = space.scope === 'overview'
+  const initial = space.name.trim().slice(0, 1).toUpperCase() || '?'
+  return (
+    <div
+      className={`relative aspect-[4/3] overflow-hidden rounded-xl border bg-muted/40 transition ${
+        isActive ? 'border-primary/60 ring-2 ring-primary/30' : 'border-border/60'
+      }`}
+    >
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex h-full w-full flex-col items-center justify-center gap-2 p-3 text-center"
+      >
+        <div
+          className={`flex h-12 w-12 items-center justify-center overflow-hidden rounded-full ${
+            isOverview ? 'bg-muted text-muted-foreground' : 'bg-primary/15 text-primary'
+          }`}
+        >
+          {space.avatar ? (
+            <img src={space.avatar} alt={space.name} className="h-full w-full object-cover" />
+          ) : isOverview ? (
+            <Compass className="h-6 w-6" />
+          ) : (
+            <span className="text-lg font-semibold">{initial}</span>
+          )}
+        </div>
+        <span className="line-clamp-2 text-sm font-medium text-foreground">
+          {space.name}
+        </span>
+        {isActive && (
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">
+            Aktiv
+          </span>
+        )}
+      </button>
+    </div>
+  )
+}
+
+interface FilterChipProps {
+  active: boolean
+  onClick: () => void
+  children: ReactNode
+}
+
+function FilterChip({ active, onClick, children }: FilterChipProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium transition ${
+        active
+          ? 'border-primary bg-primary text-primary-foreground'
+          : 'border-border/60 bg-background text-foreground hover:bg-muted'
+      }`}
+    >
+      {children}
+    </button>
   )
 }
 
