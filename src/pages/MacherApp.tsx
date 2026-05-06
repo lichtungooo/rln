@@ -604,22 +604,34 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
 
       <AppShellMain withBottomNav={false}>
         {/* Home — global, oeffnet sich bei Klick aufs Haeuschen */}
-        {homeOpen && (
-          <HomeView
-            userName={userData.name}
-            onClose={() => setHomeOpen(false)}
-            onStartHandshake={() => setVerifyDialogOpen(true)}
-            contacts={activeContacts.map((c) => ({
-              id: c.id,
-              name: c.name,
-              avatar: c.avatar,
-              verifiedAt: c.verifiedAt,
-            }))}
-            onOpenContacts={
-              supportsContacts ? () => setContactsDialogOpen(true) : undefined
-            }
-          />
-        )}
+        {homeOpen && (() => {
+          const connectorSupportsHandshake = hasSignedClaims(connector)
+          const userAuthed = Boolean(currentUser?.id)
+          const handshakeReady = connectorSupportsHandshake && userAuthed
+          const handshakeBlockedHint = !connectorSupportsHandshake
+            ? 'Im Demo-Modus deaktiviert. Wechsle zur Web-of-Trust-Anmeldung.'
+            : !userAuthed
+              ? 'Erst mit den 12 Worten anmelden.'
+              : undefined
+          return (
+            <HomeView
+              userName={userData.name}
+              onClose={() => setHomeOpen(false)}
+              onStartHandshake={() => setVerifyDialogOpen(true)}
+              handshakeReady={handshakeReady}
+              handshakeBlockedHint={handshakeBlockedHint}
+              contacts={activeContacts.map((c) => ({
+                id: c.id,
+                name: c.name,
+                avatar: c.avatar,
+                verifiedAt: c.verifiedAt,
+              }))}
+              onOpenContacts={
+                supportsContacts ? () => setContactsDialogOpen(true) : undefined
+              }
+            />
+          )
+        })()}
 
         {/* Module-Block — bei offener Home per display:none versteckt,
             damit Modul-State (Map-Zoom, Tab-Inhalte) erhalten bleibt. */}

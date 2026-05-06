@@ -28,6 +28,10 @@ interface HomeViewProps {
   onClose: () => void
   /** Handshake starten — oeffnet den Verifikations-Dialog (QR zeigen + scannen) */
   onStartHandshake: () => void
+  /** True wenn aktiver Connector signierte Claims unterstuetzt + User authentifiziert */
+  handshakeReady: boolean
+  /** Hinweis warum Handshake aktuell blockiert (gezeigt unter dem Knopf wenn !ready) */
+  handshakeBlockedHint?: string
   /** Liste verbundener Kontakte (verifiziert + unverifiziert, Status active) */
   contacts?: HomeContact[]
   /** Klick auf "Alle anzeigen" oder eine einzelne Karte */
@@ -39,6 +43,8 @@ const HOME_CONTACTS_PREVIEW = 6
 export function HomeView({
   userName,
   onStartHandshake,
+  handshakeReady,
+  handshakeBlockedHint,
   contacts = [],
   onOpenContacts,
 }: HomeViewProps) {
@@ -103,13 +109,20 @@ export function HomeView({
         <button
           type="button"
           onClick={onStartHandshake}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
+          disabled={!handshakeReady}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Handshake starten
           <ArrowRight className="h-4 w-4" />
         </button>
 
-        {contacts.length > 0 && (
+        {!handshakeReady && handshakeBlockedHint && (
+          <p className="mt-3 text-center text-[11px] text-muted-foreground">
+            {handshakeBlockedHint}
+          </p>
+        )}
+
+        {handshakeReady && contacts.length > 0 && (
           <p className="mt-3 text-center text-[11px] text-muted-foreground">
             {contacts.length === 1
               ? 'Ein Mensch bereits verbunden.'
