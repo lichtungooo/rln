@@ -677,6 +677,15 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
               }
             : undefined
         }
+        onSpaceSettings={
+          activeGroup ? () => openSpaceSettings('general', null) : undefined
+        }
+        onCreateSpace={openCreateDialog}
+        onModuleSettings={
+          activeGroup
+            ? () => openSpaceSettings('modules', activeModule)
+            : undefined
+        }
       />
 
       {/* Dialogs */}

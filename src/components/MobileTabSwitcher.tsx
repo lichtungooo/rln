@@ -13,7 +13,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import type { ComponentType, ReactNode, SVGProps } from 'react'
-import { X, Plus, ArrowLeft, Check, Compass, ChevronRight, Pencil, Users, Fingerprint, LogOut } from 'lucide-react'
+import { X, Plus, ArrowLeft, Check, Compass, ChevronRight, Pencil, Users, Fingerprint, LogOut, MoreHorizontal } from 'lucide-react'
 
 export interface MobileTab {
   id: string
@@ -49,6 +49,10 @@ interface MobileTabSwitcherProps {
   contactCount?: number
   onVerifyIdentity?: () => void
   onLogout?: () => void
+  /** Footer-Aktionen je nach Reiter */
+  onSpaceSettings?: () => void
+  onCreateSpace?: () => void
+  onModuleSettings?: () => void
   /** Reiter, der beim Oeffnen aktiv ist (default: 'modules') */
   initialView?: SwitcherView
 }
@@ -77,6 +81,9 @@ export function MobileTabSwitcher({
   contactCount,
   onVerifyIdentity,
   onLogout,
+  onSpaceSettings,
+  onCreateSpace,
+  onModuleSettings,
   initialView = 'modules',
 }: MobileTabSwitcherProps) {
   const [view, setView] = useState<SwitcherView>(initialView)
@@ -184,7 +191,102 @@ export function MobileTabSwitcher({
           />
         )}
       </div>
+
+      <SwitcherFooter
+        view={view}
+        onClose={onClose}
+        onSpaceSettings={onSpaceSettings}
+        onCreateSpace={onCreateSpace}
+        onModuleSettings={onModuleSettings}
+      />
     </div>
+  )
+}
+
+interface SwitcherFooterProps {
+  view: SwitcherView
+  onClose: () => void
+  onSpaceSettings?: () => void
+  onCreateSpace?: () => void
+  onModuleSettings?: () => void
+}
+
+function SwitcherFooter({
+  view,
+  onClose,
+  onSpaceSettings,
+  onCreateSpace,
+  onModuleSettings,
+}: SwitcherFooterProps) {
+  // Welche Aktionen pro Reiter
+  const left =
+    view === 'spaces'
+      ? onSpaceSettings
+      : view === 'modules'
+        ? onModuleSettings
+        : undefined
+
+  const leftLabel =
+    view === 'spaces'
+      ? 'Space-Einstellungen'
+      : view === 'modules'
+        ? 'Modul-Einstellungen'
+        : ''
+
+  const right =
+    view === 'spaces'
+      ? onCreateSpace
+      : undefined
+
+  const rightLabel = view === 'spaces' ? 'Neuer Space' : ''
+
+  // Wenn beide Seiten leer — Footer komplett ausblenden
+  if (!left && !right) return null
+
+  const handleLeft = () => {
+    if (left) {
+      left()
+      onClose()
+    }
+  }
+  const handleRight = () => {
+    if (right) {
+      right()
+      onClose()
+    }
+  }
+
+  return (
+    <footer className="flex h-14 shrink-0 items-center justify-between border-t border-border/60 bg-background px-3">
+      {left ? (
+        <button
+          type="button"
+          onClick={handleLeft}
+          className="flex h-10 w-10 items-center justify-center rounded-full text-foreground transition hover:bg-muted"
+          aria-label={leftLabel}
+          title={leftLabel}
+        >
+          <MoreHorizontal className="h-5 w-5" />
+        </button>
+      ) : (
+        <div className="h-10 w-10" />
+      )}
+
+      {right ? (
+        <button
+          type="button"
+          onClick={handleRight}
+          className="flex h-10 items-center gap-1.5 rounded-full bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
+          aria-label={rightLabel}
+          title={rightLabel}
+        >
+          <Plus className="h-4 w-4" />
+          <span>{rightLabel}</span>
+        </button>
+      ) : (
+        <div className="h-10 w-10" />
+      )}
+    </footer>
   )
 }
 
