@@ -12,7 +12,15 @@
  */
 
 import { useMemo } from 'react'
-import { QrCode, Smartphone, ArrowRight } from 'lucide-react'
+import { QrCode, Smartphone, ArrowRight, ShieldCheck, Users } from 'lucide-react'
+
+export interface HomeContact {
+  id: string
+  name?: string
+  avatar?: string
+  /** ISO-Timestamp wenn ueber Handshake verifiziert */
+  verifiedAt?: string
+}
 
 interface HomeViewProps {
   userName: string
@@ -20,11 +28,20 @@ interface HomeViewProps {
   onClose: () => void
   /** Handshake starten — oeffnet den Verifikations-Dialog (QR zeigen + scannen) */
   onStartHandshake: () => void
-  /** Anzahl der bereits verbundenen Kontakte */
-  contactCount?: number
+  /** Liste verbundener Kontakte (verifiziert + unverifiziert, Status active) */
+  contacts?: HomeContact[]
+  /** Klick auf "Alle anzeigen" oder eine einzelne Karte */
+  onOpenContacts?: () => void
 }
 
-export function HomeView({ userName, onStartHandshake, contactCount }: HomeViewProps) {
+const HOME_CONTACTS_PREVIEW = 6
+
+export function HomeView({
+  userName,
+  onStartHandshake,
+  contacts = [],
+  onOpenContacts,
+}: HomeViewProps) {
   const greeting = useMemo(() => {
     const hour = new Date().getHours()
     if (hour < 5) return 'Tiefe Nacht'
@@ -92,14 +109,22 @@ export function HomeView({ userName, onStartHandshake, contactCount }: HomeViewP
           <ArrowRight className="h-4 w-4" />
         </button>
 
-        {contactCount !== undefined && contactCount > 0 && (
+        {contacts.length > 0 && (
           <p className="mt-3 text-center text-[11px] text-muted-foreground">
-            {contactCount === 1
+            {contacts.length === 1
               ? 'Ein Mensch bereits verbunden.'
-              : `${contactCount} Menschen bereits verbunden.`}
+              : `${contacts.length} Menschen bereits verbunden.`}
           </p>
         )}
       </section>
+
+      {/* Vertrauensnetz — Kontakt-Karten */}
+      {contacts.length > 0 && (
+        <ContactsSection
+          contacts={contacts}
+          onOpenContacts={onOpenContacts}
+        />
+      )}
 
       {/* Hinweis auf weitere Schnellzugriffe */}
       <section className="rounded-xl border border-dashed border-border/60 bg-muted/30 p-4 text-center">
@@ -128,5 +153,111 @@ function HandshakeChannel({ icon: Icon, label, hint }: HandshakeChannelProps) {
       <div className="text-xs font-semibold text-foreground">{label}</div>
       <div className="text-[10px] text-muted-foreground">{hint}</div>
     </div>
+  )
+}
+
+interface ContactsSectionProps {
+  contacts: HomeContact[]
+  onOpenContacts?: () => void
+}
+
+function ContactsSection({ contacts, onOpenContacts }: ContactsSectionProps) {
+  // Verifizierte zuerst, dann nach Name sortiert
+  const sorted = useMemo(() => {
+    return [...contacts].sort((a, b) => {
+      const aVerified = Boolean(a.verifiedAt)
+      const bVerified = Boolean(b.verifiedAt)
+      if (aVerified !== bVerified) return aVerified ? -1 : 1
+      return (a.name ?? '').localeCompare(b.name ?? '')
+    })
+  }, [contacts])
+
+  const preview = sorted.slice(0, HOME_CONTACTS_PREVIEW)
+  const hasMore = sorted.length > HOME_CONTACTS_PREVIEW
+
+  return (
+    <section aria-labelledby="contacts-title" className="space-y-3">
+      <header className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-2">
+          <Users className="h-4 w-4 text-muted-foreground" />
+          <h2
+            id="contacts-title"
+            className="text-sm font-semibold uppercase tracking-wider text-muted-foreground"
+          >
+            Vertrauensnetz · {contacts.length}
+          </h2>
+        </div>
+      </header>
+
+      <div className="grid grid-cols-3 gap-2">
+        {preview.map((c) => (
+          <ContactCard
+            key={c.id}
+            contact={c}
+            onClick={onOpenContacts}
+          />
+        ))}
+      </div>
+
+      {(hasMore || onOpenContacts) && (
+        <button
+          type="button"
+          onClick={onOpenContacts}
+          disabled={!onOpenContacts}
+          className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-border/60 bg-card px-3 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted disabled:opacity-60"
+        >
+          {hasMore
+            ? `Alle ${contacts.length} anzeigen`
+            : 'Kontakte verwalten'}
+          <ArrowRight className="h-4 w-4" />
+        </button>
+      )}
+    </section>
+  )
+}
+
+interface ContactCardProps {
+  contact: HomeContact
+  onClick?: () => void
+}
+
+function ContactCard({ contact, onClick }: ContactCardProps) {
+  const initial = (contact.name ?? '?').trim().slice(0, 1).toUpperCase() || '?'
+  const isVerified = Boolean(contact.verifiedAt)
+  const Wrapper = onClick ? 'button' : 'div'
+
+  return (
+    <Wrapper
+      type={onClick ? 'button' : undefined}
+      onClick={onClick}
+      className={`relative flex flex-col items-center gap-1.5 rounded-xl border bg-card p-2.5 text-center transition ${
+        onClick ? 'hover:bg-muted/60 cursor-pointer' : ''
+      } ${isVerified ? 'border-primary/30' : 'border-border/60'}`}
+    >
+      <div
+        className={`flex h-12 w-12 items-center justify-center overflow-hidden rounded-full ${
+          isVerified ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
+        }`}
+      >
+        {contact.avatar ? (
+          <img
+            src={contact.avatar}
+            alt={contact.name ?? 'Kontakt'}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <span className="text-base font-semibold">{initial}</span>
+        )}
+      </div>
+      <div className="min-w-0 w-full text-xs font-medium text-foreground line-clamp-1">
+        {contact.name ?? 'Unbenannt'}
+      </div>
+      {isVerified && (
+        <ShieldCheck
+          className="absolute -right-1 -top-1 h-4 w-4 rounded-full bg-background text-primary"
+          aria-label="Verifiziert"
+        />
+      )}
+    </Wrapper>
   )
 }

@@ -609,7 +609,15 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
             userName={userData.name}
             onClose={() => setHomeOpen(false)}
             onStartHandshake={() => setVerifyDialogOpen(true)}
-            contactCount={activeContacts.length}
+            contacts={activeContacts.map((c) => ({
+              id: c.id,
+              name: c.name,
+              avatar: c.avatar,
+              verifiedAt: c.verifiedAt,
+            }))}
+            onOpenContacts={
+              supportsContacts ? () => setContactsDialogOpen(true) : undefined
+            }
           />
         )}
 
