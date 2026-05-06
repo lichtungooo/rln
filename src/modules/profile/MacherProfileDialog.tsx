@@ -107,57 +107,68 @@ export function MacherProfileDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto gap-0 p-0" aria-describedby={undefined}>
+      <DialogContent
+        className="sm:max-w-md w-screen h-[100dvh] sm:h-auto sm:max-h-[90vh] gap-0 p-0 flex flex-col"
+        onInteractOutside={(e) => e.preventDefault()}
+        aria-describedby={undefined}
+      >
         <DialogTitle className="sr-only">Profil bearbeiten</DialogTitle>
 
-        {/* Header: Avatar + Name + DID */}
-        <div className="px-6 pt-6 pb-4">
-          <div className="flex items-center gap-4">
-            <AvatarUpload
-              avatar={avatar}
-              name={(values.name as string) ?? ""}
-              onUpload={handleAvatarUpload}
-              onClear={() => setAvatar("")}
-            />
-            <div className="flex-1 min-w-0">
-              {nameField && (
-                <Input
-                  value={(values.name as string) ?? ""}
-                  onChange={(e) => setField("name", e.target.value)}
-                  placeholder={nameField.placeholder ?? "Dein Name"}
-                  className="h-8 text-base font-semibold border-transparent shadow-none bg-transparent px-1 hover:bg-muted/50 focus:bg-card focus:border-input transition-all"
-                />
-              )}
-              <button
-                onClick={handleCopyDid}
-                className="mt-1 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted/60 hover:bg-muted transition-colors"
-                title="DID kopieren"
-              >
-                <code className="text-[10px] font-mono text-muted-foreground tracking-tight">{shortDid}</code>
-                {copied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3 text-muted-foreground/50" />}
-              </button>
-              {contactCount != null && (
-                <p className="text-xs text-muted-foreground mt-1">{contactCount} Kontakte</p>
-              )}
+        {/* Scroll-Bereich (Header + Felder) — Footer bleibt drunter sichtbar */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Header: Avatar + Name + DID */}
+          <div className="px-6 pt-6 pb-4">
+            <div className="flex items-center gap-4">
+              <AvatarUpload
+                avatar={avatar}
+                name={(values.name as string) ?? ""}
+                onUpload={handleAvatarUpload}
+                onClear={() => setAvatar("")}
+              />
+              <div className="flex-1 min-w-0">
+                {nameField && (
+                  <Input
+                    value={(values.name as string) ?? ""}
+                    onChange={(e) => setField("name", e.target.value)}
+                    placeholder={nameField.placeholder ?? "Dein Name"}
+                    className="h-8 text-base font-semibold border-transparent shadow-none bg-transparent px-1 hover:bg-muted/50 focus:bg-card focus:border-input transition-all"
+                  />
+                )}
+                <button
+                  onClick={handleCopyDid}
+                  className="mt-1 inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-muted/60 hover:bg-muted transition-colors"
+                  title="DID kopieren"
+                >
+                  <code className="text-[10px] font-mono text-muted-foreground tracking-tight">{shortDid}</code>
+                  {copied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3 text-muted-foreground/50" />}
+                </button>
+                {contactCount != null && (
+                  <p className="text-xs text-muted-foreground mt-1">{contactCount} Kontakte</p>
+                )}
+              </div>
             </div>
+          </div>
+
+          {/* Felder */}
+          <div className="px-6 pb-6 space-y-4">
+            {otherFields.map((field) => (
+              <FieldRenderer
+                key={field.id}
+                field={field}
+                value={values[field.id]}
+                onChange={(val) => setField(field.id, val)}
+              />
+            ))}
+
+            {error && <p className="text-xs text-destructive">{error}</p>}
           </div>
         </div>
 
-        {/* Felder */}
-        <div className="px-6 pb-4 space-y-4">
-          {otherFields.map((field) => (
-            <FieldRenderer
-              key={field.id}
-              field={field}
-              value={values[field.id]}
-              onChange={(val) => setField(field.id, val)}
-            />
-          ))}
-
-          {error && <p className="text-xs text-destructive">{error}</p>}
-        </div>
-
-        <DialogFooter className="px-6 py-4 border-t">
+        {/* Footer — bleibt unten sichtbar, auch wenn Tastatur sich oeffnet */}
+        <DialogFooter
+          className="shrink-0 px-6 py-4 border-t bg-background"
+          style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+        >
           <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} disabled={saving}>
             Abbrechen
           </Button>
@@ -200,20 +211,32 @@ function AvatarUpload({
   onClear: () => void
 }) {
   return (
-    <div className="relative group shrink-0">
+    <div className="relative shrink-0">
       {avatar ? (
         <>
-          <img src={avatar} alt={name} className="w-16 h-16 rounded-full object-cover ring-2 ring-background shadow-sm" />
+          {/* Bild ist Klick-Ziel: oeffnet File-Picker */}
+          <label className="block w-16 h-16 cursor-pointer">
+            <img
+              src={avatar}
+              alt={name}
+              className="w-16 h-16 rounded-full object-cover ring-2 ring-background shadow-sm"
+            />
+            <input type="file" accept="image/*" onChange={onUpload} className="hidden" />
+          </label>
+          {/* Camera-Pin — auf Touch sichtbar */}
+          <label className="absolute -bottom-0.5 -right-0.5 p-1.5 bg-primary text-primary-foreground border-2 border-background rounded-full shadow-sm cursor-pointer hover:bg-primary/90">
+            <Camera className="h-3 w-3" />
+            <input type="file" accept="image/*" onChange={onUpload} className="hidden" />
+          </label>
+          {/* X — auf Touch sichtbar */}
           <button
+            type="button"
             onClick={onClear}
-            className="absolute -top-1 -right-1 p-0.5 bg-destructive text-white rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
+            className="absolute -top-1 -right-1 p-1 bg-destructive text-white rounded-full shadow-sm hover:bg-destructive/90"
+            aria-label="Bild entfernen"
           >
             <X className="h-3 w-3" />
           </button>
-          <label className="absolute -bottom-0.5 -right-0.5 p-1 bg-card border border-border rounded-full shadow-sm cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity hover:bg-accent">
-            <Camera className="h-2.5 w-2.5 text-muted-foreground" />
-            <input type="file" accept="image/*" onChange={onUpload} className="hidden" />
-          </label>
         </>
       ) : (
         <label className="w-16 h-16 rounded-full border-2 border-dashed border-border hover:border-primary/50 bg-muted/30 flex items-center justify-center cursor-pointer transition-all hover:bg-muted/50">
