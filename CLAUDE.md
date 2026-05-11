@@ -254,14 +254,19 @@ Bei Container-Breite < 768px schaltet PageGrid auf Single-Column-Modus um:
 - Drag-and-Drop ist auf Mobile deaktiviert (Touch waere verwirrend)
 - ResizeObserver erkennt Resize live (Browser-Fenster verkleinern)
 
-### Drag-and-Drop (Desktop)
+### Drag-and-Drop + Resize (Desktop)
 
-Slots in PageGrid lassen sich per Drag-and-Drop tauschen. Jeder Slot
-zeigt beim Hover ein kleines Grip-Handle oben rechts. Drag startet,
-Drop auf anderen Slot tauscht die Positionen. Persistenz greift
-automatisch via PageGrid-localStorage.
+Slots in PageGrid lassen sich per Drag-and-Drop tauschen UND in der
+Groesse aendern. Jeder Slot zeigt beim Hover zwei Handles:
 
-- Mobile: kein Drag — Slot-Konfig nur via Zahnrad
+- **Grip oben rechts** — Drag-and-Drop: zieht den Slot, Drop auf einen
+  anderen Slot tauscht die Positionen
+- **Ecke unten rechts** — Resize: Drag aendert colSpan + rowSpan. Werte
+  snappen auf valide Stufen (Breit 1/2/3/6, Hoch 1/2/3/4)
+
+Persistenz greift automatisch via PageGrid-localStorage.
+
+- Mobile: kein Drag/Resize — Slot-Konfig nur via Zahnrad
 - Visuelle Hinweise: gedraggter Slot opacity 40%, Drop-Target Primary-Ring
 
 ### Was DANN passiert

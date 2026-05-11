@@ -365,6 +365,71 @@ function PageGridLayout({
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [dropTargetId, setDropTargetId] = useState<string | null>(null)
 
+  // Resize-State (per Drag an der Ecke unten rechts)
+  const [resizing, setResizing] = useState<{
+    slotId: string
+    startX: number
+    startY: number
+    startCols: ColSpan
+    startRows: RowSpan
+    cellW: number
+    cellH: number
+  } | null>(null)
+
+  useEffect(() => {
+    if (!resizing) return
+    const VALID_COLS: ColSpan[] = [1, 2, 3, 6]
+    const VALID_ROWS: RowSpan[] = [1, 2, 3, 4]
+    const snap = <T extends number>(target: number, valid: readonly T[]): T =>
+      valid.reduce(
+        (closest, v) =>
+          Math.abs(v - target) < Math.abs(closest - target) ? v : closest,
+        valid[0]
+      )
+    const onMove = (e: MouseEvent) => {
+      const dx = e.clientX - resizing.startX
+      const dy = e.clientY - resizing.startY
+      const newColsRaw = resizing.startCols + dx / resizing.cellW
+      const newRowsRaw = resizing.startRows + dy / resizing.cellH
+      const newCols = snap(newColsRaw, VALID_COLS)
+      const newRows = snap(newRowsRaw, VALID_ROWS)
+      const slot = page.slots.find((s) => s.id === resizing.slotId)
+      if (!slot) return
+      if (slot.colSpan === newCols && slot.rowSpan === newRows) return
+      onReorderSlots(
+        page.slots.map((s) =>
+          s.id === resizing.slotId ? { ...s, colSpan: newCols, rowSpan: newRows } : s
+        )
+      )
+    }
+    const onUp = () => setResizing(null)
+    window.addEventListener("mousemove", onMove)
+    window.addEventListener("mouseup", onUp)
+    return () => {
+      window.removeEventListener("mousemove", onMove)
+      window.removeEventListener("mouseup", onUp)
+    }
+  }, [resizing, page.slots, onReorderSlots])
+
+  const startResize = (slotId: string, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    const slot = page.slots.find((s) => s.id === slotId)
+    if (!slot) return
+    const slotEl = (e.currentTarget as HTMLElement).parentElement
+    if (!slotEl) return
+    const rect = slotEl.getBoundingClientRect()
+    setResizing({
+      slotId,
+      startX: e.clientX,
+      startY: e.clientY,
+      startCols: slot.colSpan,
+      startRows: slot.rowSpan,
+      cellW: rect.width / slot.colSpan,
+      cellH: rect.height / slot.rowSpan,
+    })
+  }
+
   const handleDrop = (targetId: string) => {
     if (!draggingId || draggingId === targetId) {
       setDraggingId(null)
@@ -465,6 +530,16 @@ function PageGridLayout({
               aria-label="Verschieben"
             >
               <GripVertical className="h-3.5 w-3.5" />
+            </div>
+
+            {/* Resize-Handle — unten rechts, Drag aendert colSpan/rowSpan */}
+            <div
+              onMouseDown={(e) => startResize(slot.id, e)}
+              className="absolute bottom-0 right-0 z-10 w-4 h-4 cursor-nwse-resize opacity-0 hover:opacity-100 group-hover:opacity-100 transition-opacity flex items-end justify-end p-0.5"
+              title="Slot-Groesse aendern (Drag)"
+              aria-label="Groesse aendern"
+            >
+              <div className="w-2 h-2 border-r-2 border-b-2 border-muted-foreground/60" />
             </div>
 
             <div className="h-full w-full">
