@@ -116,8 +116,25 @@ export function PageGrid({
   lockPages = false,
 }: PageGridProps) {
   const [pages, setPages] = useState<GridPage[]>(() => loadPages(storageKey, defaultPages))
-  const [activeIdx, setActiveIdx] = useState(0)
+  const [activeIdx, setActiveIdx] = useState(() => {
+    try {
+      const raw = localStorage.getItem(`${storageKey}-active`)
+      const idx = raw ? parseInt(raw, 10) : 0
+      return Number.isFinite(idx) && idx >= 0 ? idx : 0
+    } catch {
+      return 0
+    }
+  })
   const [configOpen, setConfigOpen] = useState(false)
+
+  // Aktive Page persistieren (User kommt zur gleichen Page zurueck)
+  useEffect(() => {
+    try {
+      localStorage.setItem(`${storageKey}-active`, String(activeIdx))
+    } catch {
+      // egal
+    }
+  }, [storageKey, activeIdx])
 
   // Mobile-Erkennung via ResizeObserver auf dem Container.
   // Bei schmaler Breite: Grid wird einspaltig, Slots stapeln, Page scrollt.
@@ -135,10 +152,16 @@ export function PageGrid({
     return () => obs.disconnect()
   }, [])
 
-  // Bei storageKey-Wechsel (z.B. anderer Space) neu laden
+  // Bei storageKey-Wechsel (z.B. anderer Space) neu laden + aktive Page wiederherstellen
   useEffect(() => {
     setPages(loadPages(storageKey, defaultPages))
-    setActiveIdx(0)
+    try {
+      const raw = localStorage.getItem(`${storageKey}-active`)
+      const idx = raw ? parseInt(raw, 10) : 0
+      setActiveIdx(Number.isFinite(idx) && idx >= 0 ? idx : 0)
+    } catch {
+      setActiveIdx(0)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageKey])
 
@@ -147,7 +170,9 @@ export function PageGrid({
     savePages(storageKey, pages)
   }, [storageKey, pages])
 
-  const activePage = pages[activeIdx] ?? pages[0]
+  // Clamp activeIdx auf existierende Pages — falls Pages weniger geworden sind
+  const safeActiveIdx = Math.min(activeIdx, Math.max(0, pages.length - 1))
+  const activePage = pages[safeActiveIdx] ?? pages[0]
 
   const updatePage = (next: GridPage) => {
     setPages((prev) => prev.map((p) => (p.id === next.id ? next : p)))
@@ -190,7 +215,7 @@ export function PageGrid({
               type="button"
               onClick={() => setActiveIdx(idx)}
               className={`px-2.5 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                idx === activeIdx
+                idx === safeActiveIdx
                   ? "bg-foreground text-background font-semibold"
                   : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               }`}
