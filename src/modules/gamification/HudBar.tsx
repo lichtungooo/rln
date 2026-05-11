@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react"
-import { Sparkles, ChevronUp, ChevronDown } from "lucide-react"
+import { Sparkles, ChevronUp, ChevronDown, Crown } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useUserProgress } from "./use-progress"
+import { useElderStatus } from "../profile/use-elder-status"
 import {
   TREE_BEREICHE,
-  INNERE_BEREICHE,
+  SYNERGIES,
   progressInLevel,
   type TreeBereichId,
 } from "./tree"
@@ -14,7 +15,10 @@ import {
  *
  * Zeigt Total-Level + XP-Balken zum naechsten Level. Klick aufs Level
  * springt in den Skill-Tree. Klick auf den Pfeil expandiert die Liste
- * aller 7 Bereiche mit ihren Levels und Mini-Balken.
+ * aller 8 Bereiche mit ihren Levels und Mini-Balken.
+ *
+ * Aelteste tragen ein Crown-Marker im Compact-Bar (Phase F10).
+ * Mehrere aktive Synergien werden mit Zahl angezeigt (Phase Polish).
  *
  * Wird in MacherApp eingebunden — als fixed Position oben rechts unter
  * der Navbar, nicht innerhalb eines Moduls. Mobile: ausgeblendet
@@ -31,6 +35,7 @@ export function HudBar({ spaceSlug, currentModule }: HudBarProps) {
   const [expanded, setExpanded] = useState(false)
   const navigate = useNavigate()
   const { data, bereichXp, bereichProgress } = useUserProgress()
+  const elder = useElderStatus()
 
   const totalXp = useMemo(
     () => Object.values(data.bereichXp).reduce((a, b) => a + (b ?? 0), 0),
@@ -38,8 +43,11 @@ export function HudBar({ spaceSlug, currentModule }: HudBarProps) {
   )
   const totalProgress = progressInLevel(totalXp)
 
-  const synergyActive = useMemo(
-    () => INNERE_BEREICHE.every((b) => (data.bereichXp[b] ?? 0) > 0),
+  const activeSynergyCount = useMemo(
+    () =>
+      SYNERGIES.filter((syn) =>
+        syn.bereiche.every((b) => (data.bereichXp[b] ?? 0) > 0)
+      ).length,
     [data.bereichXp]
   )
 
@@ -76,8 +84,19 @@ export function HudBar({ spaceSlug, currentModule }: HudBarProps) {
             </div>
           </div>
 
-          {synergyActive && (
-            <Sparkles className="h-4 w-4 text-purple-500 shrink-0" />
+          {elder.isElder && (
+            <Crown className="h-4 w-4 text-amber-500 shrink-0" />
+          )}
+
+          {activeSynergyCount > 0 && (
+            <div className="flex items-center gap-0.5 shrink-0" title={`${activeSynergyCount} Synergien aktiv`}>
+              <Sparkles className="h-4 w-4 text-purple-500" />
+              {activeSynergyCount > 1 && (
+                <span className="text-[10px] font-bold text-purple-500">
+                  {activeSynergyCount}
+                </span>
+              )}
+            </div>
           )}
 
           {expanded ? (
@@ -104,7 +123,7 @@ export function HudBar({ spaceSlug, currentModule }: HudBarProps) {
           </div>
         </div>
 
-        {/* Expanded: 7 Bereiche */}
+        {/* Expanded: 8 Bereiche */}
         {expanded && (
           <div className="border-t bg-muted/10 p-2 space-y-1.5 max-h-80 overflow-y-auto w-64">
             {TREE_BEREICHE.map((bereich) => {

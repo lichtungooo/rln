@@ -7,7 +7,7 @@ import {
 } from "@real-life-stack/toolkit"
 import type { Item } from "@real-life-stack/data-interface"
 import type { TreeBereichId } from "./tree"
-import { progressInLevel, INNERE_BEREICHE } from "./tree"
+import { progressInLevel, SYNERGIES, type Synergie } from "./tree"
 import type { SkillData, UserProgressData } from "./types"
 import { GAMIFICATION_ITEM_TYPES } from "./types"
 import { UNIVERSAL_SKILLS, UNIVERSAL_SKILL_BY_ID } from "./universal-skills"
@@ -119,7 +119,11 @@ export function useUserProgress() {
     async (input: {
       skillXp?: Record<string, number>
       bereichXp?: Partial<Record<TreeBereichId, number>>
-    }): Promise<{ synergyTriggered: boolean; synergyBonus: number }> => {
+    }): Promise<{
+      synergyTriggered: boolean
+      synergyBonus: number
+      triggeredSynergies: Array<{ synergie: Synergie; bonus: number }>
+    }> => {
       if (!currentUser?.id) {
         throw new Error("Nicht eingeloggt — kein User-Progress")
       }
@@ -157,19 +161,28 @@ export function useUserProgress() {
         thisActionBereichXp[id] = (thisActionBereichXp[id] ?? 0) + (amount ?? 0)
       }
 
-      // 3. Synergie-Pruefung: alle drei inneren Bereiche in dieser Aktion?
-      const innerScores = INNERE_BEREICHE.map((b) => thisActionBereichXp[b] ?? 0)
-      const synergyTriggered = innerScores.every((x) => x > 0)
+      // 3. Synergie-Pruefung: alle definierten Synergien durchlaufen.
+      //    Wenn ALLE Bereiche einer Synergie in dieser Aktion XP bekommen,
+      //    addieren wir den Bonus auf die Synergie-Summe und verteilen ihn
+      //    gleichmaessig zurueck auf die Synergie-Bereiche.
+      const triggeredSynergies: Array<{ synergie: Synergie; bonus: number }> = []
       let synergyBonus = 0
-      if (synergyTriggered) {
-        const innerSum = innerScores.reduce((a, b) => a + b, 0)
-        synergyBonus = Math.round(innerSum * 0.25)
-        // Bonus gleichmaessig auf die drei inneren Bereiche verteilen
-        const perBereich = Math.round(synergyBonus / 3)
-        for (const b of INNERE_BEREICHE) {
+      for (const syn of SYNERGIES) {
+        const scores = syn.bereiche.map((b) => thisActionBereichXp[b] ?? 0)
+        const allActive = scores.every((x) => x > 0)
+        if (!allActive) continue
+
+        const sum = scores.reduce((a, b) => a + b, 0)
+        const bonus = Math.round(sum * syn.bonus)
+        synergyBonus += bonus
+        triggeredSynergies.push({ synergie: syn, bonus })
+
+        const perBereich = Math.round(bonus / syn.bereiche.length)
+        for (const b of syn.bereiche) {
           nextBereichXp[b] = (nextBereichXp[b] ?? 0) + perBereich
         }
       }
+      const synergyTriggered = triggeredSynergies.length > 0
 
       const nextData: UserProgressData = {
         skillXp: nextSkillXp,
@@ -187,7 +200,7 @@ export function useUserProgress() {
         })
       }
 
-      return { synergyTriggered, synergyBonus }
+      return { synergyTriggered, synergyBonus, triggeredSynergies }
     },
     [currentUser?.id, skillItems, data, myProgress, createItem, updateItem]
   )

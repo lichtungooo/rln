@@ -14,11 +14,13 @@ export {
   TREE_BEREICHE,
   BEREICH_BY_ID,
   INNERE_BEREICHE,
+  SYNERGIES,
   xpToLevel,
   xpForLevel,
   progressInLevel,
   type TreeBereich,
   type TreeBereichId,
+  type Synergie,
 } from "./tree"
 
 export {

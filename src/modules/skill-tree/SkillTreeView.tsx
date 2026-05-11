@@ -12,6 +12,7 @@ import type { ModuleViewProps } from "../registry"
 import {
   TREE_BEREICHE,
   INNERE_BEREICHE,
+  SYNERGIES,
   progressInLevel,
   useUserProgress,
   useGamificationSeed,
@@ -87,10 +88,14 @@ export function SkillTreeView({ activeGroup }: ModuleViewProps) {
   const totalXp = useMemo(() => Object.values(data.bereichXp).reduce((a, b) => a + (b ?? 0), 0), [data.bereichXp])
   const totalLevel = useMemo(() => progressInLevel(totalXp).level, [totalXp])
 
-  // Synergie-Bonus aktiv? Drei innere Bereiche haben alle XP
-  const synergyActive = useMemo(() => {
-    return INNERE_BEREICHE.every((b) => (data.bereichXp[b] ?? 0) > 0)
+  // Welche Synergien sind aktiv? Eine Synergie ist aktiv, wenn ALLE
+  // ihre Bereiche XP > 0 tragen.
+  const activeSynergies = useMemo(() => {
+    return SYNERGIES.filter((syn) =>
+      syn.bereiche.every((b) => (data.bereichXp[b] ?? 0) > 0)
+    )
   }, [data.bereichXp])
+  const synergyActive = activeSynergies.length > 0
 
   return (
     <div className="container mx-auto max-w-5xl p-4 space-y-6">
@@ -125,16 +130,32 @@ export function SkillTreeView({ activeGroup }: ModuleViewProps) {
           {synergyActive && (
             <div className="px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2" style={{ background: "rgba(168,85,247,0.1)", color: "#A855F7" }}>
               <Sparkles className="h-4 w-4" />
-              Synergie aktiv
+              {activeSynergies.length === 1
+                ? "Synergie aktiv"
+                : `${activeSynergies.length} Synergien aktiv`}
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Synergie-Hinweis */}
+      {/* Synergie-Liste */}
       {synergyActive && (
-        <div className="bg-purple-500/5 border border-purple-500/20 rounded-md p-3 text-xs text-purple-900 leading-relaxed">
-          <strong>Synergie-Bonus aktiv.</strong> Seele, Geist und Bewusstsein wachsen gleichzeitig — wenn die drei eins werden, oeffnet sich etwas, das mehr ist als die Summe.
+        <div className="bg-purple-500/5 border border-purple-500/20 rounded-md p-3 space-y-1.5">
+          <div className="text-xs font-semibold text-purple-900">
+            Stille Synergien — Bereiche, die zusammenwachsen
+          </div>
+          <div className="space-y-1">
+            {activeSynergies.map((syn) => (
+              <div key={syn.id} className="flex items-start gap-2 text-xs text-purple-900">
+                <Sparkles className="h-3 w-3 mt-0.5 shrink-0 text-purple-600" />
+                <div className="flex-1 min-w-0">
+                  <span className="font-semibold">{syn.name}</span>
+                  <span className="text-purple-700/70 ml-1.5">+{Math.round(syn.bonus * 100)}%</span>
+                  <span className="text-purple-700/80 italic ml-1.5">· {syn.spirit}</span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 

@@ -114,12 +114,81 @@ export const BEREICH_BY_ID: Record<TreeBereichId, TreeBereich> = TREE_BEREICHE.r
 )
 
 /**
- * Drei innere Bereiche fuer den Synergie-Bonus.
- * Wenn Seele + Geist + Bewusstsein gleichzeitig im selben Zeitraum wachsen,
- * entsteht ein stiller Bonus — Vision von Timo:
- * "Wenn die eins werden, kannst du alles."
+ * Drei innere Bereiche fuer den Synergie-Bonus (Backward Compat).
+ * Wird in der Synergie-Liste unten als "Innerer Dreiklang" gespiegelt.
  */
 export const INNERE_BEREICHE: TreeBereichId[] = ["seele", "geist", "bewusstsein"]
+
+/**
+ * Synergien — Bereiche, die zusammenwachsen, geben einen stillen Bonus.
+ *
+ * Wenn eine Aktion XP auf ALLE Bereiche einer Synergie verteilt, bekommt
+ * sie den Bonus. Mehrere Synergien koennen in einer Aktion gleichzeitig
+ * aktiv sein — die Boni addieren sich.
+ *
+ * Anti-Konsum-Prinzip: kein lautes Feedback, keine Push-Notifications.
+ * Die Synergie leuchtet still im Tree.
+ *
+ * Recherche: skilltree-vertiefung/02-tree-architektur.md (Block F.5),
+ *            skilltree-vertiefung/01-skill-universum.md (Block D.4).
+ */
+export interface Synergie {
+  /** Eindeutige ID */
+  id: string
+  /** Anzeigename */
+  name: string
+  /** Welche Bereiche muessen zusammenwachsen */
+  bereiche: TreeBereichId[]
+  /** Bonus-Quote auf die Summe der Synergie-XP (z.B. 0.25 = +25%) */
+  bonus: number
+  /** Kurze Beschreibung — was traegt diese Synergie */
+  spirit: string
+}
+
+export const SYNERGIES: Synergie[] = [
+  {
+    id: "innerer-dreiklang",
+    name: "Innerer Dreiklang",
+    bereiche: ["seele", "geist", "bewusstsein"],
+    bonus: 0.25,
+    spirit: "Wenn die drei eins werden, kannst du alles.",
+  },
+  {
+    id: "werkstoff",
+    name: "Werkstoff",
+    bereiche: ["koerper", "handwerk"],
+    bonus: 0.10,
+    spirit: "Hand und Werk fliessen — das Tun durchstroemt den Koerper.",
+  },
+  {
+    id: "resonanz",
+    name: "Resonanz",
+    bereiche: ["soziales", "gemeinschaft"],
+    bonus: 0.10,
+    spirit: "Naehe und Wirkung wachsen zusammen — Mensch traegt Wir.",
+  },
+  {
+    id: "klarheit",
+    name: "Klarheit",
+    bereiche: ["geist", "bewusstsein"],
+    bonus: 0.10,
+    spirit: "Denken und Gewahrsein vereint — der Blick wird scharf.",
+  },
+  {
+    id: "herz-feuer",
+    name: "Herz-Feuer",
+    bereiche: ["seele", "gemeinschaft"],
+    bonus: 0.15,
+    spirit: "Gefuehl wird Tat fuer das Ganze — tiefe Verbindung.",
+  },
+  {
+    id: "vollkreis",
+    name: "Vollkreis",
+    bereiche: ["koerper", "geist", "seele", "bewusstsein", "soziales", "gemeinschaft", "handwerk", "natur"],
+    bonus: 0.50,
+    spirit: "Alle acht zugleich. Sehr selten. Wakan-Resonanz.",
+  },
+]
 
 // ============================================================
 // Level-Berechnung

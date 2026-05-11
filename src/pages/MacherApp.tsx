@@ -639,7 +639,7 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
         </div>
       </header>
 
-      {/* HUD oben rechts — Total-Level + XP-Balken, expandierbar zu 7 Bereichen */}
+      {/* HUD oben rechts — Total-Level + XP-Balken, expandierbar zu 8 Bereichen */}
       {activeGroup && (
         <HudBar
           spaceSlug={getSpaceMeta(activeGroup).slug ?? activeGroup.id}

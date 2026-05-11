@@ -10,7 +10,7 @@ import {
 } from "../../gamification"
 
 /**
- * TreeWidget — kompakte Sicht auf die 7 Bereiche.
+ * TreeWidget — kompakte Sicht auf die 8 Bereiche.
  * Klick auf einen Bereich oder den Header springt zum Skill-Tree-Modul.
  */
 export function TreeWidget({ spaceSlug }: { spaceSlug: string | null }) {
@@ -53,7 +53,7 @@ export function TreeWidget({ spaceSlug }: { spaceSlug: string | null }) {
         <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
       </button>
 
-      {/* 7 Bereiche kompakt */}
+      {/* 8 Bereiche kompakt */}
       <div className="space-y-1.5 flex-1 overflow-y-auto">
         {TREE_BEREICHE.map((bereich) => {
           const xp = bereichXp(bereich.id as TreeBereichId)
