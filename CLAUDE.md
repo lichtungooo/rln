@@ -407,12 +407,13 @@ XP-Balken + Trust-Zahl + Marker (Aelteste, Synergien) sind als wiederverwendbare
 
 ### Offene Themen
 
-- **Klick-Routing fertig bauen** (siehe oben — kommt vor allen anderen Modul-Refactors)
-- ✅ **Doppeltes Zahnrad weg** (11.05.2026). Globales App-Zahnrad entfernt — Page-Konfig ueber PageGrid-Zahnrad, Space-Settings ueber Workspace-Switcher Edit.
-- **Settings als Grid-Modul:** Allgemein / Themes / Module / ... als Tabs in einem Grid-Modul.
-- ✅ **Drag-and-Drop** fuer Slots (Desktop, 11.05.2026)
-- **Mobile** — vermutlich 1-spaltig, Slots stapeln untereinander.
-- ✅ **HUD** aktiv in Modulen ohne eigene StatsBar (Dashboard/Profil zeigen StatsBar im Header). Spaeter: Setting zum vollstaendigen Ausblenden.
+- ✅ **Klick-Routing** (11.05.2026): 6 Channels via SelectionContext
+- ✅ **Doppeltes Zahnrad weg** (12.05.2026 — wieder aufgegriffen): EIN globales Settings-Zahnrad oben rechts, kontextsensitiv (oeffnet Module-Tab mit aktivem moduleId). PageGrid-internes Zahnrad raus, Map-Inline-Zahnrad raus, Haeuschen-Button raus → durch QR-Code-Button (Handshake) ersetzt.
+- **Settings als Grid-Drilldown** (offen): SpaceSettings soll 3-Spalten-Layout auf Desktop bekommen (Top-Tabs / Sub-Items / Detail) und Firefox-Drilldown auf Mobile. Mobile-Drilldown existiert in MobileSpaceSettings.tsx, Module-Detail-Stufe fehlt. Header bekam 12.05. den Modul-Doktrin-Gradient.
+- **Page-Konfig-Modal**: Code lebt noch in PageGrid (PageConfigModal), wird aber nicht aufgerufen. Soll ueber globales Settings → Module-Tab → Modul-Detail integriert werden.
+- ✅ **Drag-and-Drop + Resize** fuer Slots (Desktop, 11.05.2026)
+- ✅ **Mobile**: PageGrid single-column stack, Pfeile im Header. Settings Firefox-Drilldown.
+- ✅ **HUD** aktiv in Modulen ohne eigene StatsBar.
 
 ---
 
