@@ -185,7 +185,7 @@ Beispiel: Profil (Avatar/Quest/Skill), Kalender (Tag/Woche/Monat/...).
 | Tab-Buttons (Pille) | `bg-foreground text-background` aktiv, `text-muted-foreground hover:bg-muted/50` inaktiv |
 | `+` Button | Nur in PageGrid ohne lockPages — neue Page anlegen |
 | `headerRight: ReactNode` | Modul-spezifisch — z.B. `<StatsBar />` (XP+Trust) in Dashboard/Profil |
-| Zahnrad rechts oben | **NUR EINES** pro Modul. Aktuell: PageGrid-internes. Spaeter: globales App-Zahnrad kontextsensitiv (offene Aufgabe) |
+| Zahnrad rechts oben | **NUR EINES** pro Sichtfeld. Globales App-Zahnrad ist weg — Page-Konfig lebt im Modul (PageGrid-Zahnrad), Space-Settings ueber Workspace-Switcher Edit. |
 | **KEINE** Modul-interne Suche | globale Suche oben im App-Header reicht |
 
 ### Schicht 3 — Widget
@@ -377,7 +377,7 @@ XP-Balken + Trust-Zahl + Marker (Aelteste, Synergien) sind als wiederverwendbare
 ### Offene Themen
 
 - **Klick-Routing fertig bauen** (siehe oben — kommt vor allen anderen Modul-Refactors)
-- **Doppeltes Zahnrad weg.** Aktuell hat PageGrid intern ein Zahnrad + es gibt das globale App-Zahnrad oben rechts. Timo will nur EIN Zahnrad (das globale), kontextsensitiv: Klick im Dashboard → Dashboard-Konfig. Plan: PageGrid-internes Zahnrad raus, globales App-Zahnrad ruft Modul-Konfig auf.
+- ✅ **Doppeltes Zahnrad weg** (11.05.2026). Globales App-Zahnrad entfernt — Page-Konfig ueber PageGrid-Zahnrad, Space-Settings ueber Workspace-Switcher Edit.
 - **Settings als Grid-Modul:** Allgemein / Themes / Module / ... als Tabs in einem Grid-Modul.
 - **Drag-and-Drop** fuer Slots zusaetzlich zum Zahnrad.
 - **Mobile** — vermutlich 1-spaltig, Slots stapeln untereinander.

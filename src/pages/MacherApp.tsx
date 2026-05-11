@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Plus, Settings as SettingsIcon } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { LocalConnector } from '@real-life-stack/local-connector'
 import { MockConnector } from '@real-life-stack/mock-connector'
 import type { DataInterface, Group } from '@real-life-stack/data-interface'
@@ -619,19 +619,14 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
             <Square className="h-4 w-4" strokeWidth={2.5} />
           </button>
 
-          {/* Rechts: Status, Vollbild, Einstellungen, User */}
+          {/* Rechts: Status, Vollbild, User
+              Globales Settings-Zahnrad weg (Modul-Doktrin: nur EIN
+              Zahnrad pro Sichtfeld). Page-/Modul-Konfig lebt im Modul
+              selbst (PageGrid-Zahnrad). Space-Settings erreichbar
+              ueber den Edit-Knopf im Workspace-Switcher. */}
           <div className="flex shrink-0 items-center gap-0.5">
             {supportsMessaging && <RelayStatusBadgeWrapper />}
             <FullscreenButton />
-            <button
-              type="button"
-              onClick={() => openSpaceSettings('general')}
-              title="Einstellungen"
-              aria-label="Einstellungen"
-              className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground"
-            >
-              <SettingsIcon className="h-3.5 w-3.5" />
-            </button>
             <UserMenu
               user={userData}
               onProfile={() => setProfileDialogOpen(true)}
