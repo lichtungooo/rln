@@ -49,6 +49,13 @@ export interface AvailableWidget {
   defaultRowSpan?: RowSpan
 }
 
+export interface PageGridNavApi {
+  prev: () => void
+  next: () => void
+  canPrev: boolean
+  canNext: boolean
+}
+
 export interface PageGridProps {
   /** Eindeutiger Storage-Key (z.B. "rln-dashboard-<spaceId>") */
   storageKey: string
@@ -60,6 +67,12 @@ export interface PageGridProps {
   renderWidget: (widgetId: string) => ReactNode
   /** Optionaler Inhalt rechts im Header (z.B. XP/Trust-Badge) */
   headerRight?: ReactNode
+  /**
+   * Optional: Pfeile aussen wirken auf diese API (Klick-Routing).
+   * Wenn nicht passed: keine Pfeile sichtbar. Pages werden nur via
+   * Tab-Klick gewechselt.
+   */
+  navApi?: PageGridNavApi
 }
 
 const COL_SPANS: ColSpan[] = [1, 2, 3, 6]
@@ -92,6 +105,7 @@ export function PageGrid({
   availableWidgets,
   renderWidget,
   headerRight,
+  navApi,
 }: PageGridProps) {
   const [pages, setPages] = useState<GridPage[]>(() => loadPages(storageKey, defaultPages))
   const [activeIdx, setActiveIdx] = useState(0)
@@ -110,11 +124,6 @@ export function PageGrid({
   }, [storageKey, pages])
 
   const activePage = pages[activeIdx] ?? pages[0]
-  const canPrev = activeIdx > 0
-  const canNext = activeIdx < pages.length - 1
-
-  const goPrev = () => setActiveIdx((i) => Math.max(0, i - 1))
-  const goNext = () => setActiveIdx((i) => Math.min(pages.length - 1, i + 1))
 
   const updatePage = (next: GridPage) => {
     setPages((prev) => prev.map((p) => (p.id === next.id ? next : p)))
@@ -191,46 +200,38 @@ export function PageGrid({
         </button>
       </div>
 
-      {/* Wrapper mit Pfeilen aussen */}
+      {/* Wrapper: Pfeile aussen NUR wenn navApi gegeben — sie wirken auf
+          Klick-Routing (Item-Wechsel im aktiven Widget), NICHT auf
+          Page-Wechsel. Pages werden manuell oben geklickt. */}
       <div className="flex-1 flex items-stretch min-h-0 px-0 py-1.5 gap-0">
-        <button
-          type="button"
-          onClick={goPrev}
-          disabled={!canPrev}
-          className="self-center shrink-0 p-1 text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
-          aria-label="Vorige Seite"
-        >
-          <ChevronLeft className="h-8 w-8" strokeWidth={1.5} />
-        </button>
+        {navApi && (
+          <button
+            type="button"
+            onClick={navApi.prev}
+            disabled={!navApi.canPrev}
+            className="self-center shrink-0 p-1 text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
+            aria-label="Zurueck"
+          >
+            <ChevronLeft className="h-8 w-8" strokeWidth={1.5} />
+          </button>
+        )}
 
         <div className="flex-1 min-w-0 min-h-0 p-2">
           <PageGridLayout page={activePage} renderWidget={renderWidget} />
         </div>
 
-        <button
-          type="button"
-          onClick={goNext}
-          disabled={!canNext}
-          className="self-center shrink-0 p-1 text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
-          aria-label="Naechste Seite"
-        >
-          <ChevronRight className="h-8 w-8" strokeWidth={1.5} />
-        </button>
+        {navApi && (
+          <button
+            type="button"
+            onClick={navApi.next}
+            disabled={!navApi.canNext}
+            className="self-center shrink-0 p-1 text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
+            aria-label="Weiter"
+          >
+            <ChevronRight className="h-8 w-8" strokeWidth={1.5} />
+          </button>
+        )}
       </div>
-
-      {/* Indikator-Punkte */}
-      {pages.length > 1 && (
-        <div className="flex justify-center gap-1.5 pb-2 shrink-0">
-          {pages.map((_, i) => (
-            <div
-              key={i}
-              className={`h-1 rounded-full transition-all ${
-                i === activeIdx ? "w-4 bg-primary" : "w-1 bg-muted"
-              }`}
-            />
-          ))}
-        </div>
-      )}
 
       {configOpen && (
         <PageConfigModal

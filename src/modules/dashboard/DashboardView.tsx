@@ -2,9 +2,11 @@ import { useMemo } from "react"
 import type { ModuleViewProps } from "../registry"
 import { getSpaceMeta } from "../../spaces/space-data"
 import { PageGrid, type GridPage, type AvailableWidget } from "../../components/PageGrid"
+import { SelectionProvider, useNavigation } from "../../components/SelectionContext"
 import { StatsBar } from "../gamification"
 import { TreeWidget } from "./widgets/TreeWidget"
 import { QuestWidget } from "./widgets/QuestWidget"
+import { QuestDetailWidget } from "./widgets/QuestDetailWidget"
 import { LogWidget } from "./widgets/LogWidget"
 import { CalendarWidget } from "./widgets/CalendarWidget"
 import { AvatarWidget } from "../avatar"
@@ -22,6 +24,7 @@ const DASHBOARD_WIDGETS: AvailableWidget[] = [
   { id: "avatar", label: "Avatar", defaultColSpan: 2, defaultRowSpan: 2 },
   { id: "tree", label: "Faehigkeiten", defaultColSpan: 2, defaultRowSpan: 2 },
   { id: "quest", label: "Quests", defaultColSpan: 2, defaultRowSpan: 2 },
+  { id: "quest-detail", label: "Quest-Detail", defaultColSpan: 3, defaultRowSpan: 2 },
   { id: "calendar", label: "Kalender", defaultColSpan: 6, defaultRowSpan: 2 },
   { id: "log", label: "Log", defaultColSpan: 3, defaultRowSpan: 2 },
 ]
@@ -42,20 +45,14 @@ const DEFAULT_PAGES: GridPage[] = [
     name: "Tag",
     slots: [
       { id: "s1", widget: "calendar", colSpan: 6, rowSpan: 2 },
-      { id: "s2", widget: "log", colSpan: 3, rowSpan: 2 },
-      { id: "s3", widget: "quest", colSpan: 3, rowSpan: 2 },
+      // Quest links + Quest-Detail rechts — Klick-Routing-Vorbild
+      { id: "s2", widget: "quest", colSpan: 3, rowSpan: 2 },
+      { id: "s3", widget: "quest-detail", colSpan: 3, rowSpan: 2 },
     ],
   },
 ]
 
 export function DashboardView({ spaceId, activeGroup }: ModuleViewProps) {
-  const spaceSlug = useMemo(() => {
-    if (!activeGroup) return null
-    return getSpaceMeta(activeGroup).slug ?? activeGroup.id
-  }, [activeGroup])
-
-  const spaceKey = spaceId ?? "default"
-
   if (!activeGroup) {
     return (
       <div className="h-full w-full flex items-center justify-center p-8">
@@ -65,6 +62,27 @@ export function DashboardView({ spaceId, activeGroup }: ModuleViewProps) {
       </div>
     )
   }
+
+  return (
+    <SelectionProvider>
+      <DashboardInner spaceId={spaceId} activeGroup={activeGroup} />
+    </SelectionProvider>
+  )
+}
+
+function DashboardInner({
+  spaceId,
+  activeGroup,
+}: {
+  spaceId: string | null
+  activeGroup: NonNullable<ModuleViewProps["activeGroup"]>
+}) {
+  const spaceSlug = useMemo(() => {
+    return getSpaceMeta(activeGroup).slug ?? activeGroup.id
+  }, [activeGroup])
+
+  const spaceKey = spaceId ?? "default"
+  const nav = useNavigation()
 
   const renderWidget = (widgetId: string) => {
     switch (widgetId) {
@@ -80,6 +98,8 @@ export function DashboardView({ spaceId, activeGroup }: ModuleViewProps) {
         return <TreeWidget spaceSlug={spaceSlug} />
       case "quest":
         return <QuestWidget spaceSlug={spaceSlug} />
+      case "quest-detail":
+        return <QuestDetailWidget />
       case "calendar":
         return <CalendarWidget spaceSlug={spaceSlug} />
       case "log":
@@ -93,6 +113,16 @@ export function DashboardView({ spaceId, activeGroup }: ModuleViewProps) {
     }
   }
 
+  // navApi nur dann passen wenn ein Channel aktiv ist — sonst keine Pfeile
+  const navApi = nav.activeChannelId
+    ? {
+        prev: nav.prev,
+        next: nav.next,
+        canPrev: nav.canPrev,
+        canNext: nav.canNext,
+      }
+    : undefined
+
   return (
     <PageGrid
       storageKey={`rln-dashboard-${spaceKey}`}
@@ -100,6 +130,7 @@ export function DashboardView({ spaceId, activeGroup }: ModuleViewProps) {
       availableWidgets={DASHBOARD_WIDGETS}
       renderWidget={renderWidget}
       headerRight={<StatsBar />}
+      navApi={navApi}
     />
   )
 }

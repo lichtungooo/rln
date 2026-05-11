@@ -3,16 +3,35 @@ import { Trophy, CheckCircle2, ArrowRight } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useQuests } from "../../quest"
 import type { QuestData } from "../../quest"
+import { useChannel, useChannelSync } from "../../../components/SelectionContext"
 
 /**
  * QuestWidget — die naechsten offenen Quests + Anzahl erledigter.
+ *
+ * Klick-Routing: registriert offene Quests im "quest"-Channel. Klick
+ * auf eine Quest setzt sie als selected — ein QuestDetailWidget in
+ * einem anderen Slot zeigt das Detail. Pfeile aussen rotieren durch
+ * die Quests.
+ *
+ * Pfeil rechts oben fuehrt zum Quest-Modul (alter Sprung-Behavior).
  */
 export function QuestWidget({ spaceSlug }: { spaceSlug: string | null }) {
   const navigate = useNavigate()
   const { quests, isCompleted } = useQuests()
 
-  const open = useMemo(() => quests.filter((q) => !isCompleted(q.id)).slice(0, 3), [quests, isCompleted])
-  const doneCount = useMemo(() => quests.filter((q) => isCompleted(q.id)).length, [quests, isCompleted])
+  const openQuests = useMemo(
+    () => quests.filter((q) => !isCompleted(q.id)),
+    [quests, isCompleted]
+  )
+  const openPreview = useMemo(() => openQuests.slice(0, 3), [openQuests])
+  const doneCount = useMemo(
+    () => quests.filter((q) => isCompleted(q.id)).length,
+    [quests, isCompleted]
+  )
+
+  // Channel-Sync: alle offenen Quests im "quest"-Channel verfuegbar machen
+  useChannelSync("quest", openQuests)
+  const { selectedId, select } = useChannel("quest")
 
   const goQuests = () => {
     if (spaceSlug) navigate(`/${spaceSlug}/quest`)
@@ -20,12 +39,7 @@ export function QuestWidget({ spaceSlug }: { spaceSlug: string | null }) {
 
   return (
     <div className="bg-card border rounded-xl p-4 h-full flex flex-col">
-      <button
-        type="button"
-        onClick={goQuests}
-        disabled={!spaceSlug}
-        className="flex items-center justify-between mb-3 text-left group disabled:cursor-default"
-      >
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <Trophy className="h-5 w-5" style={{ color: "#E8751A" }} />
           <div>
@@ -33,30 +47,44 @@ export function QuestWidget({ spaceSlug }: { spaceSlug: string | null }) {
               Quests
             </div>
             <div className="text-base font-bold leading-tight">
-              {open.length} offen · {doneCount} erledigt
+              {openQuests.length} offen · {doneCount} erledigt
             </div>
           </div>
         </div>
-        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
-      </button>
+        <button
+          type="button"
+          onClick={goQuests}
+          disabled={!spaceSlug}
+          className="p-1 rounded hover:bg-muted/30 transition-colors disabled:opacity-40"
+          aria-label="Zum Quest-Modul"
+          title="Zum Quest-Modul"
+        >
+          <ArrowRight className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </div>
 
       <div className="flex-1 space-y-1.5 overflow-y-auto">
-        {open.length === 0 ? (
+        {openPreview.length === 0 ? (
           <div className="text-xs text-muted-foreground italic text-center py-4">
             {quests.length === 0 ? "Noch keine Quest angelegt." : "Alle erledigt — neue anlegen."}
           </div>
         ) : (
-          open.map((quest) => {
+          openPreview.map((quest) => {
             const data = quest.data as QuestData
             const totalXp =
               Object.values(data.skillXp ?? {}).reduce((a, b) => a + b, 0) +
               Object.values(data.bereichXp ?? {}).reduce((a, b) => a + (b ?? 0), 0)
+            const isSelected = selectedId === quest.id
             return (
               <button
                 key={quest.id}
                 type="button"
-                onClick={goQuests}
-                className="w-full text-left p-2 rounded-md border hover:bg-muted/30 transition-colors"
+                onClick={() => select(quest.id)}
+                className={`w-full text-left p-2 rounded-md border transition-colors ${
+                  isSelected
+                    ? "border-primary bg-primary/5 shadow-sm"
+                    : "border-transparent hover:bg-muted/30"
+                }`}
               >
                 <div className="flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-muted-foreground/40 shrink-0 mt-0.5" />
@@ -72,6 +100,11 @@ export function QuestWidget({ spaceSlug }: { spaceSlug: string | null }) {
               </button>
             )
           })
+        )}
+        {openQuests.length > 3 && (
+          <div className="text-[10px] text-muted-foreground italic text-center pt-1">
+            +{openQuests.length - 3} weitere — mit Pfeilen durchblaettern
+          </div>
         )}
       </div>
     </div>
