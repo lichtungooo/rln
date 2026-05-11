@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from "react"
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react"
 import {
   ChevronLeft,
   ChevronRight,
@@ -119,6 +119,22 @@ export function PageGrid({
   const [activeIdx, setActiveIdx] = useState(0)
   const [configOpen, setConfigOpen] = useState(false)
 
+  // Mobile-Erkennung via ResizeObserver auf dem Container.
+  // Bei schmaler Breite: Grid wird einspaltig, Slots stapeln, Page scrollt.
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    if (!containerRef.current) return
+    const el = containerRef.current
+    const obs = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setIsMobile(entry.contentRect.width < 768)
+      }
+    })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
   // Bei storageKey-Wechsel (z.B. anderer Space) neu laden
   useEffect(() => {
     setPages(loadPages(storageKey, defaultPages))
@@ -158,16 +174,16 @@ export function PageGrid({
   }
 
   return (
-    <div className="flex flex-col h-full w-full">
-      {/* Header: Seiten-Tabs + Zahnrad */}
+    <div ref={containerRef} className="flex flex-col h-full w-full">
+      {/* Header: Seiten-Tabs + Zahnrad. Auf Mobile horizontal scrollbar. */}
       <div
-        className="border-b px-3 sm:px-4 py-2 flex items-center gap-2 flex-wrap shrink-0"
+        className="border-b px-3 sm:px-4 py-2 flex items-center gap-2 shrink-0"
         style={{
           background:
             "linear-gradient(90deg, rgba(232,117,26,0.05) 0%, rgba(168,85,247,0.04) 100%)",
         }}
       >
-        <div className="flex items-center gap-1 shrink-0 flex-wrap">
+        <div className="flex items-center gap-1 min-w-0 overflow-x-auto sm:overflow-visible sm:flex-wrap">
           {pages.map((p, idx) => (
             <button
               key={p.id}
@@ -227,7 +243,11 @@ export function PageGrid({
         )}
 
         <div className="flex-1 min-w-0 min-h-0 p-2">
-          <PageGridLayout page={activePage} renderWidget={renderWidget} />
+          <PageGridLayout
+            page={activePage}
+            renderWidget={renderWidget}
+            isMobile={isMobile}
+          />
         </div>
 
         {navApi && (
@@ -267,9 +287,11 @@ export function PageGrid({
 function PageGridLayout({
   page,
   renderWidget,
+  isMobile,
 }: {
   page: GridPage
   renderWidget: (widgetId: string) => ReactNode
+  isMobile: boolean
 }) {
   if (page.slots.length === 0) {
     return (
@@ -279,6 +301,30 @@ function PageGridLayout({
     )
   }
 
+  // Mobile: single-column, Slots stapeln mit fester min-Hoehe.
+  // Page-Inhalt scrollt vertikal (Ausnahme von der no-scroll-Regel).
+  if (isMobile) {
+    return (
+      <div className="h-full w-full overflow-y-auto">
+        <div className="flex flex-col gap-2 min-h-full">
+          {page.slots.map((slot) => (
+            <div
+              key={slot.id}
+              className="min-w-0 overflow-hidden shrink-0"
+              style={{
+                // rowSpan bestimmt Hoehe — pro Einheit ca. 180px (kompakt)
+                minHeight: `${slot.rowSpan * 180}px`,
+              }}
+            >
+              {renderWidget(slot.widget)}
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  // Desktop: 6-Spalten-Grid, Slots mit colSpan/rowSpan.
   return (
     <div
       className="h-full w-full grid gap-2"

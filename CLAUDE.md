@@ -244,13 +244,22 @@ Item-IDs sind eindeutig im Channel (default: Item.id).
 - ❌ **Klick auf Item → Modul-Sprung** als Default. Wenn ein Detail-Widget existiert, sollte der Klick es fuettern. Modul-Sprung gibt's per `ArrowRight`-Icon im Widget-Header (Backward-Kompat).
 - ❌ **Page-Scroll** des gesamten Moduls. Nur Widgets scrollen intern.
 
+### Mobile (PageGrid responsive)
+
+Bei Container-Breite < 768px schaltet PageGrid auf Single-Column-Modus um:
+- Slots stapeln untereinander mit `min-height = rowSpan * 180px`
+- Page-Inhalt scrollt vertikal (einzige Ausnahme von der no-scroll-Regel)
+- Page-Tabs scrollen horizontal wenn zu viele
+- Klick-Routing + Pfeile arbeiten unveraendert
+- ResizeObserver erkennt Resize live (Browser-Fenster verkleinern)
+
 ### Was DANN passiert
 
 Wenn alle Module dieser Doktrin folgen:
 - Mensch lernt das System einmal, kann es ueberall.
 - Jedes Modul fuehlt sich an wie das gleiche — nur mit anderen Inhalten.
 - Der Mensch baut sich seine Welt selbst zusammen, ueber Slots und Channels.
-- Mobile / Desktop / Tablet gleich (PageGrid responsive, geplant).
+- Mobile / Desktop / Tablet gleich — PageGrid passt sich automatisch an.
 
 ---
 
