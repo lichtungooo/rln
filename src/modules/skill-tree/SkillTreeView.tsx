@@ -13,12 +13,7 @@ import {
   type LucideIcon,
 } from "lucide-react"
 import * as LucideIcons from "lucide-react"
-import {
-  Card,
-  CardContent,
-  Button,
-  useItems,
-} from "@real-life-stack/toolkit"
+import { useItems } from "@real-life-stack/toolkit"
 import type { ModuleViewProps } from "../registry"
 import {
   TREE_BEREICHE,
@@ -37,18 +32,22 @@ import {
 } from "../gamification"
 
 /**
- * SkillTreeView — Karussell-Layout (Phase Polish-2, 11.05.2026).
+ * SkillTreeView — Karussell mit Two-Panel-Drill (AC-Odyssey-Style).
  *
- * Drei-Ebenen-Drill-Down im Stil von Assassin's Creed Odyssey:
- *   - Ebene 1: 8 Bereiche als Kreise im Karussell (2 sichtbar Desktop, 1 Mobile)
- *   - Ebene 2: ein Bereich mit Skills als Kreise (Grid)
- *   - Ebene 3: ein Skill mit Level, Voraussetzungen, Sichtbarkeit
+ * Stand: 11.05.2026 (Polish-3 nach Timo-Feedback).
  *
- * Navigation: Wischen / Pfeile fuer Karussell. Klick fuer Drill-Down,
- * Zurueck-Pfeil oder X fuer Eltern-Ebene.
+ * Zwei Panels nebeneinander zeigen entweder:
+ *   - **Bereich** (Header kompakt + Skills als Kreis-Grid)
+ *   - **Skill-Detail** (Beschreibung, Level, Voraussetzungen, Sichtbarkeit)
  *
- * Skills sind runde Kreise mit Icon. Bei XP > 0 leuchten sie heller.
- * Stufe steht als kleine Zahl darunter.
+ * Klick auf Skill in LINKEM Panel → Skill-Detail erscheint im RECHTEN.
+ * Klick auf Skill in RECHTEM Panel → Skill-Detail erscheint im LINKEN.
+ * X auf einem Panel → es geht zurueck zu seinem Bereich-Zustand.
+ *
+ * Karussell-Pfeile rotieren beide Panels gemeinsam, wenn beide
+ * Bereiche zeigen.
+ *
+ * Mobile: nur ein Panel sichtbar, immer das aktive (Detail bevorzugt).
  */
 
 // ============================================================
@@ -61,7 +60,9 @@ interface RenderSkill {
   isUniversal: boolean
 }
 
-type View = "carousel" | "bereich" | "skill"
+type PanelState =
+  | { kind: "bereich"; bereichIdx: number }
+  | { kind: "skill"; bereichIdx: number; skillId: string }
 
 // ============================================================
 // Haupt-Component
@@ -112,13 +113,11 @@ export function SkillTreeView({ activeGroup }: ModuleViewProps) {
     [data.bereichXp]
   )
 
-  // Navigation-State
-  const [view, setView] = useState<View>("carousel")
-  const [carouselOffset, setCarouselOffset] = useState(0)
-  const [selectedBereichId, setSelectedBereichId] = useState<TreeBereichId | null>(null)
-  const [selectedSkillId, setSelectedSkillId] = useState<string | null>(null)
-  const [isMobile, setIsMobile] = useState(false)
+  // Two-Panel-State
+  const [leftPanel, setLeftPanel] = useState<PanelState>({ kind: "bereich", bereichIdx: 0 })
+  const [rightPanel, setRightPanel] = useState<PanelState>({ kind: "bereich", bereichIdx: 1 })
 
+  const [isMobile, setIsMobile] = useState(false)
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768)
     check()
@@ -126,425 +125,336 @@ export function SkillTreeView({ activeGroup }: ModuleViewProps) {
     return () => window.removeEventListener("resize", check)
   }, [])
 
-  // Wieviele Bereiche pro Schritt sichtbar — Mobile 1, Desktop 2
-  const perStep = isMobile ? 1 : 2
-  const maxOffset = Math.max(0, TREE_BEREICHE.length - perStep)
-  const visibleBereiche = TREE_BEREICHE.slice(carouselOffset, carouselOffset + perStep)
+  // Sind beide Panels im Bereich-Modus? Dann ist das Karussell aktiv.
+  const carouselActive = leftPanel.kind === "bereich" && rightPanel.kind === "bereich"
 
-  const goBack = () => {
-    if (view === "skill") {
-      setSelectedSkillId(null)
-      setView("bereich")
-    } else if (view === "bereich") {
-      setSelectedBereichId(null)
-      setView("carousel")
+  const handleSelectSkill = (side: "left" | "right", skillId: string, bereichIdx: number) => {
+    // Klick links → Detail rechts; Klick rechts → Detail links
+    const detail: PanelState = { kind: "skill", bereichIdx, skillId }
+    if (side === "left") {
+      setRightPanel(detail)
+    } else {
+      setLeftPanel(detail)
     }
   }
 
-  const openBereich = (b: TreeBereichId) => {
-    setSelectedBereichId(b)
-    setView("bereich")
+  const handleCloseSkill = (side: "left" | "right") => {
+    // X auf Skill-Detail: Panel zurueck zu seinem Bereich
+    if (side === "left" && leftPanel.kind === "skill") {
+      setLeftPanel({ kind: "bereich", bereichIdx: leftPanel.bereichIdx })
+    } else if (side === "right" && rightPanel.kind === "skill") {
+      setRightPanel({ kind: "bereich", bereichIdx: rightPanel.bereichIdx })
+    }
   }
 
-  const openSkill = (id: string) => {
-    setSelectedSkillId(id)
-    setView("skill")
+  // Karussell-Navigation (nur wenn beide Panels Bereiche zeigen)
+  const goPrev = () => {
+    if (!carouselActive) return
+    if (leftPanel.kind !== "bereich" || rightPanel.kind !== "bereich") return
+    const newLeft = (leftPanel.bereichIdx - 2 + TREE_BEREICHE.length) % TREE_BEREICHE.length
+    const newRight = (newLeft + 1) % TREE_BEREICHE.length
+    setLeftPanel({ kind: "bereich", bereichIdx: newLeft })
+    setRightPanel({ kind: "bereich", bereichIdx: newRight })
+  }
+  const goNext = () => {
+    if (!carouselActive) return
+    if (leftPanel.kind !== "bereich" || rightPanel.kind !== "bereich") return
+    const newLeft = (leftPanel.bereichIdx + 2) % TREE_BEREICHE.length
+    const newRight = (newLeft + 1) % TREE_BEREICHE.length
+    setLeftPanel({ kind: "bereich", bereichIdx: newLeft })
+    setRightPanel({ kind: "bereich", bereichIdx: newRight })
   }
 
-  const selectedBereich = selectedBereichId
-    ? TREE_BEREICHE.find((b) => b.id === selectedBereichId)
-    : undefined
+  // Mobile: nur ein Panel sichtbar — Detail-Panel hat Vorrang, sonst linkes
+  const mobilePanel = isMobile
+    ? leftPanel.kind === "skill"
+      ? leftPanel
+      : rightPanel.kind === "skill"
+      ? rightPanel
+      : leftPanel
+    : null
+  const mobileSide: "left" | "right" =
+    mobilePanel === leftPanel ? "left" : "right"
 
-  const selectedSkill: RenderSkill | undefined = useMemo(() => {
-    if (!selectedBereichId || !selectedSkillId) return undefined
-    return skillsByBereich[selectedBereichId].find((s) => s.id === selectedSkillId)
-  }, [selectedBereichId, selectedSkillId, skillsByBereich])
+  // Mobile-Karussell-Nav: schaltet leftPanel durch (rightPanel folgt)
+  const mobileBereichIdx = leftPanel.kind === "bereich" ? leftPanel.bereichIdx : 0
+  const mobilePrev = () => {
+    const next = (mobileBereichIdx - 1 + TREE_BEREICHE.length) % TREE_BEREICHE.length
+    setLeftPanel({ kind: "bereich", bereichIdx: next })
+    setRightPanel({ kind: "bereich", bereichIdx: (next + 1) % TREE_BEREICHE.length })
+  }
+  const mobileNext = () => {
+    const next = (mobileBereichIdx + 1) % TREE_BEREICHE.length
+    setLeftPanel({ kind: "bereich", bereichIdx: next })
+    setRightPanel({ kind: "bereich", bereichIdx: (next + 1) % TREE_BEREICHE.length })
+  }
 
   return (
-    <div className="container mx-auto max-w-5xl p-4 space-y-4">
-      {/* Header: Total-Level + Sticker */}
-      <Card>
-        <CardContent className="p-4 flex items-center gap-4 flex-wrap">
-          <div
-            className="flex-shrink-0 w-16 h-16 rounded-full grid place-items-center text-xl font-bold text-white shadow-lg"
-            style={{ background: "linear-gradient(135deg, #E8751A, #FBBF24)" }}
-          >
-            {totalLevel}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
-              Faehigkeitenbaum
-            </div>
-            <h2 className="text-lg font-bold mt-0.5">Level {totalLevel}</h2>
-            <p className="text-xs text-muted-foreground">
-              {totalXp.toLocaleString("de-DE")} XP — verteilt auf 8 Bereiche
-            </p>
-            {seedStatus.skillsTodo > 0 && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="mt-1.5 h-7 text-xs"
-                onClick={seed}
-                disabled={seeding}
-              >
-                {seeding
-                  ? "Lade..."
-                  : `${seedStatus.skillsTodo} ${seedStatus.manifestName}-Skills anlegen`}
-              </Button>
-            )}
+    <div className="container mx-auto max-w-5xl p-3 space-y-3">
+      {/* Kompakter Header */}
+      <div className="flex items-center gap-3 flex-wrap px-2">
+        <div
+          className="w-10 h-10 rounded-full grid place-items-center text-sm font-bold text-white shadow"
+          style={{ background: "linear-gradient(135deg, #E8751A, #FBBF24)" }}
+        >
+          {totalLevel}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-xs font-semibold">
+            Level {totalLevel} ·{" "}
+            <span className="text-muted-foreground font-normal">
+              {totalXp.toLocaleString("de-DE")} XP
+            </span>
           </div>
           {activeSynergies.length > 0 && (
             <div
-              className="px-3 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5"
-              style={{ background: "rgba(168,85,247,0.1)", color: "#A855F7" }}
+              className="text-[10px] flex items-center gap-1 mt-0.5"
               title={activeSynergies.map((s) => s.name).join(", ")}
             >
-              <Sparkles className="h-3.5 w-3.5" />
-              {activeSynergies.length === 1
-                ? activeSynergies[0].name
-                : `${activeSynergies.length} Synergien`}
+              <Sparkles className="h-3 w-3 text-purple-500" />
+              <span className="text-purple-700 font-medium">
+                {activeSynergies.length === 1
+                  ? activeSynergies[0].name
+                  : `${activeSynergies.length} Synergien aktiv`}
+              </span>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      {/* Breadcrumb / Zurueck */}
-      {view !== "carousel" && (
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            onClick={goBack}
-            className="h-8 px-2"
-          >
-            <ChevronLeft className="h-4 w-4 mr-1" />
-            Zurueck
-          </Button>
-          <span className="text-xs text-muted-foreground">
-            {view === "bereich" && selectedBereich && `Tree / ${selectedBereich.label}`}
-            {view === "skill" && selectedBereich && selectedSkill &&
-              `Tree / ${selectedBereich.label} / ${selectedSkill.data.name}`}
-          </span>
         </div>
-      )}
+        {seedStatus.skillsTodo > 0 && (
+          <button
+            type="button"
+            onClick={seed}
+            disabled={seeding}
+            className="text-xs px-2 py-1 rounded border border-muted-foreground/20 hover:border-primary hover:bg-primary/5 transition-colors"
+          >
+            {seeding ? "..." : `+${seedStatus.skillsTodo} ${seedStatus.manifestName}`}
+          </button>
+        )}
+      </div>
 
-      {/* Karussell-Ebene */}
-      {view === "carousel" && (
-        <CarouselLevel
-          visibleBereiche={visibleBereiche}
-          offset={carouselOffset}
-          maxOffset={maxOffset}
-          perStep={perStep}
-          onPrev={() => setCarouselOffset((o) => Math.max(0, o - perStep))}
-          onNext={() => setCarouselOffset((o) => Math.min(maxOffset, o + perStep))}
+      {/* Panel-Layout */}
+      {isMobile && mobilePanel ? (
+        // Mobile: ein Panel
+        <Panel
+          state={mobilePanel}
+          side={mobileSide}
+          skillsByBereich={skillsByBereich}
           bereichXp={bereichXp}
           bereichProgress={bereichProgress}
-          skillsByBereich={skillsByBereich}
-          onSelect={openBereich}
-        />
-      )}
-
-      {/* Bereich-Ebene */}
-      {view === "bereich" && selectedBereich && (
-        <BereichLevel
-          bereich={selectedBereich}
-          xp={bereichXp(selectedBereich.id)}
-          progress={bereichProgress(selectedBereich.id)}
-          skills={skillsByBereich[selectedBereich.id]}
           skillXp={skillXp}
           skillProgress={skillProgress}
           isUnlocked={isUnlocked}
-          onSelectSkill={openSkill}
+          getVisibility={getVisibility}
+          setVisibility={setVisibility}
+          onSelectSkill={(skillId, bereichIdx) =>
+            handleSelectSkill(mobileSide, skillId, bereichIdx)
+          }
+          onClose={() => handleCloseSkill(mobileSide)}
         />
-      )}
-
-      {/* Skill-Ebene */}
-      {view === "skill" && selectedBereich && selectedSkill && (
-        <SkillLevel
-          bereich={selectedBereich}
-          skill={selectedSkill}
-          xp={skillXp(selectedSkill.id)}
-          progress={skillProgress(selectedSkill.id)}
-          unlock={isUnlocked(selectedSkill.id)}
-          visibility={getVisibility(selectedSkill.id)}
-          onVisibilityChange={(level) => setVisibility(selectedSkill.id, level)}
-        />
-      )}
-    </div>
-  )
-}
-
-// ============================================================
-// CarouselLevel — 8 Bereiche im Karussell (2 oder 1 sichtbar)
-// ============================================================
-
-function CarouselLevel({
-  visibleBereiche,
-  offset,
-  maxOffset,
-  perStep,
-  onPrev,
-  onNext,
-  bereichXp,
-  bereichProgress,
-  skillsByBereich,
-  onSelect,
-}: {
-  visibleBereiche: TreeBereich[]
-  offset: number
-  maxOffset: number
-  perStep: number
-  onPrev: () => void
-  onNext: () => void
-  bereichXp: (id: TreeBereichId) => number
-  bereichProgress: (id: TreeBereichId) => ReturnType<typeof progressInLevel>
-  skillsByBereich: Record<TreeBereichId, RenderSkill[]>
-  onSelect: (id: TreeBereichId) => void
-}) {
-  return (
-    <div className="space-y-3">
-      {/* Bereich-Kreise */}
-      <div className="flex items-center gap-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={onPrev}
-          disabled={offset === 0}
-          className="shrink-0 h-12 w-8 p-0"
-          aria-label="Zurueck"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </Button>
-
-        <div className={`flex-1 grid gap-3 ${perStep === 1 ? "grid-cols-1" : "grid-cols-2"}`}>
-          {visibleBereiche.map((b) => (
-            <BereichCircle
-              key={b.id}
-              bereich={b}
-              xp={bereichXp(b.id)}
-              progress={bereichProgress(b.id)}
-              skillCount={skillsByBereich[b.id].length}
-              isInner={INNERE_BEREICHE.includes(b.id)}
-              onClick={() => onSelect(b.id)}
-            />
-          ))}
-        </div>
-
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={onNext}
-          disabled={offset >= maxOffset}
-          className="shrink-0 h-12 w-8 p-0"
-          aria-label="Weiter"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </Button>
-      </div>
-
-      {/* Karussell-Indikatoren */}
-      <div className="flex justify-center gap-1.5">
-        {Array.from({ length: Math.ceil(TREE_BEREICHE.length / perStep) }).map((_, i) => {
-          const active = Math.floor(offset / perStep) === i
-          return (
-            <div
-              key={i}
-              className={`h-1.5 rounded-full transition-all ${
-                active ? "w-6 bg-primary" : "w-1.5 bg-muted"
-              }`}
-            />
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-// ============================================================
-// BereichCircle — ein Bereich als grosser Kreis
-// ============================================================
-
-function BereichCircle({
-  bereich,
-  xp,
-  progress,
-  skillCount,
-  isInner,
-  onClick,
-}: {
-  bereich: TreeBereich
-  xp: number
-  progress: ReturnType<typeof progressInLevel>
-  skillCount: number
-  isInner: boolean
-  onClick: () => void
-}) {
-  const Icon = bereich.icon as LucideIcon
-  const activated = xp > 0
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group flex flex-col items-center gap-2 p-4 rounded-2xl border bg-card hover:border-primary hover:shadow-md transition-all"
-      style={activated ? { borderColor: bereich.color } : {}}
-    >
-      <div
-        className={`relative w-24 h-24 md:w-28 md:h-28 rounded-full flex items-center justify-center transition-all ${
-          activated ? "shadow-lg" : ""
-        }`}
-        style={{
-          background: activated
-            ? `radial-gradient(circle, ${bereich.color}30 0%, ${bereich.color}10 100%)`
-            : "rgba(148,163,184,0.08)",
-          boxShadow: activated ? `0 0 24px ${bereich.color}40` : undefined,
-        }}
-      >
-        <Icon
-          className="h-10 w-10 md:h-12 md:w-12 transition-transform group-hover:scale-110"
-          style={{ color: activated ? bereich.color : "#94A3B8" }}
-        />
-        {/* Level-Pille */}
-        {progress.level > 0 && (
-          <div
-            className="absolute -top-1 -right-1 px-2 py-0.5 rounded-full text-[10px] font-bold text-white shadow"
-            style={{ background: bereich.color }}
-          >
-            Lv {progress.level}
-          </div>
-        )}
-        {/* Innerer-Kreis-Marker */}
-        {isInner && (
-          <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 px-1.5 py-0 rounded text-[8px] uppercase font-semibold tracking-wider bg-purple-100 text-purple-700">
-            innen
-          </div>
-        )}
-      </div>
-
-      <div className="text-center">
-        <div className="text-sm font-semibold">{bereich.label}</div>
-        <div className="text-[10px] text-muted-foreground italic">{bereich.spirit}</div>
-        <div className="text-[10px] text-muted-foreground mt-0.5">
-          {skillCount} Skill{skillCount === 1 ? "" : "s"}
-          {xp > 0 && ` · ${xp.toLocaleString("de-DE")} XP`}
-        </div>
-      </div>
-
-      {/* XP-Balken */}
-      {xp > 0 && (
-        <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
-          <div
-            className="h-full rounded-full"
-            style={{
-              width: `${Math.min(100, progress.ratio * 100)}%`,
-              background: bereich.color,
-            }}
+      ) : (
+        // Desktop: zwei Panels nebeneinander
+        <div className="grid grid-cols-2 gap-3">
+          <Panel
+            state={leftPanel}
+            side="left"
+            skillsByBereich={skillsByBereich}
+            bereichXp={bereichXp}
+            bereichProgress={bereichProgress}
+            skillXp={skillXp}
+            skillProgress={skillProgress}
+            isUnlocked={isUnlocked}
+            getVisibility={getVisibility}
+            setVisibility={setVisibility}
+            onSelectSkill={(skillId, bereichIdx) =>
+              handleSelectSkill("left", skillId, bereichIdx)
+            }
+            onClose={() => handleCloseSkill("left")}
+          />
+          <Panel
+            state={rightPanel}
+            side="right"
+            skillsByBereich={skillsByBereich}
+            bereichXp={bereichXp}
+            bereichProgress={bereichProgress}
+            skillXp={skillXp}
+            skillProgress={skillProgress}
+            isUnlocked={isUnlocked}
+            getVisibility={getVisibility}
+            setVisibility={setVisibility}
+            onSelectSkill={(skillId, bereichIdx) =>
+              handleSelectSkill("right", skillId, bereichIdx)
+            }
+            onClose={() => handleCloseSkill("right")}
           />
         </div>
       )}
-    </button>
+
+      {/* Karussell-Navigation */}
+      {carouselActive && (
+        <div className="flex items-center justify-center gap-3 pt-1">
+          <button
+            type="button"
+            onClick={isMobile ? mobilePrev : goPrev}
+            className="h-9 w-9 rounded-full grid place-items-center border hover:bg-muted transition-colors"
+            aria-label="Zurueck"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </button>
+          <div className="flex gap-1.5">
+            {TREE_BEREICHE.map((_, i) => {
+              const leftIdx = leftPanel.kind === "bereich" ? leftPanel.bereichIdx : -1
+              const rightIdx = rightPanel.kind === "bereich" ? rightPanel.bereichIdx : -1
+              const active = i === leftIdx || (!isMobile && i === rightIdx)
+              return (
+                <div
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all ${
+                    active ? "w-5 bg-primary" : "w-1.5 bg-muted"
+                  }`}
+                />
+              )
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={isMobile ? mobileNext : goNext}
+            className="h-9 w-9 rounded-full grid place-items-center border hover:bg-muted transition-colors"
+            aria-label="Weiter"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
 
 // ============================================================
-// BereichLevel — Bereich-Detail mit Skills als Kreise
+// Panel — zeigt entweder Bereich oder Skill-Detail
 // ============================================================
 
-function BereichLevel({
-  bereich,
-  xp,
-  progress,
-  skills,
-  skillXp,
-  skillProgress,
-  isUnlocked,
-  onSelectSkill,
-}: {
-  bereich: TreeBereich
-  xp: number
-  progress: ReturnType<typeof progressInLevel>
-  skills: RenderSkill[]
+interface PanelProps {
+  state: PanelState
+  side: "left" | "right"
+  skillsByBereich: Record<TreeBereichId, RenderSkill[]>
+  bereichXp: (id: TreeBereichId) => number
+  bereichProgress: (id: TreeBereichId) => ReturnType<typeof progressInLevel>
   skillXp: (id: string) => number
   skillProgress: (id: string) => ReturnType<typeof progressInLevel>
   isUnlocked: (id: string) => { unlocked: boolean; missing: string[] }
-  onSelectSkill: (id: string) => void
-}) {
+  getVisibility: (id: string) => SkillVisibilityLevel | undefined
+  setVisibility: (id: string, level: SkillVisibilityLevel | undefined) => Promise<void>
+  onSelectSkill: (skillId: string, bereichIdx: number) => void
+  onClose: () => void
+}
+
+function Panel({
+  state,
+  side,
+  skillsByBereich,
+  bereichXp,
+  bereichProgress,
+  skillXp,
+  skillProgress,
+  isUnlocked,
+  getVisibility,
+  setVisibility,
+  onSelectSkill,
+  onClose,
+}: PanelProps) {
+  const bereich = TREE_BEREICHE[state.bereichIdx]
   const Icon = bereich.icon as LucideIcon
-  return (
-    <Card style={{ borderColor: bereich.color }}>
-      <CardContent className="p-5 space-y-4">
-        {/* Bereich-Header */}
-        <div className="flex items-center gap-3">
+  const skills = skillsByBereich[bereich.id]
+  const isInner = INNERE_BEREICHE.includes(bereich.id)
+
+  if (state.kind === "bereich") {
+    const bProg = bereichProgress(bereich.id)
+    const bXp = bereichXp(bereich.id)
+    return (
+      <div
+        className="rounded-xl border bg-card overflow-hidden flex flex-col"
+        style={{ borderLeftWidth: 3, borderLeftColor: bereich.color }}
+      >
+        {/* Mini-Header */}
+        <div className="px-3 py-2 border-b flex items-center gap-2 bg-muted/20">
           <div
-            className="w-14 h-14 rounded-full flex items-center justify-center shrink-0"
-            style={{
-              background: `radial-gradient(circle, ${bereich.color}30 0%, ${bereich.color}10 100%)`,
-            }}
+            className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+            style={{ background: `${bereich.color}18` }}
           >
-            <Icon className="h-7 w-7" style={{ color: bereich.color }} />
+            <Icon className="h-4 w-4" style={{ color: bereich.color }} />
           </div>
           <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-bold">{bereich.label}</h2>
-            <p className="text-xs text-muted-foreground italic">{bereich.spirit}</p>
-          </div>
-          <div className="text-right shrink-0">
-            <div className="text-3xl font-bold" style={{ color: bereich.color }}>
-              {progress.level}
+            <div className="flex items-center gap-1.5">
+              <h3 className="text-sm font-semibold truncate">{bereich.label}</h3>
+              {isInner && (
+                <span className="text-[8px] uppercase tracking-wider text-purple-700">innen</span>
+              )}
             </div>
-            <div className="text-[10px] text-muted-foreground">
-              {xp.toLocaleString("de-DE")} XP
-            </div>
+            <p className="text-[10px] text-muted-foreground italic truncate">{bereich.spirit}</p>
           </div>
+          {bProg.level > 0 && (
+            <span
+              className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+              style={{ background: `${bereich.color}18`, color: bereich.color }}
+              title={`${bXp.toLocaleString("de-DE")} XP`}
+            >
+              Lv {bProg.level}
+            </span>
+          )}
         </div>
 
-        <p className="text-xs text-muted-foreground leading-relaxed">{bereich.description}</p>
-
-        {/* XP-Balken */}
-        <div>
-          <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
-            <span>Lv {progress.level}</span>
-            <span>{progress.xpInLevel} / {progress.xpNeeded} XP</span>
-          </div>
-          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full"
-              style={{
-                width: `${Math.min(100, progress.ratio * 100)}%`,
-                background: bereich.color,
-              }}
-            />
-          </div>
+        {/* Skill-Kreis-Grid */}
+        <div className="p-3 flex-1 overflow-y-auto">
+          {skills.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic text-center py-6">
+              Keine Skills in diesem Bereich.
+            </p>
+          ) : (
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {skills.map((skill) => (
+                <SkillCircle
+                  key={skill.id}
+                  skill={skill}
+                  bereichColor={bereich.color}
+                  xp={skillXp(skill.id)}
+                  progress={skillProgress(skill.id)}
+                  locked={!isUnlocked(skill.id).unlocked}
+                  onClick={() => onSelectSkill(skill.id, state.bereichIdx)}
+                />
+              ))}
+            </div>
+          )}
         </div>
+      </div>
+    )
+  }
 
-        {/* Skills als Kreis-Grid */}
-        {skills.length === 0 ? (
-          <p className="text-xs text-muted-foreground italic text-center py-4">
-            Noch keine Skills in diesem Bereich.
-          </p>
-        ) : (
-          <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
-            {skills.map((skill) => (
-              <SkillCircle
-                key={skill.id}
-                skill={skill}
-                bereichColor={bereich.color}
-                xp={skillXp(skill.id)}
-                progress={skillProgress(skill.id)}
-                locked={!isUnlocked(skill.id).unlocked}
-                onClick={() => onSelectSkill(skill.id)}
-              />
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+  // Skill-Detail
+  const skill = skills.find((s) => s.id === state.skillId)
+  if (!skill) {
+    return (
+      <div className="rounded-xl border bg-muted/30 p-4 text-xs text-muted-foreground italic">
+        Skill nicht gefunden
+      </div>
+    )
+  }
+
+  return (
+    <SkillDetail
+      bereich={bereich}
+      skill={skill}
+      xp={skillXp(skill.id)}
+      progress={skillProgress(skill.id)}
+      unlock={isUnlocked(skill.id)}
+      visibility={getVisibility(skill.id)}
+      onVisibilityChange={(level) => setVisibility(skill.id, level)}
+      onClose={onClose}
+    />
   )
 }
 
 // ============================================================
-// SkillCircle — ein Skill als kleiner Kreis
+// SkillCircle — Skill als kleiner Kreis im Bereich-Grid
 // ============================================================
 
 function DynamicIcon({ name, className, color }: { name: string; className?: string; color?: string }) {
@@ -581,49 +491,46 @@ function SkillCircle({
       type="button"
       onClick={onClick}
       title={skill.data.description ?? skill.data.name}
-      className="group flex flex-col items-center gap-1.5 transition-all"
+      className="group flex flex-col items-center gap-1 transition-all"
     >
       <div
-        className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center border-2 transition-all group-hover:scale-110 ${
+        className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center border-2 transition-all group-hover:scale-110 group-hover:shadow-md ${
           locked ? "opacity-50" : ""
         }`}
         style={{
           background: activated ? `${color}15` : "rgba(148,163,184,0.05)",
           borderColor: activated ? color : "rgba(148,163,184,0.3)",
-          boxShadow: activated ? `0 0 12px ${color}30` : undefined,
+          boxShadow: activated ? `0 0 10px ${color}30` : undefined,
         }}
       >
         {locked ? (
-          <Lock className="h-5 w-5 text-muted-foreground" />
+          <Lock className="h-4 w-4 text-muted-foreground" />
         ) : skill.data.icon ? (
-          <DynamicIcon name={skill.data.icon} className="h-5 w-5 sm:h-6 sm:w-6" color={activated ? color : "#94A3B8"} />
+          <DynamicIcon name={skill.data.icon} className="h-4 w-4 sm:h-5 sm:w-5" color={activated ? color : "#94A3B8"} />
         ) : (
-          <Sparkles className="h-5 w-5" style={{ color: activated ? color : "#94A3B8" }} />
+          <Sparkles className="h-4 w-4" style={{ color: activated ? color : "#94A3B8" }} />
         )}
         {progress.level > 0 && (
           <div
-            className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full text-[9px] font-bold text-white grid place-items-center"
+            className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-bold text-white grid place-items-center shadow"
             style={{ background: color }}
           >
             {progress.level}
           </div>
         )}
       </div>
-      <div className="text-[10px] font-medium text-center leading-tight max-w-[80px] truncate">
+      <div className="text-[9px] sm:text-[10px] font-medium text-center leading-tight max-w-[64px] truncate">
         {skill.data.name}
       </div>
-      {skill.isUniversal && (
-        <div className="text-[8px] uppercase tracking-wider text-muted-foreground">universal</div>
-      )}
     </button>
   )
 }
 
 // ============================================================
-// SkillLevel — Skill-Detail
+// SkillDetail — Skill-Detail-Panel
 // ============================================================
 
-function SkillLevel({
+function SkillDetail({
   bereich,
   skill,
   xp,
@@ -631,6 +538,7 @@ function SkillLevel({
   unlock,
   visibility,
   onVisibilityChange,
+  onClose,
 }: {
   bereich: TreeBereich
   skill: RenderSkill
@@ -639,103 +547,114 @@ function SkillLevel({
   unlock: { unlocked: boolean; missing: string[] }
   visibility: SkillVisibilityLevel | undefined
   onVisibilityChange: (level: SkillVisibilityLevel | undefined) => Promise<void>
+  onClose: () => void
 }) {
   const color = skill.data.color ?? bereich.color
 
   return (
-    <Card style={{ borderColor: color }}>
-      <CardContent className="p-5 space-y-4">
-        {/* Skill-Header */}
-        <div className="flex items-start gap-4">
-          <div
-            className="w-20 h-20 rounded-full flex items-center justify-center shrink-0 border-2"
-            style={{
-              background: `radial-gradient(circle, ${color}30 0%, ${color}10 100%)`,
-              borderColor: color,
-              boxShadow: xp > 0 ? `0 0 24px ${color}40` : undefined,
-            }}
-          >
-            {unlock.unlocked ? (
-              skill.data.icon ? (
-                <DynamicIcon name={skill.data.icon} className="h-10 w-10" color={color} />
-              ) : (
-                <Sparkles className="h-10 w-10" style={{ color }} />
-              )
+    <div
+      className="rounded-xl border bg-card overflow-hidden flex flex-col"
+      style={{ borderLeftWidth: 3, borderLeftColor: color }}
+    >
+      {/* Mini-Header mit X */}
+      <div className="px-3 py-2 border-b flex items-center gap-2 bg-muted/20">
+        <div
+          className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 border"
+          style={{
+            background: `${color}18`,
+            borderColor: color,
+          }}
+        >
+          {unlock.unlocked ? (
+            skill.data.icon ? (
+              <DynamicIcon name={skill.data.icon} className="h-4 w-4" color={color} />
             ) : (
-              <Lock className="h-10 w-10 text-muted-foreground" />
-            )}
-          </div>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap mb-0.5">
-              <h2 className="text-xl font-bold">{skill.data.name}</h2>
-              {skill.isUniversal && (
-                <span
-                  className="text-[9px] uppercase font-semibold tracking-wider px-1.5 py-0.5 rounded"
-                  style={{ background: "rgba(100,116,139,0.12)", color: "#475569" }}
-                >
-                  universal
-                </span>
-              )}
-            </div>
-            <p className="text-[10px] text-muted-foreground italic mb-1">
-              Bereich: {bereich.label}
-            </p>
-            {skill.data.description && (
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {skill.data.description}
-              </p>
-            )}
-          </div>
+              <Sparkles className="h-4 w-4" style={{ color }} />
+            )
+          ) : (
+            <Lock className="h-4 w-4 text-muted-foreground" />
+          )}
         </div>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <h3 className="text-sm font-semibold truncate">{skill.data.name}</h3>
+            {skill.isUniversal && (
+              <span
+                className="text-[8px] uppercase font-semibold tracking-wider px-1 py-0 rounded"
+                style={{ background: "rgba(100,116,139,0.12)", color: "#475569" }}
+              >
+                universal
+              </span>
+            )}
+          </div>
+          <p className="text-[10px] text-muted-foreground italic truncate">
+            {bereich.label}
+          </p>
+        </div>
+        {progress.level > 0 && (
+          <span
+            className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+            style={{ background: `${color}18`, color }}
+          >
+            Lv {progress.level}
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={onClose}
+          className="shrink-0 p-1 rounded hover:bg-muted transition-colors"
+          aria-label="Schliessen"
+        >
+          <X className="h-3.5 w-3.5 text-muted-foreground" />
+        </button>
+      </div>
+
+      {/* Inhalt */}
+      <div className="p-3 space-y-3 flex-1 overflow-y-auto">
+        {skill.data.description && (
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            {skill.data.description}
+          </p>
+        )}
 
         {/* Level + XP */}
         {unlock.unlocked ? (
-          <div className="space-y-2">
-            <div className="flex items-baseline gap-3">
-              <div className="text-4xl font-bold" style={{ color }}>
-                {progress.level}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                {xp.toLocaleString("de-DE")} XP
-              </div>
+          <div>
+            <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+              <span>{xp.toLocaleString("de-DE")} XP</span>
+              <span>{progress.xpInLevel} / {progress.xpNeeded} zur naechsten</span>
             </div>
-            <div>
-              <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
-                <span>Stufe {progress.level}</span>
-                <span>{progress.xpInLevel} / {progress.xpNeeded} XP zur naechsten</span>
-              </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full"
-                  style={{
-                    width: `${Math.min(100, progress.ratio * 100)}%`,
-                    background: color,
-                  }}
-                />
-              </div>
+            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${Math.min(100, progress.ratio * 100)}%`,
+                  background: color,
+                }}
+              />
             </div>
           </div>
         ) : (
-          <div className="p-3 rounded-md bg-muted/40 border border-dashed">
-            <div className="flex items-center gap-2 mb-1">
-              <Lock className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm font-semibold text-muted-foreground">Gesperrt</span>
+          <div className="p-2 rounded bg-muted/40 border border-dashed text-[11px]">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <Lock className="h-3 w-3 text-muted-foreground" />
+              <span className="font-semibold text-muted-foreground">Gesperrt</span>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-muted-foreground">
               Oeffnet sich mit: <strong>{unlock.missing.join(", ")}</strong>
             </p>
           </div>
         )}
 
-        {/* Sichtbarkeits-Toggle */}
+        {/* Sichtbarkeit */}
         {unlock.unlocked && (
           <div>
-            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5">
+            <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">
               Sichtbarkeit
             </p>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1">
               <VisibilityChip
-                label="Folgt Profil"
+                label="Profil"
                 active={visibility === undefined}
                 icon={Eye}
                 color="#94A3B8"
@@ -772,8 +691,8 @@ function SkillLevel({
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 
@@ -794,14 +713,14 @@ function VisibilityChip({
     <button
       type="button"
       onClick={onClick}
-      className={`text-xs px-2 py-1 rounded border transition-colors flex items-center gap-1.5 ${
+      className={`text-[10px] px-1.5 py-0.5 rounded border transition-colors flex items-center gap-1 ${
         active
           ? "border-transparent text-white font-semibold"
           : "border-muted-foreground/20 text-muted-foreground hover:border-foreground/40"
       }`}
       style={active ? { background: color } : {}}
     >
-      <Icon className="h-3 w-3" />
+      <Icon className="h-2.5 w-2.5" />
       {label}
     </button>
   )
