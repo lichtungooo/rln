@@ -10,9 +10,10 @@ import { SpiegelView, spiegelDefaultConfig, type SpiegelModuleConfig } from "./S
  * konsistente Sicht — wie das AC-Charakter-Sheet.
  */
 export const spiegelModule: ModuleDefinition<SpiegelModuleConfig> = {
-  id: "spiegel",
+  id: "profil",
   label: "Profil",
   icon: Aperture,
+  fullWidth: true,
   View: SpiegelView,
   defaultConfig: spiegelDefaultConfig,
   itemTypes: [

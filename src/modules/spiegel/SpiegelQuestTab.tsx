@@ -134,9 +134,9 @@ export function SpiegelQuestTab({ onNavReady }: SpiegelQuestTabProps) {
   const completedOfSelected = selectedQuest ? isCompleted(selectedQuest.id) : false
 
   return (
-    <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-3 min-h-0">
+    <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-2 min-h-0">
       {/* Links: Offene Quests */}
-      <div className="rounded-xl border bg-card overflow-hidden flex flex-col">
+      <div className="rounded-xl border bg-card overflow-hidden flex flex-col h-full min-h-0">
         <div className="px-3 py-2 border-b bg-muted/20 flex items-center gap-2">
           <Trophy className="h-4 w-4 text-primary shrink-0" />
           {(["open", "done", "all"] as QuestFilter[]).map((f) => (
@@ -202,7 +202,7 @@ export function SpiegelQuestTab({ onNavReady }: SpiegelQuestTabProps) {
       </div>
 
       {/* Rechts: Log oder Quest-Detail */}
-      <div className="rounded-xl border bg-card overflow-hidden flex flex-col">
+      <div className="rounded-xl border bg-card overflow-hidden flex flex-col h-full min-h-0">
         {selectedQuest ? (
           <QuestDetailPanel
             quest={selectedQuest}
