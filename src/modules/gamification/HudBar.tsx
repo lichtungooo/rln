@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react"
-import { Sparkles, ChevronUp, ChevronDown, Crown } from "lucide-react"
+import { Sparkles, ChevronUp, ChevronDown, Crown, ShieldCheck } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useUserProgress } from "./use-progress"
+import { useReputation, trustLabel } from "./use-reputation"
 import { useElderStatus } from "../profile/use-elder-status"
 import {
   TREE_BEREICHE,
@@ -35,6 +36,7 @@ export function HudBar({ spaceSlug, currentModule }: HudBarProps) {
   const [expanded, setExpanded] = useState(false)
   const navigate = useNavigate()
   const { data, bereichXp, bereichProgress } = useUserProgress()
+  const reputation = useReputation()
   const elder = useElderStatus()
 
   const totalXp = useMemo(
@@ -55,11 +57,11 @@ export function HudBar({ spaceSlug, currentModule }: HudBarProps) {
     if (spaceSlug) navigate(`/${spaceSlug}/skill-tree`)
   }
 
-  // Wenn schon im Skill-Tree → HUD ausblenden (vermeidet doppelte Info)
-  if (currentModule === "skill-tree") return null
+  // Wenn schon im Skill-Tree oder Spiegel → HUD ausblenden (vermeidet doppelte Info)
+  if (currentModule === "skill-tree" || currentModule === "spiegel") return null
 
-  // Wenn null XP UND nichts geladen — HUD ausblenden, gibt nix zu zeigen
-  if (totalXp === 0) return null
+  // Wenn null XP UND null Trust — HUD ausblenden, gibt nix zu zeigen
+  if (totalXp === 0 && reputation.trustScore === 0) return null
 
   return (
     <div className="hidden md:block fixed top-20 right-4 z-40">
@@ -75,7 +77,7 @@ export function HudBar({ spaceSlug, currentModule }: HudBarProps) {
             {totalProgress.level}
           </div>
 
-          <div className="text-left min-w-[120px]">
+          <div className="text-left min-w-[80px]">
             <div className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider leading-none">
               Level
             </div>
@@ -106,20 +108,42 @@ export function HudBar({ spaceSlug, currentModule }: HudBarProps) {
           )}
         </button>
 
-        {/* XP-Balken — total */}
-        <div className="px-3 pb-2">
-          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full"
-              style={{
-                width: `${Math.min(100, totalProgress.ratio * 100)}%`,
-                background: "linear-gradient(90deg, #E8751A, #FBBF24)",
-              }}
-            />
+        {/* XP-Balken + Trust-Balken nebeneinander */}
+        <div className="px-3 pb-2 grid grid-cols-2 gap-2">
+          {/* XP */}
+          <div>
+            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${Math.min(100, totalProgress.ratio * 100)}%`,
+                  background: "linear-gradient(90deg, #E8751A, #FBBF24)",
+                }}
+              />
+            </div>
+            <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
+              <span>Lv {totalProgress.level}</span>
+              <span>{totalProgress.xpInLevel} / {totalProgress.xpNeeded}</span>
+            </div>
           </div>
-          <div className="flex justify-between text-[9px] text-muted-foreground mt-0.5">
-            <span>Lv {totalProgress.level}</span>
-            <span>{totalProgress.xpInLevel} / {totalProgress.xpNeeded}</span>
+          {/* Trust */}
+          <div>
+            <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full"
+                style={{
+                  width: `${Math.min(100, (reputation.trustScore / 30) * 100)}%`,
+                  background: "linear-gradient(90deg, #A855F7, #C084FC)",
+                }}
+              />
+            </div>
+            <div className="flex justify-between items-center text-[9px] text-muted-foreground mt-0.5">
+              <span className="flex items-center gap-0.5">
+                <ShieldCheck className="h-2.5 w-2.5 text-purple-600" />
+                {trustLabel(reputation.trustScore)}
+              </span>
+              <span>{reputation.trustScore}</span>
+            </div>
           </div>
         </div>
 
