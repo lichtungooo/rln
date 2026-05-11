@@ -3,6 +3,7 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
+  Crown,
   Eye,
   EyeOff,
   Globe,
@@ -12,6 +13,7 @@ import {
   UsersRound,
   type LucideIcon,
 } from "lucide-react"
+import { useElderStatus } from "../profile/use-elder-status"
 import * as LucideIcons from "lucide-react"
 import { useItems } from "@real-life-stack/toolkit"
 import type { ModuleViewProps } from "../registry"
@@ -112,6 +114,7 @@ export function SkillTreeView({ activeGroup }: ModuleViewProps) {
     () => SYNERGIES.filter((syn) => syn.bereiche.every((b) => (data.bereichXp[b] ?? 0) > 0)),
     [data.bereichXp]
   )
+  const elder = useElderStatus()
 
   // Two-Panel-State
   const [leftPanel, setLeftPanel] = useState<PanelState>({ kind: "bereich", bereichIdx: 0 })
@@ -226,25 +229,18 @@ export function SkillTreeView({ activeGroup }: ModuleViewProps) {
           {totalLevel}
         </div>
         <div className="flex-1 min-w-0">
-          <div className="text-xs font-semibold">
-            Level {totalLevel} ·{" "}
-            <span className="text-muted-foreground font-normal">
-              {totalXp.toLocaleString("de-DE")} XP
-            </span>
+          <div className="text-xs font-semibold flex items-center gap-1.5">
+            Level {totalLevel}
+            {elder.isElder && (
+              <Crown
+                className="h-3.5 w-3.5 text-amber-500"
+                aria-label="Aelteste-Status"
+              />
+            )}
           </div>
-          {activeSynergies.length > 0 && (
-            <div
-              className="text-[10px] flex items-center gap-1 mt-0.5"
-              title={activeSynergies.map((s) => s.name).join(", ")}
-            >
-              <Sparkles className="h-3 w-3 text-purple-500" />
-              <span className="text-purple-700 font-medium">
-                {activeSynergies.length === 1
-                  ? activeSynergies[0].name
-                  : `${activeSynergies.length} Synergien aktiv`}
-              </span>
-            </div>
-          )}
+          <div className="text-[10px] text-muted-foreground">
+            {totalXp.toLocaleString("de-DE")} XP gesamt
+          </div>
         </div>
         {seedStatus.skillsTodo > 0 && (
           <button
@@ -353,6 +349,89 @@ export function SkillTreeView({ activeGroup }: ModuleViewProps) {
           </button>
         </div>
       )}
+
+      {/* Footer-Streifen — aktive Synergien, Aelteste-Marker, Quick-Hints */}
+      <FooterStripe
+        synergies={activeSynergies}
+        isElder={elder.isElder}
+        totalXp={totalXp}
+      />
+    </div>
+  )
+}
+
+// ============================================================
+// FooterStripe — was traegt mich gerade
+// ============================================================
+
+function FooterStripe({
+  synergies,
+  isElder,
+  totalXp,
+}: {
+  synergies: typeof SYNERGIES
+  isElder: boolean
+  totalXp: number
+}) {
+  const hasContent = synergies.length > 0 || isElder
+  if (!hasContent && totalXp === 0) {
+    // Erst-Hinweis fuer leere Profile
+    return (
+      <div className="pt-2">
+        <div className="rounded-lg border border-dashed bg-muted/20 px-3 py-2 text-[11px] text-muted-foreground italic text-center">
+          Tippe einen Bereich, schau die Skills an. Was du tust, faerbt deinen Baum.
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="pt-1">
+      <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1">
+        {/* Aelteste-Tile */}
+        {isElder && (
+          <div
+            className="shrink-0 px-3 py-2 rounded-lg border flex items-center gap-2 bg-gradient-to-br from-amber-50 to-yellow-50"
+            style={{ borderColor: "#FBBF24" }}
+          >
+            <Crown className="h-4 w-4 text-amber-600 shrink-0" />
+            <div className="min-w-0">
+              <div className="text-[10px] uppercase font-semibold tracking-wider text-amber-700">
+                Aelteste
+              </div>
+              <div className="text-[9px] text-amber-600 italic">
+                Wisdom-Quests offen
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Synergie-Tiles */}
+        {synergies.map((syn) => (
+          <div
+            key={syn.id}
+            className="shrink-0 px-3 py-2 rounded-lg border flex items-center gap-2"
+            style={{
+              background: "rgba(168,85,247,0.06)",
+              borderColor: "rgba(168,85,247,0.25)",
+            }}
+            title={syn.spirit}
+          >
+            <Sparkles className="h-4 w-4 text-purple-600 shrink-0" />
+            <div className="min-w-0">
+              <div className="text-[10px] font-semibold text-purple-900 flex items-center gap-1">
+                {syn.name}
+                <span className="text-purple-600 font-normal">
+                  +{Math.round(syn.bonus * 100)}%
+                </span>
+              </div>
+              <div className="text-[9px] text-purple-700/70 italic truncate max-w-[180px]">
+                {syn.spirit}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
