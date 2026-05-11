@@ -6,6 +6,7 @@ import {
   Plus,
   X,
   Trash2,
+  GripVertical,
 } from "lucide-react"
 
 /**
@@ -296,6 +297,7 @@ export function PageGrid({
             page={activePage}
             renderWidget={renderWidget}
             isMobile={isMobile}
+            onReorderSlots={(slots) => updatePage({ ...activePage, slots })}
           />
         </div>
 
@@ -337,11 +339,38 @@ function PageGridLayout({
   page,
   renderWidget,
   isMobile,
+  onReorderSlots,
 }: {
   page: GridPage
   renderWidget: (widgetId: string) => ReactNode
   isMobile: boolean
+  onReorderSlots: (slots: PageSlot[]) => void
 }) {
+  // Drag-and-Drop State — nur Desktop
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const [dropTargetId, setDropTargetId] = useState<string | null>(null)
+
+  const handleDrop = (targetId: string) => {
+    if (!draggingId || draggingId === targetId) {
+      setDraggingId(null)
+      setDropTargetId(null)
+      return
+    }
+    const fromIdx = page.slots.findIndex((s) => s.id === draggingId)
+    const toIdx = page.slots.findIndex((s) => s.id === targetId)
+    if (fromIdx < 0 || toIdx < 0) {
+      setDraggingId(null)
+      setDropTargetId(null)
+      return
+    }
+    // Swap positions
+    const next = [...page.slots]
+    ;[next[fromIdx], next[toIdx]] = [next[toIdx], next[fromIdx]]
+    onReorderSlots(next)
+    setDraggingId(null)
+    setDropTargetId(null)
+  }
+
   if (page.slots.length === 0) {
     return (
       <div className="h-full w-full flex items-center justify-center text-sm text-muted-foreground italic border border-dashed rounded-xl">
@@ -350,8 +379,7 @@ function PageGridLayout({
     )
   }
 
-  // Mobile: single-column, Slots stapeln mit fester min-Hoehe.
-  // Page-Inhalt scrollt vertikal (Ausnahme von der no-scroll-Regel).
+  // Mobile: single-column, kein Drag-and-Drop (Touch waere verwirrend).
   if (isMobile) {
     return (
       <div className="h-full w-full overflow-y-auto">
@@ -360,10 +388,7 @@ function PageGridLayout({
             <div
               key={slot.id}
               className="min-w-0 overflow-hidden shrink-0"
-              style={{
-                // rowSpan bestimmt Hoehe — pro Einheit ca. 180px (kompakt)
-                minHeight: `${slot.rowSpan * 180}px`,
-              }}
+              style={{ minHeight: `${slot.rowSpan * 180}px` }}
             >
               {renderWidget(slot.widget)}
             </div>
@@ -373,7 +398,7 @@ function PageGridLayout({
     )
   }
 
-  // Desktop: 6-Spalten-Grid, Slots mit colSpan/rowSpan.
+  // Desktop: 6-Spalten-Grid mit Drag-Handles oben rechts.
   return (
     <div
       className="h-full w-full grid gap-2"
@@ -382,18 +407,57 @@ function PageGridLayout({
         gridAutoRows: "minmax(0, 1fr)",
       }}
     >
-      {page.slots.map((slot) => (
-        <div
-          key={slot.id}
-          className="min-w-0 min-h-0 overflow-hidden"
-          style={{
-            gridColumn: `span ${slot.colSpan} / span ${slot.colSpan}`,
-            gridRow: `span ${slot.rowSpan} / span ${slot.rowSpan}`,
-          }}
-        >
-          {renderWidget(slot.widget)}
-        </div>
-      ))}
+      {page.slots.map((slot) => {
+        const isDragging = draggingId === slot.id
+        const isDropTarget = dropTargetId === slot.id && draggingId !== slot.id
+        return (
+          <div
+            key={slot.id}
+            className={`relative group min-w-0 min-h-0 overflow-hidden transition-all ${
+              isDragging ? "opacity-40" : ""
+            } ${isDropTarget ? "ring-2 ring-primary ring-offset-1 rounded-xl" : ""}`}
+            style={{
+              gridColumn: `span ${slot.colSpan} / span ${slot.colSpan}`,
+              gridRow: `span ${slot.rowSpan} / span ${slot.rowSpan}`,
+            }}
+            onDragOver={(e) => {
+              if (!draggingId) return
+              e.preventDefault()
+              if (dropTargetId !== slot.id) setDropTargetId(slot.id)
+            }}
+            onDragLeave={() => {
+              if (dropTargetId === slot.id) setDropTargetId(null)
+            }}
+            onDrop={(e) => {
+              e.preventDefault()
+              handleDrop(slot.id)
+            }}
+          >
+            {/* Drag-Handle — oben rechts, halbtransparent, wird sichtbar beim Hover */}
+            <div
+              draggable
+              onDragStart={(e) => {
+                e.dataTransfer.effectAllowed = "move"
+                e.dataTransfer.setData("text/slot-id", slot.id)
+                setDraggingId(slot.id)
+              }}
+              onDragEnd={() => {
+                setDraggingId(null)
+                setDropTargetId(null)
+              }}
+              className="absolute top-1 right-1 z-10 p-1 rounded bg-background/60 backdrop-blur-sm text-muted-foreground opacity-0 hover:opacity-100 group-hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity"
+              title="Slot verschieben (Drag-and-Drop)"
+              aria-label="Verschieben"
+            >
+              <GripVertical className="h-3.5 w-3.5" />
+            </div>
+
+            <div className="h-full w-full">
+              {renderWidget(slot.widget)}
+            </div>
+          </div>
+        )
+      })}
     </div>
   )
 }
