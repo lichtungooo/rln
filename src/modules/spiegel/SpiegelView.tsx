@@ -9,6 +9,7 @@ import { StatsBar } from "../gamification"
 import { SpiegelAvatarTab } from "./SpiegelAvatarTab"
 import { SpiegelQuestTab } from "./SpiegelQuestTab"
 import { SpiegelSkillTab } from "./SpiegelSkillTab"
+import { SpiegelSkillDetailWidget } from "./SpiegelSkillDetailWidget"
 import { useDemoSeed } from "./use-demo-seed"
 
 /**
@@ -38,6 +39,7 @@ const PROFIL_WIDGETS: AvailableWidget[] = [
   { id: "profil-avatar", label: "Avatar + Inventar", defaultColSpan: 6, defaultRowSpan: 4 },
   { id: "profil-quest", label: "Quests + Log", defaultColSpan: 6, defaultRowSpan: 4 },
   { id: "profil-skill", label: "Faehigkeitsbaum", defaultColSpan: 6, defaultRowSpan: 4 },
+  { id: "skill-detail", label: "Skill-Detail", defaultColSpan: 3, defaultRowSpan: 4 },
 ]
 
 const DEFAULT_PAGES: GridPage[] = [
@@ -104,6 +106,8 @@ function SpiegelInner(props: ModuleViewProps<SpiegelModuleConfig>) {
             <SpiegelSkillTab {...props} />
           </div>
         )
+      case "skill-detail":
+        return <SpiegelSkillDetailWidget />
       default:
         return (
           <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground italic">

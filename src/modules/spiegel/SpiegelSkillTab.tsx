@@ -28,6 +28,7 @@ import {
   type TreeBereich,
   type TreeBereichId,
 } from "../gamification"
+import { useChannel, useChannelSync } from "../../components/SelectionContext"
 
 /**
  * SpiegelSkillTab — Skill-Tree im Spiegel.
@@ -103,7 +104,19 @@ export function SpiegelSkillTab({ activeGroup }: SpiegelSkillTabProps) {
 
   const carouselActive = leftPanel.kind === "bereich" && rightPanel.kind === "bereich"
 
+  // Klick-Routing: alle Skills im "skill"-Channel registrieren. So kann
+  // ein optionales SpiegelSkillDetailWidget in einem anderen Slot das
+  // aktuell gewaehlte Skill-Detail spiegeln (parallel zum internen
+  // Two-Panel-Detail).
+  const allSkills = useMemo(() => {
+    return TREE_BEREICHE.flatMap((b) => skillsByBereich[b.id] ?? [])
+  }, [skillsByBereich])
+  useChannelSync("skill", allSkills)
+  const skillChannel = useChannel("skill")
+
   const handleSelectSkill = (side: "left" | "right", skillId: string, bereichIdx: number) => {
+    // Externen Channel synchron halten
+    skillChannel.select(skillId)
     // Klick links → Detail im RECHTEN Panel. Right merkt sich seinen vorigen Bereich.
     // Wenn das Detail-Panel schon Skill-State ist, bleibt sein urspruenglicher
     // returnBereichIdx erhalten — sonst wuerde der zum Bereich des Skills mutieren
