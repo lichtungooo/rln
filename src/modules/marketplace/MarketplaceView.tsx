@@ -437,8 +437,14 @@ export function MarketplaceView({ spaceId }: ModuleViewProps) {
         </Button>
       </div>
 
-      {/* Welt-Tabs */}
-      <div className="grid grid-cols-3 gap-1 p-1 rounded-lg bg-muted">
+      {/* Welt-Tabs — im Modul-Doktrin-Stil (aktiv = Welt-Farbe, sonst Pille) */}
+      <div
+        className="rounded-md p-1.5 flex items-center gap-1 border"
+        style={{
+          background:
+            "linear-gradient(90deg, rgba(232,117,26,0.05) 0%, rgba(168,85,247,0.04) 100%)",
+        }}
+      >
         {WORLDS.map((w) => {
           const Icon = w.icon
           const isOn = activeWorld === w.id
@@ -448,14 +454,16 @@ export function MarketplaceView({ spaceId }: ModuleViewProps) {
               key={w.id}
               type="button"
               onClick={() => switchWorld(w.id)}
-              className={`flex items-center justify-center gap-2 px-3 py-2 rounded-md text-sm font-semibold transition-all ${
-                isOn ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
+              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-colors ${
+                isOn
+                  ? "text-white font-semibold shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               }`}
-              style={isOn ? { color: w.color } : undefined}
+              style={isOn ? { background: w.color } : undefined}
             >
               <Icon className="h-4 w-4" />
               <span>{w.label}</span>
-              <span className="text-[10px] opacity-70">({count})</span>
+              <span className="text-[10px] opacity-80">({count})</span>
             </button>
           )
         })}
