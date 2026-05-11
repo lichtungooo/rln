@@ -81,6 +81,11 @@ export interface PageGridProps {
    * Verwendung: Funktions-Module wie Profil (Avatar/Quest/Skill).
    */
   lockPages?: boolean
+  /**
+   * Optional: Wird bei Page-Wechsel aufgerufen. Konsument kann den
+   * Outer-State synchronisieren (z.B. activeWorld in Marketplace).
+   */
+  onActivePageChange?: (pageId: string) => void
 }
 
 const COL_SPANS: ColSpan[] = [1, 2, 3, 6]
@@ -115,6 +120,7 @@ export function PageGrid({
   headerRight,
   navApi,
   lockPages = false,
+  onActivePageChange,
 }: PageGridProps) {
   const [pages, setPages] = useState<GridPage[]>(() => loadPages(storageKey, defaultPages))
   const [activeIdx, setActiveIdx] = useState(() => {
@@ -189,6 +195,14 @@ export function PageGrid({
   // Clamp activeIdx auf existierende Pages — falls Pages weniger geworden sind
   const safeActiveIdx = Math.min(activeIdx, Math.max(0, pages.length - 1))
   const activePage = pages[safeActiveIdx] ?? pages[0]
+
+  // onActivePageChange-Callback bei Page-Wechsel ausloesen
+  useEffect(() => {
+    if (onActivePageChange && activePage) {
+      onActivePageChange(activePage.id)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activePage?.id])
 
   const updatePage = (next: GridPage) => {
     setPages((prev) => prev.map((p) => (p.id === next.id ? next : p)))

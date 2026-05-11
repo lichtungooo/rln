@@ -131,7 +131,7 @@ export function SpaceSettings({
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
       <DialogContent
-        className="max-w-none w-screen h-[100dvh] sm:w-[98vw] sm:h-[96vh] p-0 gap-0 overflow-hidden"
+        className="max-w-none w-screen h-[100dvh] p-0 gap-0 overflow-hidden rounded-none border-none"
         onInteractOutside={(e) => e.preventDefault()}
         showCloseButton={false}
       >
