@@ -19,6 +19,31 @@ import type { TreeBereichId } from "./tree"
 // ============================================================
 
 /**
+ * Voraussetzungs-Modell fuer Skills (Phase F3, 11.05.2026).
+ *
+ * Ein Skill kann gesperrt sein, bis bestimmte andere Skills wachsen.
+ * Drei Wege, die kombinierbar sind:
+ *   - `all` : alle Skills aus der Liste muessen mindestens Level 1 haben
+ *   - `any` : einer aus der Liste reicht (Level >= 1)
+ *   - `minLevel` : bestimmter Skill auf bestimmtem Level
+ *
+ * Wenn mehrere Wege gesetzt sind, muessen alle erfuellt sein (AND ueber
+ * die drei Felder, OR innerhalb von `any`).
+ *
+ * Die referenzierten Skill-IDs koennen Universal (Praefix `u-`) oder
+ * space-spezifisch (WoT-Item-ID) sein. Cross-Space-Voraussetzungen
+ * funktionieren ueber Universal-Skills.
+ */
+export interface SkillPrerequisites {
+  /** Alle Skills aus der Liste mindestens Level 1 */
+  all?: string[]
+  /** Einer aus der Liste reicht (Level >= 1) */
+  any?: string[]
+  /** Skill mit Mindest-Level */
+  minLevel?: { skillId: string; level: number }[]
+}
+
+/**
  * Item: `type: "skill"`
  *
  * Beispiel im Macher-Space:
@@ -37,6 +62,8 @@ export interface SkillData {
   color?: string
   /** Sortier-Reihenfolge im Tree */
   order?: number
+  /** Voraussetzungs-Skills, die wachsen muessen, bevor dieser hier sich oeffnet. */
+  prerequisites?: SkillPrerequisites
 }
 
 // ============================================================

@@ -20,8 +20,8 @@ export const MACHER_DEFAULT_SKILLS: Array<SkillData & { id: string }> = [
   // --- Handwerk (primaer) ---
   { id: "holz", name: "Holz", bereichId: "handwerk", icon: "trees", color: "#8B5A2B", description: "Saege, Hobel, Schnitzmesser. Vom Brett zum Werk.", order: 10 },
   { id: "metall", name: "Metall", bereichId: "handwerk", icon: "wrench", color: "#94A3B8", description: "Saegen, Bohren, Feilen, Biegen.", order: 20 },
-  { id: "schweissen", name: "Schweissen", bereichId: "handwerk", icon: "flame", color: "#F97316", description: "Lichtbogen, MIG, MAG, WIG. Funken fliegen, Stahl wird eins.", order: 30 },
-  { id: "schmieden", name: "Schmieden", bereichId: "handwerk", icon: "hammer", color: "#A16207", description: "Esse, Amboss, Hammer. Form gibt's mit Hitze und Druck.", order: 40 },
+  { id: "schweissen", name: "Schweissen", bereichId: "handwerk", icon: "flame", color: "#F97316", description: "Lichtbogen, MIG, MAG, WIG. Funken fliegen, Stahl wird eins.", order: 30, prerequisites: { minLevel: [{ skillId: "metall", level: 2 }] } },
+  { id: "schmieden", name: "Schmieden", bereichId: "handwerk", icon: "hammer", color: "#A16207", description: "Esse, Amboss, Hammer. Form gibt's mit Hitze und Druck.", order: 40, prerequisites: { minLevel: [{ skillId: "metall", level: 3 }] } },
   { id: "elektronik", name: "Elektronik", bereichId: "handwerk", icon: "cpu", color: "#3B82F6", description: "Loeten, Schaltungen, Sensorik. Wo Strom denkt.", order: 50 },
   { id: "drucken-3d", name: "3D-Druck", bereichId: "handwerk", icon: "box", color: "#10B981", description: "FDM, SLA, Slicer-Magie. Vom CAD zum Bauteil.", order: 60 },
   { id: "lasern", name: "Lasern", bereichId: "handwerk", icon: "zap", color: "#EF4444", description: "Schneiden, Gravieren, Praezision in Holz und Acryl.", order: 70 },
@@ -51,7 +51,7 @@ export const MACHER_DEFAULT_SKILLS: Array<SkillData & { id: string }> = [
 
   // --- Natur ---
   { id: "garten", name: "Garten", bereichId: "natur", icon: "sprout", color: "#65A30D", description: "Beet anlegen, Boden lesen, Saatgut auswaehlen. Was waechst und wann.", order: 700 },
-  { id: "permakultur", name: "Permakultur", bereichId: "natur", icon: "trees", color: "#16A34A", description: "Zonen, Polykultur, Wasserrueckhaltung. Lebenssystem statt Einzelpflanze.", order: 710 },
+  { id: "permakultur", name: "Permakultur", bereichId: "natur", icon: "trees", color: "#16A34A", description: "Zonen, Polykultur, Wasserrueckhaltung. Lebenssystem statt Einzelpflanze.", order: 710, prerequisites: { minLevel: [{ skillId: "garten", level: 1 }] } },
   { id: "imkern", name: "Imkern", bereichId: "natur", icon: "hexagon", color: "#F59E0B", description: "Stockschau, Schwarmkontrolle, Honig schleudern. Bienen lesen lernen.", order: 720 },
   { id: "heilpflanzen", name: "Heilpflanzen", bereichId: "natur", icon: "flower-2", color: "#EC4899", description: "Wildkraeuter erkennen, sammeln, verarbeiten. Tinktur, Salbe, Tee.", order: 730 },
   { id: "holzwirtschaft", name: "Holzwirtschaft", bereichId: "natur", icon: "tree-pine", color: "#92400E", description: "Wald lesen, Baum faellen, Trocknen, Hochwertiges Material herstellen.", order: 740 },

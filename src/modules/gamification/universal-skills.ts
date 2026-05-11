@@ -46,7 +46,7 @@ export const UNIVERSAL_SKILLS: Array<SkillData & { id: string }> = [
   { id: "u-geist-lernen", name: "Lernen lernen", bereichId: "geist", icon: "brain", description: "Wie man Wissen aufnimmt, behaelt, anwendet.", order: 2060 },
   { id: "u-geist-gedaechtnis", name: "Gedaechtnis", bereichId: "geist", icon: "lightbulb", description: "Erinnern, Memo-Techniken, Mnemonik.", order: 2070 },
   { id: "u-geist-fokus", name: "Fokus", bereichId: "geist", icon: "crosshair", description: "Aufmerksamkeit halten, tief eintauchen, dranbleiben.", order: 2080 },
-  { id: "u-geist-kritik", name: "Kritisches Denken", bereichId: "geist", icon: "search", description: "Annahmen pruefen, Quellen wiegen, durchschauen.", order: 2090 },
+  { id: "u-geist-kritik", name: "Kritisches Denken", bereichId: "geist", icon: "search", description: "Annahmen pruefen, Quellen wiegen, durchschauen.", order: 2090, prerequisites: { minLevel: [{ skillId: "u-geist-logik", level: 2 }] } },
   { id: "u-geist-loesen", name: "Problemloesen", bereichId: "geist", icon: "puzzle", description: "Auseinandernehmen, neu zusammensetzen, einen Weg finden.", order: 2100 },
 
   // ============================================================
@@ -71,9 +71,9 @@ export const UNIVERSAL_SKILLS: Array<SkillData & { id: string }> = [
   { id: "u-bewusstsein-praesenz", name: "Praesenz", bereichId: "bewusstsein", icon: "sun", description: "Voll da sein — ganz im Hier und Jetzt.", order: 4030 },
   { id: "u-bewusstsein-selbst", name: "Selbst-Beobachtung", bereichId: "bewusstsein", icon: "user", description: "Sich selber beim Tun zusehen — der innere Zeuge.", order: 4040 },
   { id: "u-bewusstsein-reflexion", name: "Reflexion", bereichId: "bewusstsein", icon: "rotate-ccw", description: "Erlebtes durchdenken, einordnen, lernen.", order: 4050 },
-  { id: "u-bewusstsein-schatten", name: "Schatten-Arbeit", bereichId: "bewusstsein", icon: "moon-star", description: "Was verdraengt ist sichtbar machen und versoehnen.", order: 4060 },
+  { id: "u-bewusstsein-schatten", name: "Schatten-Arbeit", bereichId: "bewusstsein", icon: "moon-star", description: "Was verdraengt ist sichtbar machen und versoehnen.", order: 4060, prerequisites: { minLevel: [{ skillId: "u-bewusstsein-selbst", level: 2 }] } },
   { id: "u-bewusstsein-werte", name: "Werte", bereichId: "bewusstsein", icon: "compass", description: "Klaeren, was wirklich traegt — die innere Richtung.", order: 4070 },
-  { id: "u-bewusstsein-vision", name: "Vision", bereichId: "bewusstsein", icon: "telescope", description: "Schau, was werden will — den Faden erkennen.", order: 4080 },
+  { id: "u-bewusstsein-vision", name: "Vision", bereichId: "bewusstsein", icon: "telescope", description: "Schau, was werden will — den Faden erkennen.", order: 4080, prerequisites: { minLevel: [{ skillId: "u-bewusstsein-reflexion", level: 2 }, { skillId: "u-bewusstsein-werte", level: 1 }] } },
   { id: "u-bewusstsein-stille", name: "Stille", bereichId: "bewusstsein", icon: "volume-x", description: "Im Schweigen sein, dem Lauschen Raum geben.", order: 4090 },
   { id: "u-bewusstsein-hingabe", name: "Hingabe", bereichId: "bewusstsein", icon: "flame", description: "Sich dem Groesseren anvertrauen.", order: 4100 },
 
@@ -88,7 +88,7 @@ export const UNIVERSAL_SKILLS: Array<SkillData & { id: string }> = [
   { id: "u-soziales-beduerfnisse", name: "Beduerfnisse", bereichId: "soziales", icon: "heart-pulse", description: "Eigene und fremde Beduerfnisse erkennen.", order: 5060 },
   { id: "u-soziales-grenzen", name: "Grenzen", bereichId: "soziales", icon: "shield", description: "Klar Grenzen setzen — schuetzend, ohne Mauer.", order: 5070 },
   { id: "u-soziales-konsent", name: "Konsent", bereichId: "soziales", icon: "check-circle", description: "Wheel of Consent — geben, empfangen, fragen.", order: 5080 },
-  { id: "u-soziales-reparieren", name: "Reparieren", bereichId: "soziales", icon: "git-merge", description: "Nach dem Bruch zurueck zueinander finden.", order: 5090 },
+  { id: "u-soziales-reparieren", name: "Reparieren", bereichId: "soziales", icon: "git-merge", description: "Nach dem Bruch zurueck zueinander finden.", order: 5090, prerequisites: { minLevel: [{ skillId: "u-soziales-konflikt", level: 2 }] } },
   { id: "u-soziales-freundschaft", name: "Freundschaft", bereichId: "soziales", icon: "smile", description: "Beziehungen pflegen ueber Zeit hinweg.", order: 5100 },
 
   // ============================================================
@@ -103,7 +103,7 @@ export const UNIVERSAL_SKILLS: Array<SkillData & { id: string }> = [
   { id: "u-gemeinschaft-teilen", name: "Teilen", bereichId: "gemeinschaft", icon: "share-2", description: "Was da ist gemeinsam nutzen, Werkzeuge, Wissen, Raum.", order: 6070 },
   { id: "u-gemeinschaft-buergerschaft", name: "Buergerschaft", bereichId: "gemeinschaft", icon: "landmark", description: "Beteiligen — Wahlen, Engagement, Stimme heben.", order: 6080 },
   { id: "u-gemeinschaft-organisation", name: "Organisation", bereichId: "gemeinschaft", icon: "network", description: "Gruppen tragen, Genossenschaften aufbauen.", order: 6090 },
-  { id: "u-gemeinschaft-initiation", name: "Initiation", bereichId: "gemeinschaft", icon: "key-round", description: "Andere durch Schwellen begleiten — Coming of Age, Aelteste.", order: 6100 },
+  { id: "u-gemeinschaft-initiation", name: "Initiation", bereichId: "gemeinschaft", icon: "key-round", description: "Andere durch Schwellen begleiten — Coming of Age, Aelteste.", order: 6100, prerequisites: { minLevel: [{ skillId: "u-gemeinschaft-rituale", level: 3 }] } },
 
   // ============================================================
   // HANDWERK — mit den Haenden formen

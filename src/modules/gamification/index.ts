@@ -24,6 +24,7 @@ export {
 export {
   GAMIFICATION_ITEM_TYPES,
   type SkillData,
+  type SkillPrerequisites,
   type UserProgressData,
   type LogEntryData,
   type LogEntryType,
@@ -33,6 +34,12 @@ export {
   type AvatarItemRarity,
   type UserAvatarData,
 } from "./types"
+
+export {
+  isSkillUnlocked,
+  makeSkillNameResolver,
+  type UnlockCheck,
+} from "./prerequisites"
 
 export { useUserProgress } from "./use-progress"
 export { useLog } from "./use-log"

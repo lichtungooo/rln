@@ -10,7 +10,8 @@ import type { TreeBereichId } from "./tree"
 import { progressInLevel, INNERE_BEREICHE } from "./tree"
 import type { SkillData, UserProgressData } from "./types"
 import { GAMIFICATION_ITEM_TYPES } from "./types"
-import { UNIVERSAL_SKILLS } from "./universal-skills"
+import { UNIVERSAL_SKILLS, UNIVERSAL_SKILL_BY_ID } from "./universal-skills"
+import { isSkillUnlocked, type UnlockCheck } from "./prerequisites"
 
 /**
  * Hook fuer User-Progress (XP pro Skill + Bereich) im aktuellen Space.
@@ -69,6 +70,36 @@ export function useUserProgress() {
   const skillProgress = useCallback(
     (skillId: string) => progressInLevel(skillXp(skillId)),
     [skillXp]
+  )
+
+  /**
+   * Lookup: Skill-Definition aus Universal-Code-Skills oder WoT-Items.
+   */
+  const lookupSkill = useCallback(
+    (skillId: string): SkillData | undefined => {
+      const universal = UNIVERSAL_SKILL_BY_ID[skillId]
+      if (universal) return universal
+      const item = skillItems.find((it) => it.id === skillId)
+      return item ? (item.data as SkillData) : undefined
+    },
+    [skillItems]
+  )
+
+  /**
+   * Prueft, ob ein Skill offen ist (Voraussetzungen erfuellt).
+   * Liefert auch eine Liste fehlender Voraussetzungen fuer die UI.
+   */
+  const isUnlocked = useCallback(
+    (skillId: string): UnlockCheck => {
+      const def = lookupSkill(skillId)
+      if (!def) return { unlocked: true, missing: [] }
+      return isSkillUnlocked(
+        def.prerequisites,
+        skillXp,
+        (id) => lookupSkill(id)?.name ?? id,
+      )
+    },
+    [lookupSkill, skillXp]
   )
 
   /**
@@ -168,6 +199,8 @@ export function useUserProgress() {
     skillProgress,
     bereichProgress,
     addXp,
+    isUnlocked,
+    lookupSkill,
     /** Liste aller Skill-Definitionen im aktiven Space */
     skills: skillItems,
   }

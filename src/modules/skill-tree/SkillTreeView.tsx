@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { ChevronDown, ChevronRight, Sparkles, TrendingUp, type LucideIcon } from "lucide-react"
+import { ChevronDown, ChevronRight, Lock, Sparkles, TrendingUp, type LucideIcon } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -46,7 +46,7 @@ interface RenderSkill {
  */
 
 export function SkillTreeView(_props: ModuleViewProps) {
-  const { data, bereichXp, bereichProgress, skillXp, skillProgress } = useUserProgress()
+  const { data, bereichXp, bereichProgress, skillXp, skillProgress, isUnlocked } = useUserProgress()
   const { data: skillItems } = useItems({ type: GAMIFICATION_ITEM_TYPES.skill })
   const { seed, busy: seeding, status: seedStatus } = useGamificationSeed()
 
@@ -132,7 +132,7 @@ export function SkillTreeView(_props: ModuleViewProps) {
         </div>
       )}
 
-      {/* 7 Bereich-Cards */}
+      {/* 8 Bereich-Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {TREE_BEREICHE.map((bereich) => (
           <BereichCard
@@ -143,6 +143,7 @@ export function SkillTreeView(_props: ModuleViewProps) {
             skills={skillsByBereich[bereich.id]}
             skillXp={skillXp}
             skillProgress={skillProgress}
+            isUnlocked={isUnlocked}
             isInner={INNERE_BEREICHE.includes(bereich.id)}
           />
         ))}
@@ -162,10 +163,11 @@ interface BereichCardProps {
   skills: RenderSkill[]
   skillXp: (id: string) => number
   skillProgress: (id: string) => ReturnType<typeof progressInLevel>
+  isUnlocked: (id: string) => { unlocked: boolean; missing: string[] }
   isInner: boolean
 }
 
-function BereichCard({ bereich, xp, progress, skills, skillXp, skillProgress, isInner }: BereichCardProps) {
+function BereichCard({ bereich, xp, progress, skills, skillXp, skillProgress, isUnlocked, isInner }: BereichCardProps) {
   const [open, setOpen] = useState(false)
   const Icon = bereich.icon as LucideIcon
 
@@ -233,19 +235,38 @@ function BereichCard({ bereich, xp, progress, skills, skillXp, skillProgress, is
                 {skills.map((skill) => {
                   const sXp = skillXp(skill.id)
                   const sProg = skillProgress(skill.id)
+                  const unlock = isUnlocked(skill.id)
+                  const titleParts = [skill.data.description ?? ""]
+                  if (!unlock.unlocked) {
+                    titleParts.push(`Oeffnet sich mit: ${unlock.missing.join(", ")}`)
+                  }
                   return (
                     <div
                       key={skill.id}
-                      className="p-2 rounded border bg-card hover:bg-muted/30 transition-colors"
-                      title={skill.data.description ?? ""}
+                      className={`p-2 rounded border transition-colors ${
+                        unlock.unlocked
+                          ? "bg-card hover:bg-muted/30"
+                          : "bg-muted/30 border-dashed opacity-70"
+                      }`}
+                      title={titleParts.filter(Boolean).join(" — ")}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2">
-                          <div
-                            className="w-2 h-2 rounded-full"
-                            style={{ background: skill.data.color ?? bereich.color }}
-                          />
-                          <span className="text-sm font-medium">{skill.data.name}</span>
+                          {unlock.unlocked ? (
+                            <div
+                              className="w-2 h-2 rounded-full shrink-0"
+                              style={{ background: skill.data.color ?? bereich.color }}
+                            />
+                          ) : (
+                            <Lock className="h-3 w-3 text-muted-foreground shrink-0" />
+                          )}
+                          <span
+                            className={`text-sm font-medium ${
+                              unlock.unlocked ? "" : "text-muted-foreground"
+                            }`}
+                          >
+                            {skill.data.name}
+                          </span>
                           {skill.isUniversal && (
                             <span
                               className="text-[9px] uppercase font-semibold tracking-wider px-1 py-0 rounded"
@@ -265,7 +286,12 @@ function BereichCard({ bereich, xp, progress, skills, skillXp, skillProgress, is
                           {sXp} XP
                         </span>
                       </div>
-                      {sXp > 0 && (
+                      {!unlock.unlocked && (
+                        <div className="text-[10px] text-muted-foreground italic">
+                          Oeffnet sich mit: {unlock.missing.join(", ")}
+                        </div>
+                      )}
+                      {unlock.unlocked && sXp > 0 && (
                         <div className="h-1 bg-muted rounded-full overflow-hidden">
                           <div
                             className="h-full rounded-full"
