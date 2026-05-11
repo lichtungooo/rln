@@ -55,6 +55,14 @@ export { usePastExperiences } from "./use-past-experiences"
 export { MACHER_DEFAULT_SKILLS, MACHER_DEFAULT_AVATAR_ITEMS } from "./macher-skills"
 
 export {
+  SPACE_MANIFESTS,
+  getManifestForSpace,
+  macherManifest,
+  lichtungManifest,
+  type SpaceManifest,
+} from "./manifests"
+
+export {
   UNIVERSAL_SKILLS,
   UNIVERSAL_SKILL_BY_ID,
   UNIVERSAL_SKILL_PREFIX,

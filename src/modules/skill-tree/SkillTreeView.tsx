@@ -45,10 +45,11 @@ interface RenderSkill {
  * Bereich Handwerk ist auf Stufe 4".
  */
 
-export function SkillTreeView(_props: ModuleViewProps) {
+export function SkillTreeView({ activeGroup }: ModuleViewProps) {
+  const spaceSlug = (activeGroup?.data as { slug?: string } | undefined)?.slug
   const { data, bereichXp, bereichProgress, skillXp, skillProgress, isUnlocked } = useUserProgress()
   const { data: skillItems } = useItems({ type: GAMIFICATION_ITEM_TYPES.skill })
-  const { seed, busy: seeding, status: seedStatus } = useGamificationSeed()
+  const { seed, busy: seeding, status: seedStatus } = useGamificationSeed(spaceSlug)
 
   // Skills nach Bereich gruppieren — Universal-Skills aus Code +
   // space-spezifische Items aus WoT zusammen rendern.
@@ -104,7 +105,7 @@ export function SkillTreeView(_props: ModuleViewProps) {
             <p className="text-sm text-muted-foreground">
               {totalXp.toLocaleString("de-DE")} XP gesamt — verteilt auf 8 Bereiche
             </p>
-            {skillItems.length === 0 && (
+            {seedStatus.skillsTodo > 0 && (
               <Button
                 size="sm"
                 variant="outline"
@@ -112,7 +113,9 @@ export function SkillTreeView(_props: ModuleViewProps) {
                 onClick={seed}
                 disabled={seeding}
               >
-                {seeding ? "Lade..." : `${seedStatus.skillsTodo} Macher-Skills zusaetzlich anlegen`}
+                {seeding
+                  ? "Lade..."
+                  : `${seedStatus.skillsTodo} ${seedStatus.manifestName}-Skills anlegen`}
               </Button>
             )}
           </div>
