@@ -245,7 +245,7 @@ export function AvatarView({ spaceId }: ModuleViewProps) {
                     {group.items.length} Item{group.items.length === 1 ? "" : "s"}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                <div className="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3">
                   {group.items.map((item) => (
                     <InventoryCard
                       key={item.id}
@@ -407,6 +407,17 @@ function ArchetypeSection({
 // InventoryCard
 // ============================================================
 
+/**
+ * Mastery-Punkte fuer Item-Rarity (AC-Style).
+ * common=1, rare=2, epic=3, legendary=3 (mit Glow).
+ */
+function rarityDots(rarity: AvatarItemRarity): { dots: 1 | 2 | 3; legendary: boolean } {
+  if (rarity === "common") return { dots: 1, legendary: false }
+  if (rarity === "rare") return { dots: 2, legendary: false }
+  if (rarity === "epic") return { dots: 3, legendary: false }
+  return { dots: 3, legendary: true }
+}
+
 function InventoryCard({
   item,
   isDisplayed,
@@ -419,11 +430,16 @@ function InventoryCard({
   const bereich = item.def.bereichId ? BEREICH_BY_ID[item.def.bereichId] : null
   const color = item.def.color ?? bereich?.color ?? "#FBBF24"
   const borderColor = RARITY_BORDER[item.def.rarity]
+  const { dots, legendary } = rarityDots(item.def.rarity)
 
   const handleDragStart = (e: React.DragEvent) => {
     e.dataTransfer.effectAllowed = "move"
     e.dataTransfer.setData("text/avatar-item-id", item.id)
   }
+
+  const titleText = item.def.condition
+    ? `${item.def.name} · ${RARITY_LABEL[item.def.rarity]} · ${item.def.condition}`
+    : `${item.def.name} · ${RARITY_LABEL[item.def.rarity]}`
 
   return (
     <button
@@ -431,41 +447,54 @@ function InventoryCard({
       onClick={onToggle}
       draggable={!isDisplayed}
       onDragStart={handleDragStart}
-      className={`group relative bg-card rounded-lg border-2 p-3 text-center transition-all hover:scale-[1.02] hover:shadow-lg ${
-        isDisplayed ? "ring-2 ring-primary ring-offset-2" : "cursor-grab active:cursor-grabbing"
+      title={titleText}
+      className={`group flex flex-col items-center gap-1 transition-all ${
+        isDisplayed ? "" : "cursor-grab active:cursor-grabbing"
       }`}
-      style={{ borderColor }}
     >
-      <div
-        className="w-12 h-12 mx-auto rounded-full grid place-items-center mb-2"
-        style={{ background: `${color}15` }}
-      >
-        <DynamicIcon name={item.def.symbol} className="w-6 h-6" color={color} />
-      </div>
-
-      <div className="text-sm font-semibold leading-tight">{item.def.name}</div>
-      <div
-        className="text-[9px] uppercase font-semibold tracking-wider mt-1"
-        style={{ color }}
-      >
-        {RARITY_LABEL[item.def.rarity]}
-      </div>
-
-      {item.def.condition && (
-        <div className="text-[10px] text-muted-foreground mt-1.5 line-clamp-2 leading-snug">
-          {item.def.condition}
+      <div className="relative">
+        <div
+          className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center border-2 transition-all group-hover:scale-110 group-hover:shadow-md`}
+          style={{
+            background: `${color}15`,
+            borderColor,
+            boxShadow: legendary
+              ? `0 0 16px ${color}80, 0 0 8px ${color}40`
+              : isDisplayed
+              ? `0 0 12px ${color}50`
+              : undefined,
+          }}
+        >
+          <DynamicIcon name={item.def.symbol} className="w-6 h-6 sm:w-7 sm:h-7" color={color} />
         </div>
-      )}
+        {/* Equipped-Marker */}
+        {isDisplayed && (
+          <div
+            className="absolute -top-1 -right-1 w-5 h-5 rounded-full grid place-items-center text-[10px] font-bold text-white shadow"
+            style={{ background: "#10B981" }}
+            aria-label="Auf Avatar getragen"
+          >
+            <Check className="h-3 w-3" />
+          </div>
+        )}
+      </div>
 
-      {/* Status-Badge */}
-      <div
-        className={`absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.5 rounded transition-all ${
-          isDisplayed
-            ? "bg-primary text-primary-foreground"
-            : "bg-muted text-muted-foreground opacity-0 group-hover:opacity-100"
-        }`}
-      >
-        {isDisplayed ? "✓ auf Avatar" : "anlegen"}
+      {/* AC-Style Rarity-Punkte */}
+      <div className="flex items-center gap-0.5" aria-label={`${RARITY_LABEL[item.def.rarity]}`}>
+        {[1, 2, 3].map((i) => (
+          <span
+            key={i}
+            className="w-1 h-1 rounded-full"
+            style={{
+              background: i <= dots ? color : "rgba(148,163,184,0.25)",
+              boxShadow: legendary && i <= dots ? `0 0 4px ${color}` : undefined,
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="text-[10px] font-medium text-center leading-tight max-w-[80px] truncate">
+        {item.def.name}
       </div>
     </button>
   )
