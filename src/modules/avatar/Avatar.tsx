@@ -36,11 +36,12 @@ export interface AvatarProps {
 const HALO_POSITIONS_BY_BEREICH: Record<TreeBereichId, number> = {
   geist: -90,           // 12 Uhr (oben)
   seele: -45,           // 1:30
-  bewusstsein: -135,    // 10:30
   soziales: 0,          // 3 Uhr
-  gemeinschaft: 180,    // 9 Uhr
+  natur: 45,            // 4:30 — zwischen Begegnung und Schaffen, gegenueber Bewusstsein
   handwerk: 90,         // 6 Uhr (unten)
   koerper: 135,         // 7:30
+  gemeinschaft: 180,    // 9 Uhr
+  bewusstsein: -135,    // 10:30
 }
 
 const RARITY_GLOW: Record<string, string> = {

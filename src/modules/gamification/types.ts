@@ -27,7 +27,7 @@ import type { TreeBereichId } from "./tree"
 export interface SkillData {
   /** Anzeigename, z.B. "Holz", "3D-Druck", "Meditation" */
   name: string
-  /** Welcher der 7 universellen Bereiche traegt diesen Skill primaer? */
+  /** Welcher der 8 universellen Bereiche traegt diesen Skill primaer? */
   bereichId: TreeBereichId
   /** Lucide-Icon-Name (optional, faellt sonst auf Bereich-Icon zurueck) */
   icon?: string

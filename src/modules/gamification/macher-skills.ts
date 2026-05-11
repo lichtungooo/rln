@@ -48,6 +48,13 @@ export const MACHER_DEFAULT_SKILLS: Array<SkillData & { id: string }> = [
 
   // --- Bewusstsein ---
   { id: "achtsamkeit", name: "Achtsamkeit am Werk", bereichId: "bewusstsein", icon: "eye", description: "Im Tun voll praesent. Werkstatt als Meditation.", order: 600 },
+
+  // --- Natur ---
+  { id: "garten", name: "Garten", bereichId: "natur", icon: "sprout", color: "#65A30D", description: "Beet anlegen, Boden lesen, Saatgut auswaehlen. Was waechst und wann.", order: 700 },
+  { id: "permakultur", name: "Permakultur", bereichId: "natur", icon: "trees", color: "#16A34A", description: "Zonen, Polykultur, Wasserrueckhaltung. Lebenssystem statt Einzelpflanze.", order: 710 },
+  { id: "imkern", name: "Imkern", bereichId: "natur", icon: "hexagon", color: "#F59E0B", description: "Stockschau, Schwarmkontrolle, Honig schleudern. Bienen lesen lernen.", order: 720 },
+  { id: "heilpflanzen", name: "Heilpflanzen", bereichId: "natur", icon: "flower-2", color: "#EC4899", description: "Wildkraeuter erkennen, sammeln, verarbeiten. Tinktur, Salbe, Tee.", order: 730 },
+  { id: "holzwirtschaft", name: "Holzwirtschaft", bereichId: "natur", icon: "tree-pine", color: "#92400E", description: "Wald lesen, Baum faellen, Trocknen, Hochwertiges Material herstellen.", order: 740 },
 ]
 
 /**
@@ -67,6 +74,10 @@ export const MACHER_DEFAULT_AVATAR_ITEMS = [
   // Gemeinschaft-Pfad
   { id: "lehrer-stab", name: "Lehrer-Stab", symbol: "graduation-cap", bereichId: "gemeinschaft" as const, rarity: "epic" as const, condition: "Drei Lehrlinge zur Gesellenpruefung gefuehrt", color: "#10B981" },
   { id: "werkstatt-schluessel", name: "Werkstatt-Schluessel", symbol: "key", bereichId: "gemeinschaft" as const, rarity: "rare" as const, condition: "Eigene Werkstatt eroeffnet", color: "#10B981" },
+
+  // Natur-Pfad
+  { id: "gruener-daumen", name: "Gruener Daumen", symbol: "sprout", bereichId: "natur" as const, rarity: "common" as const, condition: "Erstes Beet angelegt", color: "#65A30D" },
+  { id: "bienen-fluesterer", name: "Bienen-Fluesterer", symbol: "hexagon", bereichId: "natur" as const, rarity: "epic" as const, condition: "Eigenes Bienenvolk durch ein Jahr gefuehrt", color: "#F59E0B" },
 
   // Allgemein
   { id: "macher-stern", name: "Macher-Stern", symbol: "sparkles", rarity: "epic" as const, condition: "Erste eigene Quest-Reihe veroeffentlicht", color: "#E8751A" },

@@ -1,16 +1,22 @@
 /**
  * Tree-Schema fuer das Gamification-Modul.
  *
- * Sieben universelle Bereiche, fest im Code (in jedem Space gleich, damit
+ * Acht universelle Bereiche, fest im Code (in jedem Space gleich, damit
  * der Charakter zwischen Spaces reisen kann). Skills unter den Bereichen
  * sind pro Space frei definierbar (Items vom Typ `skill`).
+ *
+ * Stand 11.05.2026 — Phase F1: Natur als 8. Saeule.
+ *   Permakultur, Imkern, Heilpflanzen, Bushcraft, Solarpunk tragen so
+ *   viel Tiefe, dass sie eigene Skill-Welt sind. WEF "Environmental
+ *   Stewardship", Gardners Naturalistic Intelligence, Schauberger und
+ *   Steiner zeigen alle in diese Richtung.
  *
  * Stand 01.05.2026 — Erweiterung um Bereich "Handwerk" gegenueber
  * Visionsdokument (das 6 Bereiche nennt). Begruendung in
  * `project_gamification_stack.md` (Memory).
  */
 
-import { Heart, Brain, Flame, Sun, Users, Hammer, Sparkles, type LucideIcon } from "lucide-react"
+import { Heart, Brain, Flame, Sun, Users, Hammer, Sparkles, Leaf, type LucideIcon } from "lucide-react"
 
 export type TreeBereichId =
   | "koerper"
@@ -20,6 +26,7 @@ export type TreeBereichId =
   | "soziales"
   | "gemeinschaft"
   | "handwerk"
+  | "natur"
 
 export interface TreeBereich {
   id: TreeBereichId
@@ -90,6 +97,14 @@ export const TREE_BEREICHE: TreeBereich[] = [
     spirit: "Praezision, Geduld, Material",
     color: "#E8751A",
     icon: Hammer,
+  },
+  {
+    id: "natur",
+    label: "Natur",
+    description: "Pflanzen, Tiere, Wetter — das lebendige Feld lesen und ehren",
+    spirit: "Wurzel, Lebendigkeit, Verbundenheit",
+    color: "#65A30D",
+    icon: Leaf,
   },
 ]
 
