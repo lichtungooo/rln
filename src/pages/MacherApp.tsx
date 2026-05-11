@@ -62,6 +62,7 @@ import { avatarModule } from '../modules/avatar'
 import { spiegelModule } from '../modules/spiegel'
 import { wissensfeldModule } from '../modules/wissensfeld'
 import { valluetModule } from '../modules/valluet'
+import { settingsModule } from '../modules/settings'
 import { useSpaceTheme } from '../themes/use-space-theme'
 import { SpaceSettings, type SpaceSettingsTab } from '../settings/SpaceSettings'
 import { MobileSpaceSettings } from '../settings/MobileSpaceSettings'
@@ -90,6 +91,7 @@ registerModule(avatarModule)
 registerModule(spiegelModule)
 registerModule(wissensfeldModule)
 registerModule(valluetModule)
+registerModule(settingsModule)
 
 const STORAGE_KEY_CONNECTOR = 'macher-connector'
 const STORAGE_KEY_GROUP = 'macher-active-group'
@@ -264,7 +266,7 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
   // stehen. Sie bleiben registriert (Dashboard-Widgets brauchen sie), aber
   // tauchen nicht in der Tab-Leiste auf. Avatar/Quest/Skill-Tree sind jetzt
   // im Spiegel-Modul vereint.
-  const HIDDEN_TAB_MODULES = ['avatar', 'quest', 'skill-tree']
+  const HIDDEN_TAB_MODULES = ['avatar', 'quest', 'skill-tree', 'settings']
 
   const isOverview = activeWorkspace?.scope === 'overview'
   const activeGroup = isOverview ? null : groups.find((g) => g.id === activeWorkspace?.id) ?? null
@@ -631,7 +633,14 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
             <FullscreenButton />
             <button
               type="button"
-              onClick={() => openSpaceSettings("modules", activeModule)}
+              onClick={() => {
+                if (activeWorkspace) {
+                  const slug = groups.find((g) => g.id === activeWorkspace.id)
+                    ? getSpacePathSegment(groups.find((g) => g.id === activeWorkspace.id)!)
+                    : activeWorkspace.id
+                  navigate(`/${slug}/settings?tab=modules&moduleId=${activeModule}`)
+                }
+              }}
               title={`Einstellungen — Space + ${activeModule}`}
               aria-label="Einstellungen"
               className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground"

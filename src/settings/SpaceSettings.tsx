@@ -87,6 +87,58 @@ export interface SpaceSettingsProps {
   initialTab?: SpaceSettingsTab
   /** Wenn gesetzt: im Module-Tab automatisch dieses Modul aufgeklappt zeigen. */
   initialModuleId?: string | null
+  /** Wenn true: KEIN Dialog-Wrapper, direkt rendern (fuer Modul-View). */
+  embedded?: boolean
+  /** Wenn passed: ueberschreibt internen Tab-State (controlled) */
+  onTabChange?: (tab: SpaceSettingsTab) => void
+}
+
+/**
+ * SettingsView — Modul-Variante (kein Dialog). Liest initialTab und
+ * initialModuleId aus URL-Query, schliesst per navigate(-1) zurueck zum
+ * vorigen Modul.
+ */
+import type { ModuleViewProps } from "../modules/registry"
+import { useNavigate, useSearchParams } from "react-router-dom"
+
+export function SettingsView({ spaceId, activeGroup }: ModuleViewProps) {
+  const [params, setParams] = useSearchParams()
+  const navigate = useNavigate()
+  const initialTab = (params.get("tab") as SpaceSettingsTab) || "general"
+  const initialModuleId = params.get("moduleId")
+
+  const handleClose = () => {
+    // Zurueck zum vorherigen Modul (z.B. Dashboard)
+    if (activeGroup) {
+      const slug = getSpaceMeta(activeGroup).slug ?? activeGroup.id
+      navigate(`/${slug}/dashboard`)
+    } else {
+      navigate(-1)
+    }
+  }
+
+  // Tab-Wechsel synchronisiert URL-Query
+  const onTabChange = (tab: SpaceSettingsTab) => {
+    const next = new URLSearchParams(params)
+    next.set("tab", tab)
+    next.delete("moduleId")
+    setParams(next, { replace: true })
+  }
+
+  return (
+    <div className="h-full w-full">
+      <SpaceSettings
+        open={true}
+        embedded
+        onClose={handleClose}
+        onTabChange={onTabChange}
+        spaceId={spaceId}
+        activeGroup={activeGroup}
+        initialTab={initialTab}
+        initialModuleId={initialModuleId}
+      />
+    </div>
+  )
 }
 
 interface TabDef {
@@ -113,12 +165,19 @@ export function SpaceSettings({
   activeGroup,
   initialTab = "general",
   initialModuleId = null,
+  embedded = false,
+  onTabChange,
 }: SpaceSettingsProps) {
-  const [activeTab, setActiveTab] = useState<SpaceSettingsTab>(initialTab)
+  const [activeTab, setActiveTabInternal] = useState<SpaceSettingsTab>(initialTab)
   const [previewVisible, setPreviewVisible] = useState(true)
   // Sub-Selection pro Tab — z.B. fuer Module-Tab welches Modul gerade
   // selektiert ist (Detail wandert in Spalte 3)
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(initialModuleId)
+
+  const setActiveTab = (tab: SpaceSettingsTab) => {
+    setActiveTabInternal(tab)
+    onTabChange?.(tab)
+  }
 
   // Wenn Dialog mit initialTab/initialModuleId neu geoeffnet wird:
   // den State entsprechend setzen.
@@ -138,6 +197,57 @@ export function SpaceSettings({
     slots: [{ id: "s1", widget: "settings-content", colSpan: 6 as const, rowSpan: 4 as const }],
   }))
 
+  const settingsBody = (
+    <PageGrid
+      storageKey={`rln-settings-${spaceId ?? "default"}`}
+      defaultPages={settingsPages}
+      availableWidgets={[{ id: "settings-content", label: "Settings-Inhalt", defaultColSpan: 6, defaultRowSpan: 4 }]}
+      lockPages
+      activePageId={activeTab}
+      onActivePageChange={(id) => setActiveTab(id as SpaceSettingsTab)}
+      headerRight={
+        <>
+          <SettingsIcon className="h-4 w-4 text-primary" />
+          <span className="text-[11px] text-muted-foreground truncate hidden lg:inline max-w-[16rem]">
+            {activeGroup?.name ?? "Kein Space"}
+          </span>
+          {!embedded && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-8 w-8 shrink-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </>
+      }
+      renderWidget={() => (
+        <div className="h-full w-full">
+          {!activeGroup ? (
+            <div className="p-8 text-center text-sm text-muted-foreground">
+              Bitte einen Space waehlen, um die Einstellungen zu oeffnen.
+            </div>
+          ) : (
+            <SettingsBody
+              activeTab={activeTab}
+              spaceId={spaceId}
+              activeGroup={activeGroup}
+              selectedModuleId={selectedModuleId}
+              setSelectedModuleId={setSelectedModuleId}
+            />
+          )}
+        </div>
+      )}
+    />
+  )
+
+  if (embedded) {
+    return settingsBody
+  }
+
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
       <DialogContent
@@ -145,48 +255,7 @@ export function SpaceSettings({
         onInteractOutside={(e) => e.preventDefault()}
         showCloseButton={false}
       >
-        <PageGrid
-          storageKey={`rln-settings-${spaceId ?? "default"}`}
-          defaultPages={settingsPages}
-          availableWidgets={[{ id: "settings-content", label: "Settings-Inhalt", defaultColSpan: 6, defaultRowSpan: 4 }]}
-          lockPages
-          activePageId={activeTab}
-          onActivePageChange={(id) => setActiveTab(id as SpaceSettingsTab)}
-          headerRight={
-            <>
-              <SettingsIcon className="h-4 w-4 text-primary" />
-              <span className="text-[11px] text-muted-foreground truncate hidden lg:inline max-w-[16rem]">
-                {activeGroup?.name ?? "Kein Space"}
-              </span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={onClose}
-                className="h-8 w-8 shrink-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </>
-          }
-          renderWidget={() => (
-            <div className="h-full w-full">
-              {!activeGroup ? (
-                <div className="p-8 text-center text-sm text-muted-foreground">
-                  Bitte einen Space waehlen, um die Einstellungen zu oeffnen.
-                </div>
-              ) : (
-                <SettingsBody
-                  activeTab={activeTab}
-                  spaceId={spaceId}
-                  activeGroup={activeGroup}
-                  selectedModuleId={selectedModuleId}
-                  setSelectedModuleId={setSelectedModuleId}
-                />
-              )}
-            </div>
-          )}
-        />
+        {settingsBody}
       </DialogContent>
     </Dialog>
   )
