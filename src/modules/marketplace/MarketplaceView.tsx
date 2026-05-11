@@ -34,6 +34,7 @@ import {
 import type { User } from "@real-life-stack/data-interface"
 import type { Item } from "@real-life-stack/data-interface"
 import type { ModuleViewProps } from "../registry"
+import { PageGrid } from "../../components/PageGrid"
 import { TagInput } from "../profile/TagInput"
 import { ImageGalleryInput } from "./ImageGalleryInput"
 import {
@@ -421,56 +422,27 @@ export function MarketplaceView({ spaceId }: ModuleViewProps) {
     )
   }
 
-  // Liste-Modus
-  return (
-    <div className="container mx-auto max-w-6xl p-4 space-y-4">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold mb-1">Marktplatz</h1>
-          <p className="text-sm text-muted-foreground">
-            Drei Welten unter einem Dach — Sachen, Begabungen, Beduerfnisse.
-          </p>
-        </div>
-        <Button onClick={() => setCreating(true)} size="sm">
-          <Plus className="h-4 w-4 mr-1" />
-          Neues Inserat
-        </Button>
-      </div>
+  // Liste-Modus — PageGrid mit 3 lockPages, fuer Sachen/Begabungen/Beduerfnisse.
+  // Inner-Content (Search/Filter/Cards) bleibt unveraendert, nur in einem Slot
+  // gerendert. Welt-Wechsel via onActivePageChange.
+  const marketplacePages = WORLDS.map((w) => ({
+    id: w.id,
+    name: w.label,
+    slots: [{ id: "s1", widget: "marketplace-content", colSpan: 6 as const, rowSpan: 4 as const }],
+  }))
 
-      {/* Welt-Tabs — im Modul-Doktrin-Stil (aktiv = Welt-Farbe, sonst Pille) */}
-      <div
-        className="rounded-md p-1.5 flex items-center gap-1 border"
-        style={{
-          background:
-            "linear-gradient(90deg, rgba(232,117,26,0.05) 0%, rgba(168,85,247,0.04) 100%)",
-        }}
-      >
-        {WORLDS.map((w) => {
-          const Icon = w.icon
-          const isOn = activeWorld === w.id
-          const count = worldCounts[w.id]
-          return (
-            <button
-              key={w.id}
-              type="button"
-              onClick={() => switchWorld(w.id)}
-              className={`flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-colors ${
-                isOn
-                  ? "text-white font-semibold shadow-sm"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-              }`}
-              style={isOn ? { background: w.color } : undefined}
-            >
-              <Icon className="h-4 w-4" />
-              <span>{w.label}</span>
-              <span className="text-[10px] opacity-80">({count})</span>
-            </button>
-          )
-        })}
-      </div>
-      <p className="text-xs text-muted-foreground -mt-2 px-1">
-        {activeWorldDef.hint}
-      </p>
+  return (
+    <PageGrid
+      storageKey={`rln-marketplace-${spaceId ?? "default"}`}
+      defaultPages={marketplacePages}
+      availableWidgets={[{ id: "marketplace-content", label: "Marktplatz-Welt", defaultColSpan: 6, defaultRowSpan: 4 }]}
+      renderWidget={() => (
+        <div className="h-full w-full overflow-y-auto p-4 space-y-4">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <p className="text-sm text-muted-foreground">
+              {activeWorldDef.hint}
+            </p>
+          </div>
 
       {/* Such- + Filter-Bar */}
       {entriesInWorld.length > 0 && (
@@ -587,7 +559,17 @@ export function MarketplaceView({ spaceId }: ModuleViewProps) {
           ))}
         </div>
       )}
-    </div>
+        </div>
+      )}
+      lockPages
+      onActivePageChange={(id) => switchWorld(id as WorldId)}
+      headerRight={
+        <Button onClick={() => setCreating(true)} size="sm" className="h-7">
+          <Plus className="h-3.5 w-3.5 mr-1" />
+          Neues Inserat
+        </Button>
+      }
+    />
   )
 }
 
