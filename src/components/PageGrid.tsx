@@ -86,6 +86,13 @@ export interface PageGridProps {
    * Outer-State synchronisieren (z.B. activeWorld in Marketplace).
    */
   onActivePageChange?: (pageId: string) => void
+  /**
+   * Optional: Controlled-Mode. Wenn gesetzt, kontrolliert der Outer-State
+   * welche Page aktiv ist. Bei Klick auf Tab wird nur onActivePageChange
+   * aufgerufen — Outer setzt activePageId.
+   * Wenn nicht gesetzt: uncontrolled (interner State + localStorage).
+   */
+  activePageId?: string
 }
 
 const COL_SPANS: ColSpan[] = [1, 2, 3, 6]
@@ -121,6 +128,7 @@ export function PageGrid({
   navApi,
   lockPages = false,
   onActivePageChange,
+  activePageId,
 }: PageGridProps) {
   const [pages, setPages] = useState<GridPage[]>(() => loadPages(storageKey, defaultPages))
   const [activeIdx, setActiveIdx] = useState(() => {
@@ -192,8 +200,10 @@ export function PageGrid({
     savePages(storageKey, pages)
   }, [storageKey, pages])
 
-  // Clamp activeIdx auf existierende Pages — falls Pages weniger geworden sind
-  const safeActiveIdx = Math.min(activeIdx, Math.max(0, pages.length - 1))
+  // Im Controlled-Mode: activeIdx kommt aus activePageId; sonst aus internem state.
+  const safeActiveIdx = activePageId !== undefined
+    ? Math.max(0, pages.findIndex((p) => p.id === activePageId))
+    : Math.min(activeIdx, Math.max(0, pages.length - 1))
   const activePage = pages[safeActiveIdx] ?? pages[0]
 
   // onActivePageChange-Callback bei Page-Wechsel ausloesen
@@ -243,7 +253,14 @@ export function PageGrid({
             <button
               key={p.id}
               type="button"
-              onClick={() => setActiveIdx(idx)}
+              onClick={() => {
+                if (activePageId !== undefined) {
+                  // Controlled — Outer setzt activePageId via onActivePageChange
+                  onActivePageChange?.(p.id)
+                } else {
+                  setActiveIdx(idx)
+                }
+              }}
               className={`px-2.5 py-1.5 text-sm font-medium rounded-md transition-colors ${
                 idx === safeActiveIdx
                   ? "bg-foreground text-background font-semibold"

@@ -31,6 +31,7 @@ import {
   useUpdateGroup,
 } from "@real-life-stack/toolkit"
 import type { Group } from "@real-life-stack/data-interface"
+import { PageGrid } from "../components/PageGrid"
 import { ThemeView } from "../modules/theme/ThemeView"
 import { MembersView } from "../modules/members/MembersView"
 import { ModulschmiedeView } from "../modules/modulschmiede/ModulschmiedeView"
@@ -128,6 +129,15 @@ export function SpaceSettings({
     }
   }, [open, initialTab, initialModuleId])
 
+  // Settings als PageGrid mit lockPages — wie Dashboard, in Vollbild.
+  // 7 lockPages: Allgemein/Theme/Module/Modulschmiede/Mitglieder/Demo/Erweitert.
+  // Jeder Slot rendert die 3-Spalten-Drilldown-Logik (SettingsBody) intern.
+  const settingsPages = TABS.map((tab) => ({
+    id: tab.id,
+    name: tab.label,
+    slots: [{ id: "s1", widget: "settings-content", colSpan: 6 as const, rowSpan: 4 as const }],
+  }))
+
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
       <DialogContent
@@ -135,72 +145,48 @@ export function SpaceSettings({
         onInteractOutside={(e) => e.preventDefault()}
         showCloseButton={false}
       >
-        <div className="flex flex-col h-full">
-          {/* Header — Tab-Buttons OBEN (wie Profil) + Close-Button rechts */}
-          <div
-            className="flex items-center gap-2 px-3 sm:px-4 py-2 border-b shrink-0"
-            style={{
-              background:
-                "linear-gradient(90deg, rgba(232,117,26,0.05) 0%, rgba(168,85,247,0.04) 100%)",
-            }}
-          >
-            <SettingsIcon className="h-4 w-4 text-primary shrink-0" />
-            {/* Tab-Buttons im Modul-Doktrin-Stil — scrollen horizontal bei eng */}
-            <div className="flex items-center gap-1 flex-1 min-w-0 overflow-x-auto">
-              {TABS.map((tab) => {
-                const Icon = tab.icon
-                const isActive = activeTab === tab.id
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`px-2.5 py-1.5 text-sm font-medium flex items-center gap-1.5 rounded-md transition-colors shrink-0 ${
-                      isActive
-                        ? "bg-foreground text-background font-semibold"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    }`}
-                    title={tab.hint}
-                  >
-                    <Icon className="h-4 w-4 shrink-0" />
-                    <span className="hidden sm:inline">{tab.label}</span>
-                  </button>
-                )
-              })}
+        <PageGrid
+          storageKey={`rln-settings-${spaceId ?? "default"}`}
+          defaultPages={settingsPages}
+          availableWidgets={[{ id: "settings-content", label: "Settings-Inhalt", defaultColSpan: 6, defaultRowSpan: 4 }]}
+          lockPages
+          activePageId={activeTab}
+          onActivePageChange={(id) => setActiveTab(id as SpaceSettingsTab)}
+          headerRight={
+            <>
+              <SettingsIcon className="h-4 w-4 text-primary" />
+              <span className="text-[11px] text-muted-foreground truncate hidden lg:inline max-w-[16rem]">
+                {activeGroup?.name ?? "Kein Space"}
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                className="h-8 w-8 shrink-0"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </>
+          }
+          renderWidget={() => (
+            <div className="h-full w-full">
+              {!activeGroup ? (
+                <div className="p-8 text-center text-sm text-muted-foreground">
+                  Bitte einen Space waehlen, um die Einstellungen zu oeffnen.
+                </div>
+              ) : (
+                <SettingsBody
+                  activeTab={activeTab}
+                  spaceId={spaceId}
+                  activeGroup={activeGroup}
+                  selectedModuleId={selectedModuleId}
+                  setSelectedModuleId={setSelectedModuleId}
+                />
+              )}
             </div>
-            <span className="text-[11px] text-muted-foreground truncate hidden lg:inline shrink-0 max-w-[20rem]">
-              {activeGroup?.name ?? "Kein Space"}
-            </span>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="h-8 w-8 shrink-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* Body: 3-Spalten-Drilldown unter dem Tab-Header */}
-          <div className="flex-1 min-h-0 overflow-hidden">
-            {!activeGroup && (
-              <div className="p-8 text-center text-sm text-muted-foreground">
-                Bitte einen Space waehlen, um die Einstellungen zu oeffnen.
-              </div>
-            )}
-
-            {activeGroup && (
-              <SettingsBody
-                activeTab={activeTab}
-                spaceId={spaceId}
-                activeGroup={activeGroup}
-                selectedModuleId={selectedModuleId}
-                setSelectedModuleId={setSelectedModuleId}
-              />
-            )}
-          </div>
-        </div>
+          )}
+        />
       </DialogContent>
     </Dialog>
   )
