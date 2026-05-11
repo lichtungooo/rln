@@ -125,7 +125,7 @@ export function SpiegelQuestTab(_props: SpiegelQuestTabProps) {
           </span>
         </div>
 
-        <div className="p-3 space-y-3 overflow-y-auto flex-1">
+        <div className="p-2 space-y-2 overflow-y-auto flex-1">
           {openQuests.length === 0 ? (
             <div className="text-center py-6 text-xs text-muted-foreground italic">
               Keine offenen Quests. Im Quest-Modul welche anlegen.
@@ -145,9 +145,9 @@ export function SpiegelQuestTab(_props: SpiegelQuestTabProps) {
               ))}
               {/* Singles */}
               {grouped.singles.length > 0 && (
-                <div className="space-y-1.5">
+                <div className="space-y-0.5">
                   {grouped.series.length > 0 && (
-                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+                    <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold pt-1">
                       Einzeln
                     </p>
                   )}
@@ -206,7 +206,7 @@ function SeriesBlock({
 }) {
   const seriesId = (items[0]?.data as QuestData).questSeriesId
   return (
-    <div className="space-y-1">
+    <div className="space-y-0.5">
       <div className="flex items-center gap-1.5">
         <Layers className="h-3 w-3 text-purple-600" />
         <span className="text-[10px] uppercase tracking-wider text-purple-700 font-semibold">
@@ -216,7 +216,7 @@ function SeriesBlock({
           {items.length} {items.length === 1 ? "Schritt" : "Schritte"}
         </span>
       </div>
-      <div className="space-y-1 pl-3 border-l-2" style={{ borderColor: "rgba(168,85,247,0.3)" }}>
+      <div className="space-y-0.5 pl-2 border-l-2" style={{ borderColor: "rgba(168,85,247,0.3)" }}>
         {items.map((q, idx) => (
           <QuestRow
             key={q.id}
@@ -281,34 +281,28 @@ function QuestRow({
     <button
       type="button"
       onClick={onClick}
-      className={`w-full text-left px-2.5 py-1.5 rounded-md border transition-all ${
+      title={data.description ?? data.title}
+      className={`w-full text-left px-2 py-1 rounded-md border transition-all ${
         active
           ? "border-primary bg-primary/5 shadow-sm"
           : "border-transparent hover:bg-muted/30"
       }`}
     >
-      <div className="flex items-start gap-2">
+      <div className="flex items-center gap-2">
         {completed ? (
-          <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+          <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
         ) : (
-          <Circle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+          <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
         )}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            {seriesIndex !== undefined && (
-              <span className="text-[9px] font-bold px-1 rounded bg-purple-100 text-purple-700">
-                #{seriesIndex}
-              </span>
-            )}
-            <span className="text-sm font-medium truncate">{data.title}</span>
-          </div>
-          {data.description && (
-            <p className="text-[11px] text-muted-foreground line-clamp-1">
-              {data.description}
-            </p>
+        <div className="flex-1 min-w-0 flex items-center gap-1.5">
+          {seriesIndex !== undefined && (
+            <span className="text-[9px] font-bold px-1 rounded bg-purple-100 text-purple-700 shrink-0">
+              #{seriesIndex}
+            </span>
           )}
+          <span className="text-sm font-medium truncate flex-1">{data.title}</span>
         </div>
-        <div className="flex flex-col items-end gap-0.5 shrink-0">
+        <div className="flex items-center gap-1 shrink-0">
           {totalXp > 0 && (
             <span className="text-[10px] font-semibold text-primary flex items-center gap-0.5">
               <Sparkles className="h-2.5 w-2.5" />
