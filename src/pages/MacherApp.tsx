@@ -254,13 +254,13 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
   // Vollbild-Settings unter dem Zahnrad in der Navbar.
   // Dashboard zuerst — der private Spiegel ist die Heimat. Dann Karte als
   // raeumlicher Anker, dann die anderen Module.
-  const DEFAULT_MODULE_IDS = ['dashboard', 'map', 'kanban', 'calendar', 'marketplace', 'wissensfeld', 'valluet', 'quest', 'skill-tree', 'avatar']
+  const DEFAULT_MODULE_IDS = ['dashboard', 'spiegel', 'map', 'kanban', 'calendar', 'marketplace', 'wissensfeld', 'valluet', 'quest', 'skill-tree', 'avatar']
   // Meta-Module die IMMER sichtbar sind (auch wenn ein Space sie nicht in
   // group.data.modules hat). Das sind die Schaufenster-Module der Macher-Map:
   // Marketplace + Kalender + Wissensfeld + Valluet zum Probieren.
   // Funktions-Module die immer als Tab sichtbar sein sollen, auch wenn ein
   // Space sie nicht in group.data.modules hat.
-  const ALWAYS_VISIBLE_MODULES = ['marketplace', 'calendar', 'wissensfeld', 'valluet']
+  const ALWAYS_VISIBLE_MODULES = ['spiegel', 'marketplace', 'calendar', 'wissensfeld', 'valluet']
 
   const isOverview = activeWorkspace?.scope === 'overview'
   const activeGroup = isOverview ? null : groups.find((g) => g.id === activeWorkspace?.id) ?? null
