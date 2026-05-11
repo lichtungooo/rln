@@ -240,6 +240,30 @@ export function PageGrid({
 
         {headerRight}
 
+        {/* Auf Mobile: Klick-Routing-Pfeile in den Header (Container ist zu schmal fuer aussen) */}
+        {isMobile && navApi && (
+          <div className="flex items-center gap-0.5 shrink-0">
+            <button
+              type="button"
+              onClick={navApi.prev}
+              disabled={!navApi.canPrev}
+              className="p-1 rounded-md text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
+              aria-label="Zurueck"
+            >
+              <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
+            </button>
+            <button
+              type="button"
+              onClick={navApi.next}
+              disabled={!navApi.canNext}
+              className="p-1 rounded-md text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
+              aria-label="Weiter"
+            >
+              <ChevronRight className="h-5 w-5" strokeWidth={1.5} />
+            </button>
+          </div>
+        )}
+
         <button
           type="button"
           onClick={() => setConfigOpen(true)}
@@ -253,9 +277,9 @@ export function PageGrid({
 
       {/* Wrapper: Pfeile aussen NUR wenn navApi gegeben — sie wirken auf
           Klick-Routing (Item-Wechsel im aktiven Widget), NICHT auf
-          Page-Wechsel. Pages werden manuell oben geklickt. */}
+          Page-Wechsel. Auf Mobile sind die Pfeile im Header (oben). */}
       <div className="flex-1 flex items-stretch min-h-0 px-0 py-1.5 gap-0">
-        {navApi && (
+        {!isMobile && navApi && (
           <button
             type="button"
             onClick={navApi.prev}
@@ -275,7 +299,7 @@ export function PageGrid({
           />
         </div>
 
-        {navApi && (
+        {!isMobile && navApi && (
           <button
             type="button"
             onClick={navApi.next}
