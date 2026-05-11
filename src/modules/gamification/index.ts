@@ -37,7 +37,13 @@ export {
   type PastExperienceData,
   type PastExperienceMastery,
   type ViaResultData,
+  type CircleData,
+  type ShareProfileData,
 } from "./types"
+
+export { DEFAULT_CIRCLES, DEFAULT_SHARE_PROFILES } from "./sharing-defaults"
+export { useCircles } from "./use-circles"
+export { useShareProfiles } from "./use-share-profiles"
 
 export {
   isSkillUnlocked,

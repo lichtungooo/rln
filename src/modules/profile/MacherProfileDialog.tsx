@@ -16,6 +16,8 @@ import { LifeThreadCard } from "./LifeThreadCard"
 import type { LifeThreadData } from "./life-thread"
 import { PastExperiencesSection } from "./PastExperiencesSection"
 import { ViaStrengthsSection } from "./ViaStrengthsSection"
+import { CirclesSection } from "./CirclesSection"
+import { ShareProfilesSection } from "./ShareProfilesSection"
 
 export interface MacherProfileDialogProps {
   open: boolean
@@ -202,6 +204,12 @@ export function MacherProfileDialog({
 
             {/* Vergangenheits-Erfahrungen (Phase F5) — Backdating mit XP */}
             <PastExperiencesSection lifeThread={lifeThread} />
+
+            {/* Kreise (Phase F8) — Diaspora-Aspects-Pattern */}
+            <CirclesSection />
+
+            {/* Sicht-Profile (Phase F8) — Quick-Share, wer sieht was */}
+            <ShareProfilesSection />
 
             {error && <p className="text-xs text-destructive">{error}</p>}
           </div>

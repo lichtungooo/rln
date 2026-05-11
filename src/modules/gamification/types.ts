@@ -289,6 +289,76 @@ export interface ViaResultData {
 }
 
 // ============================================================
+// Kreise und Share-Profile (Phase F8, 11.05.2026)
+// ============================================================
+
+/**
+ * Kreis — eine selbst definierte Gruppe von Menschen (DIDs).
+ *
+ * Diaspora-Aspects-Pattern:
+ *   - **einseitig**: ich entscheide, wen ich in welchen Kreis tue
+ *   - **privat**:    andere wissen nicht, in welchem Kreis sie sind
+ *   - **persoenlich**: jeder Mensch baut seine eigenen Kreise
+ *
+ * Default-Kreise (vorgeschlagen beim Onboarding): Vertraute,
+ * Mitstreiter, Bekannte. Eigene Kreise wie "Werkstatt-Berlin",
+ * "Lichtung-Brandenburg", "Familie" sind frei moeglich.
+ *
+ * Item: `type: "circle"`, `createdBy` = Owner-DID.
+ */
+export interface CircleData {
+  /** Anzeigename des Kreises */
+  name: string
+  /** Kurze Beschreibung (optional) */
+  description?: string
+  /** Mitglieder als DIDs */
+  memberIds: string[]
+  /** Icon-Name (Lucide) — optional */
+  icon?: string
+  /** Hex-Farbe — optional */
+  color?: string
+}
+
+/**
+ * Sicht-Profil — was sieht ein anderer, wenn er mich anschaut.
+ *
+ * Vier Quick-Share-Profile sind vordefiniert:
+ *   - Job-Profil   — Berufs-Skills + Sprachen
+ *   - Date-Profil  — Charakter-Staerken + Werte + Hobbys
+ *   - Mentor-Profil — Skill-Tiefen + Lehr-Bereiche
+ *   - Lichtungs-Profil — Spirituelle / Bewusstseins / Gemeinschafts-Skills
+ *
+ * Eigene Profile sind frei kombinierbar. Bereich-Toggles definieren
+ * grob, welche Skills sichtbar sind. Granulare Skill-Wahl folgt in F9.
+ *
+ * Wer schaut, sieht das passende Profil — anhand seiner Kreis-
+ * Zugehoerigkeit. Wenn ein Schauender in keinem Kreis steckt, gilt
+ * das Standard-Profil mit Sichtbarkeit "oeffentlich".
+ *
+ * Item: `type: "share-profile"`, `createdBy` = Owner-DID.
+ */
+export interface ShareProfileData {
+  /** Anzeigename — z.B. "Job", "Date", "Mentor", "Lichtung" */
+  name: string
+  /** Kurze Beschreibung */
+  description?: string
+  /** Welche Bereiche sind in diesem Profil sichtbar */
+  visibleBereiche: TreeBereichId[]
+  /** Optional: bestimmte Skill-IDs explizit verborgen, obwohl ihr Bereich sichtbar ist */
+  hiddenSkillIds?: string[]
+  /** Optional: nur bestimmte Skill-IDs sichtbar, anstatt ganze Bereiche */
+  visibleSkillIds?: string[]
+  /** Optional: zeigt diese Section, auch wenn der Inhalt zur Sichtbarkeit gehoert */
+  showLifeThread?: boolean
+  showVia?: boolean
+  showPastExperiences?: boolean
+  /** Kreise, die dieses Profil als Default sehen */
+  targetCircleIds?: string[]
+  /** Icon-Name */
+  icon?: string
+}
+
+// ============================================================
 // Item-Type-Konstanten
 // ============================================================
 
@@ -301,4 +371,6 @@ export const GAMIFICATION_ITEM_TYPES = {
   quest: "quest",
   pastExperience: "past-experience",
   viaResult: "via-result",
+  circle: "circle",
+  shareProfile: "share-profile",
 } as const
