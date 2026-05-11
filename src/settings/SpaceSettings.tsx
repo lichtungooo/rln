@@ -132,12 +132,18 @@ export function SpaceSettings({
         showCloseButton={false}
       >
         <div className="flex flex-col h-full">
-          {/* Header */}
-          <div className="flex items-center gap-3 px-4 py-3 border-b bg-muted/30 shrink-0">
+          {/* Header — Modul-Doktrin-Stil mit Linear-Gradient */}
+          <div
+            className="flex items-center gap-3 px-4 py-3 border-b shrink-0"
+            style={{
+              background:
+                "linear-gradient(90deg, rgba(232,117,26,0.05) 0%, rgba(168,85,247,0.04) 100%)",
+            }}
+          >
             <SettingsIcon className="h-5 w-5 text-primary shrink-0" />
             <div className="flex-1 min-w-0">
               <h2 className="font-semibold text-sm leading-tight">
-                Space-Einstellungen
+                Einstellungen
               </h2>
               <p className="text-[11px] text-muted-foreground truncate">
                 {activeGroup?.name ?? "Kein Space gewaehlt"}
