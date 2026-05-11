@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react"
+import { useMemo, useState, useEffect, useRef } from "react"
 import {
   ChevronLeft,
   ChevronRight,
@@ -189,6 +189,32 @@ export function SkillTreeView({ activeGroup }: ModuleViewProps) {
     setRightPanel({ kind: "bereich", bereichIdx: (next + 1) % TREE_BEREICHE.length })
   }
 
+  // Touch-Swipe-Geste fuer Karussell
+  const touchStartX = useRef<number | null>(null)
+  const touchStartY = useRef<number | null>(null)
+  const SWIPE_THRESHOLD = 50 // px
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!carouselActive) return
+    touchStartX.current = e.touches[0].clientX
+    touchStartY.current = e.touches[0].clientY
+  }
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || touchStartY.current === null) return
+    const dx = e.changedTouches[0].clientX - touchStartX.current
+    const dy = e.changedTouches[0].clientY - touchStartY.current
+    touchStartX.current = null
+    touchStartY.current = null
+    // Nur horizontal akzeptieren (groesser als vertikal)
+    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy)) return
+    if (dx > 0) {
+      // Wischen nach rechts → vorheriger Bereich
+      isMobile ? mobilePrev() : goPrev()
+    } else {
+      // Wischen nach links → naechster Bereich
+      isMobile ? mobileNext() : goNext()
+    }
+  }
+
   return (
     <div className="container mx-auto max-w-5xl p-3 space-y-3">
       {/* Kompakter Header */}
@@ -233,6 +259,7 @@ export function SkillTreeView({ activeGroup }: ModuleViewProps) {
       </div>
 
       {/* Panel-Layout */}
+      <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {isMobile && mobilePanel ? (
         // Mobile: ein Panel
         <Panel
@@ -288,6 +315,7 @@ export function SkillTreeView({ activeGroup }: ModuleViewProps) {
           />
         </div>
       )}
+      </div>
 
       {/* Karussell-Navigation */}
       {carouselActive && (
@@ -368,39 +396,32 @@ function Panel({
   const isInner = INNERE_BEREICHE.includes(bereich.id)
 
   if (state.kind === "bereich") {
-    const bProg = bereichProgress(bereich.id)
-    const bXp = bereichXp(bereich.id)
     return (
       <div
         className="rounded-xl border bg-card overflow-hidden flex flex-col"
         style={{ borderLeftWidth: 3, borderLeftColor: bereich.color }}
       >
-        {/* Mini-Header */}
+        {/* Mini-Header — schlicht, kein XP, kein Level */}
         <div className="px-3 py-2 border-b flex items-center gap-2 bg-muted/20">
           <div
-            className="w-7 h-7 rounded-full flex items-center justify-center shrink-0"
+            className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
             style={{ background: `${bereich.color}18` }}
           >
-            <Icon className="h-4 w-4" style={{ color: bereich.color }} />
+            <Icon className="h-3.5 w-3.5" style={{ color: bereich.color }} />
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
               <h3 className="text-sm font-semibold truncate">{bereich.label}</h3>
               {isInner && (
-                <span className="text-[8px] uppercase tracking-wider text-purple-700">innen</span>
+                <span
+                  className="text-[8px] uppercase tracking-wider text-purple-700"
+                  title="Innerer Kreis — Teil des Inneren Dreiklangs"
+                >
+                  innen
+                </span>
               )}
             </div>
-            <p className="text-[10px] text-muted-foreground italic truncate">{bereich.spirit}</p>
           </div>
-          {bProg.level > 0 && (
-            <span
-              className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-              style={{ background: `${bereich.color}18`, color: bereich.color }}
-              title={`${bXp.toLocaleString("de-DE")} XP`}
-            >
-              Lv {bProg.level}
-            </span>
-          )}
         </div>
 
         {/* Skill-Kreis-Grid */}
@@ -468,6 +489,17 @@ function DynamicIcon({ name, className, color }: { name: string; className?: str
   return <Icon className={className} style={color ? { color } : undefined} />
 }
 
+/**
+ * Mastery-Stufen — drei Schwellen, ob Skill "Anfang" (Lv 1-9),
+ * "Geuebt" (Lv 10-49) oder "Meister" (Lv 50+).
+ */
+function masteryDots(level: number): 0 | 1 | 2 | 3 {
+  if (level <= 0) return 0
+  if (level < 10) return 1
+  if (level < 50) return 2
+  return 3
+}
+
 function SkillCircle({
   skill,
   bereichColor,
@@ -485,6 +517,7 @@ function SkillCircle({
 }) {
   const color = skill.data.color ?? bereichColor
   const activated = xp > 0
+  const dots = masteryDots(progress.level)
 
   return (
     <button
@@ -510,14 +543,18 @@ function SkillCircle({
         ) : (
           <Sparkles className="h-4 w-4" style={{ color: activated ? color : "#94A3B8" }} />
         )}
-        {progress.level > 0 && (
-          <div
-            className="absolute -top-1 -right-1 min-w-[16px] h-[16px] px-1 rounded-full text-[9px] font-bold text-white grid place-items-center shadow"
-            style={{ background: color }}
-          >
-            {progress.level}
-          </div>
-        )}
+      </div>
+      {/* AC-Style: drei Mastery-Punkte unter dem Kreis */}
+      <div className="flex items-center gap-0.5 mt-0.5" aria-label={`Stufe ${dots} von 3`}>
+        {[1, 2, 3].map((i) => (
+          <span
+            key={i}
+            className="w-1 h-1 rounded-full transition-colors"
+            style={{
+              background: i <= dots ? color : "rgba(148,163,184,0.25)",
+            }}
+          />
+        ))}
       </div>
       <div className="text-[9px] sm:text-[10px] font-medium text-center leading-tight max-w-[64px] truncate">
         {skill.data.name}
