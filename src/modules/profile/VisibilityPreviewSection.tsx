@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react"
-import { Eye, Globe, Users, UsersRound, EyeOff } from "lucide-react"
+import { Eye, Globe, Users, UsersRound, EyeOff, ExternalLink } from "lucide-react"
+import { Button } from "@real-life-stack/toolkit"
+import { ProfileViewerDialog } from "./ProfileViewerDialog"
 import {
   TREE_BEREICHE,
   UNIVERSAL_SKILLS,
@@ -26,6 +28,7 @@ export function VisibilityPreviewSection() {
   const { mine: shareProfiles } = useShareProfiles()
   const { map: visibilityMap } = useSkillVisibility()
   const [selectedCircleId, setSelectedCircleId] = useState<string | null>(null)
+  const [viewerOpen, setViewerOpen] = useState(false)
 
   const selectedCircle = circles.find((c) => c.id === selectedCircleId)
 
@@ -129,8 +132,8 @@ export function VisibilityPreviewSection() {
 
           {/* Bereich-Tabelle */}
           {bereichStats && (
-            <div className="p-3">
-              <p className="text-[10px] text-muted-foreground mb-2">
+            <div className="p-3 space-y-3">
+              <p className="text-[10px] text-muted-foreground">
                 Universal-Skills pro Bereich. Eigene Skill-Overrides (Tree-Augen)
                 schlagen das Sicht-Profil.
               </p>
@@ -147,6 +150,17 @@ export function VisibilityPreviewSection() {
                   />
                 ))}
               </div>
+              {/* Live-Vorschau-Button */}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setViewerOpen(true)}
+                className="w-full h-9 text-xs"
+              >
+                <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+                Live-Vorschau anzeigen
+              </Button>
             </div>
           )}
 
@@ -158,6 +172,15 @@ export function VisibilityPreviewSection() {
             </div>
           )}
         </>
+      )}
+
+      {/* Live-Vorschau-Dialog */}
+      {selectedCircleId && (
+        <ProfileViewerDialog
+          open={viewerOpen}
+          onOpenChange={setViewerOpen}
+          viewerCircleId={selectedCircleId}
+        />
       )}
 
       {/* Legende */}
