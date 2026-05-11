@@ -116,7 +116,30 @@ export function CalendarView({ spaceId, activeGroup, config, isPreview, onOpenSe
   const cfg = { ...calendarDefaultConfig, ...(config ?? {}) }
   const isAdmin = useIsSpaceAdmin(spaceId)
 
-  const [activeView, setActiveView] = useState<CalendarView>(cfg.defaultView)
+  // Aktive View persistieren pro Space — User kommt zurueck zur gleichen Ansicht
+  const viewStorageKey = `rln-calendar-view-${spaceId ?? "default"}`
+  const [activeView, setActiveViewRaw] = useState<CalendarView>(() => {
+    try {
+      const raw = localStorage.getItem(viewStorageKey)
+      if (raw && ["day", "week", "month", "year", "agenda", "events", "mine"].includes(raw)) {
+        return raw as CalendarView
+      }
+    } catch {
+      // egal
+    }
+    return cfg.defaultView
+  })
+  const setActiveView = useCallback(
+    (v: CalendarView) => {
+      setActiveViewRaw(v)
+      try {
+        localStorage.setItem(viewStorageKey, v)
+      } catch {
+        // egal
+      }
+    },
+    [viewStorageKey]
+  )
   const [currentMonth, setCurrentMonth] = useState(() => new Date())
   const [currentDay, setCurrentDay] = useState(() => new Date())
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear())
