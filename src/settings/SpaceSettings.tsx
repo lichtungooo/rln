@@ -173,7 +173,13 @@ export function SpaceSettings({
               auf Desktop nebeneinander (Sidebar links). */}
           <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden">
             {/* Tab-Sidebar — horizontal scrollbar auf Mobile, vertikal auf Desktop. */}
-            <nav className="shrink-0 border-b md:border-b-0 md:border-r md:w-44 lg:w-52 bg-muted/20 overflow-x-auto md:overflow-x-hidden md:overflow-y-auto">
+            <nav
+              className="shrink-0 border-b md:border-b-0 md:border-r md:w-44 lg:w-52 overflow-x-auto md:overflow-x-hidden md:overflow-y-auto"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(232,117,26,0.04) 0%, rgba(168,85,247,0.04) 100%)",
+              }}
+            >
               <ul className="flex md:block gap-1 md:gap-0 p-2 md:space-y-0.5">
                 {TABS.map((tab) => {
                   const Icon = tab.icon
@@ -185,16 +191,16 @@ export function SpaceSettings({
                         onClick={() => setActiveTab(tab.id)}
                         className={`text-left px-3 py-2 rounded-md flex items-center gap-2 text-sm transition-colors whitespace-nowrap md:w-full md:whitespace-normal ${
                           isActive
-                            ? "bg-primary text-primary-foreground"
-                            : "text-foreground hover:bg-muted"
+                            ? "bg-foreground text-background font-semibold"
+                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                         }`}
                       >
                         <Icon className="h-4 w-4 shrink-0" />
                         <div className="md:flex-1 md:min-w-0">
-                          <div className="font-medium leading-tight">{tab.label}</div>
+                          <div className="leading-tight">{tab.label}</div>
                           {tab.hint && (
                             <div className={`hidden md:block text-[10px] truncate ${
-                              isActive ? "text-primary-foreground/80" : "text-muted-foreground"
+                              isActive ? "text-background/80" : "text-muted-foreground"
                             }`}>
                               {tab.hint}
                             </div>
