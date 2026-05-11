@@ -15,6 +15,7 @@ import { TagInput } from "./TagInput"
 import { LifeThreadCard } from "./LifeThreadCard"
 import type { LifeThreadData } from "./life-thread"
 import { PastExperiencesSection } from "./PastExperiencesSection"
+import { ViaStrengthsSection } from "./ViaStrengthsSection"
 
 export interface MacherProfileDialogProps {
   open: boolean
@@ -195,6 +196,9 @@ export function MacherProfileDialog({
 
             {/* Lebens-Faden (Phase F4) — Steiner/Lievegoed 7-Jahres-Phasen */}
             <LifeThreadCard value={lifeThread} onChange={setLifeThread} />
+
+            {/* Charakter-Staerken (Phase F6) — VIA-Onboarding-Quiz */}
+            <ViaStrengthsSection />
 
             {/* Vergangenheits-Erfahrungen (Phase F5) — Backdating mit XP */}
             <PastExperiencesSection lifeThread={lifeThread} />

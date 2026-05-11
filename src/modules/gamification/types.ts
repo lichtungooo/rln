@@ -265,6 +265,30 @@ export const PAST_EXPERIENCE_XP: Record<PastExperienceMastery, number> = {
 }
 
 // ============================================================
+// VIA Strengths Result (Phase F6, 11.05.2026)
+// ============================================================
+
+/**
+ * Ergebnis des VIA-Onboarding-Quiz.
+ *
+ * 24 Antworten (eine pro Staerke), Skala 1..5. Aus den Antworten werden
+ * die fuenf hoechsten Werte als **Signature Strengths** abgeleitet und
+ * im Profil sichtbar gemacht.
+ *
+ * Pro User ein Item — beim erneuten Quiz wird es ueberschrieben.
+ *
+ * Item: `type: "via-result"`, `createdBy` = User-DID.
+ */
+export interface ViaResultData {
+  /** Antworten pro Staerken-ID. Wert 1..5, undefined wenn uebersprungen. */
+  answers: Record<string, number>
+  /** Zeitpunkt des Quiz */
+  completedAt: string
+  /** Die 5 hoechsten Staerken (IDs) — fuers Profil sichtbar */
+  signatureStrengthIds: string[]
+}
+
+// ============================================================
 // Item-Type-Konstanten
 // ============================================================
 
@@ -276,4 +300,5 @@ export const GAMIFICATION_ITEM_TYPES = {
   userAvatar: "user-avatar",
   quest: "quest",
   pastExperience: "past-experience",
+  viaResult: "via-result",
 } as const

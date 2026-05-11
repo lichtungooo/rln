@@ -36,6 +36,7 @@ export {
   type UserAvatarData,
   type PastExperienceData,
   type PastExperienceMastery,
+  type ViaResultData,
 } from "./types"
 
 export {
