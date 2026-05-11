@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import {
   CheckCircle2,
   Circle,
@@ -36,13 +36,11 @@ import type { QuestData } from "../quest/quest-engine"
  * Mobile: gestapelt — Liste oben, Detail/Log darunter.
  */
 
-export interface SpiegelQuestTabProps extends ModuleViewProps {
-  onNavReady?: (api: { prev: () => void; next: () => void; canPrev: boolean; canNext: boolean }) => void
-}
+export interface SpiegelQuestTabProps extends ModuleViewProps {}
 
 type QuestFilter = "open" | "all" | "done"
 
-export function SpiegelQuestTab({ onNavReady }: SpiegelQuestTabProps) {
+export function SpiegelQuestTab(_props: SpiegelQuestTabProps) {
   const { quests, isCompleted, complete, uncomplete } = useQuests()
   const { data: skills } = useItems({ type: GAMIFICATION_ITEM_TYPES.skill })
   const { entries: logEntries } = useLog()
@@ -56,36 +54,6 @@ export function SpiegelQuestTab({ onNavReady }: SpiegelQuestTabProps) {
     return quests.filter((q) => !isCompleted(q.id))
   }, [quests, filter, isCompleted])
   const openQuests = filteredQuests // alte Variable beibehalten fuer minimale Aenderung
-
-  // Pfeil-Navigation: durch die aktuelle Quest-Liste blaettern.
-  const goPrev = () => {
-    if (filteredQuests.length === 0) return
-    const idx = filteredQuests.findIndex((q) => q.id === selectedQuestId)
-    const next =
-      idx <= 0
-        ? filteredQuests[filteredQuests.length - 1]
-        : filteredQuests[idx - 1]
-    setSelectedQuestId(next?.id ?? null)
-  }
-  const goNext = () => {
-    if (filteredQuests.length === 0) return
-    const idx = filteredQuests.findIndex((q) => q.id === selectedQuestId)
-    const next =
-      idx === -1 || idx >= filteredQuests.length - 1
-        ? filteredQuests[0]
-        : filteredQuests[idx + 1]
-    setSelectedQuestId(next?.id ?? null)
-  }
-  useEffect(() => {
-    if (!onNavReady) return
-    onNavReady({
-      prev: goPrev,
-      next: goNext,
-      canPrev: filteredQuests.length > 0,
-      canNext: filteredQuests.length > 0,
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onNavReady, filteredQuests, selectedQuestId])
 
   // Gruppiere nach Series + Singles
   const grouped = useMemo(() => {

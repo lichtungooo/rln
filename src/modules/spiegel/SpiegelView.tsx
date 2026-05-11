@@ -1,6 +1,10 @@
-import { useState } from "react"
-import { ChevronLeft, ChevronRight, User, Trophy, Network } from "lucide-react"
 import type { ModuleViewProps } from "../registry"
+import {
+  PageGrid,
+  type GridPage,
+  type AvailableWidget,
+} from "../../components/PageGrid"
+import { SelectionProvider, useNavigation } from "../../components/SelectionContext"
 import { StatsBar } from "../gamification"
 import { SpiegelAvatarTab } from "./SpiegelAvatarTab"
 import { SpiegelQuestTab } from "./SpiegelQuestTab"
@@ -8,17 +12,16 @@ import { SpiegelSkillTab } from "./SpiegelSkillTab"
 import { useDemoSeed } from "./use-demo-seed"
 
 /**
- * SpiegelView — drei Linsen auf den Menschen in einem Modul.
+ * SpiegelView (Profil-Modul) — drei Linsen + konfigurierbares Grid.
  *
- * Profil hat eine FESTE Tab-Struktur (Avatar / Quest / Skill) — kein
- * konfigurierbares Grid wie das Dashboard. Pfeile aussen blaettern
- * INTERN durch den aktuellen Tab (Filter, Quest-Liste, Skill-Bereich)
- * via onNavReady-API, die jeder Tab bedient.
- *
- * Hero-Zeile oben: Tabs links, XP-Balken + Trust-Anzeige rechts.
- * Trust = Anzahl vertrauter Menschen (verifizierte Kontakte). Wenn
- * jemand nur 1 hat, koennte das auch ein guter Fake sein — also reine
- * Zahl, keine Bewertung.
+ * Folgt der Modul-Doktrin (siehe CLAUDE.md):
+ *   - PageGrid mit lockPages=true → 3 feste Pages (Avatar/Quest/Skill)
+ *   - Slots innerhalb jeder Page konfigurierbar (Zahnrad)
+ *   - Default-Layout pro Page: ein XL-Widget mit dem Spiegel-Tab-Inhalt
+ *   - Klick-Routing via SelectionProvider — Channels werden von den
+ *     enthaltenen Widgets registriert
+ *   - StatsBar (XP+Trust) im Header rechts, Demo-Button daneben
+ *   - Pfeile aussen nur sichtbar wenn ein Channel aktiv ist
  */
 
 export type SpiegelTab = "avatar" | "quest" | "skill"
@@ -31,130 +34,118 @@ export const spiegelDefaultConfig: SpiegelModuleConfig = {
   defaultTab: "skill",
 }
 
+const PROFIL_WIDGETS: AvailableWidget[] = [
+  { id: "profil-avatar", label: "Avatar + Inventar", defaultColSpan: 6, defaultRowSpan: 4 },
+  { id: "profil-quest", label: "Quests + Log", defaultColSpan: 6, defaultRowSpan: 4 },
+  { id: "profil-skill", label: "Faehigkeitsbaum", defaultColSpan: 6, defaultRowSpan: 4 },
+]
+
+const DEFAULT_PAGES: GridPage[] = [
+  {
+    id: "avatar",
+    name: "Avatar",
+    slots: [{ id: "s1", widget: "profil-avatar", colSpan: 6, rowSpan: 4 }],
+  },
+  {
+    id: "quest",
+    name: "Quest",
+    slots: [{ id: "s1", widget: "profil-quest", colSpan: 6, rowSpan: 4 }],
+  },
+  {
+    id: "skill",
+    name: "Skill",
+    slots: [{ id: "s1", widget: "profil-skill", colSpan: 6, rowSpan: 4 }],
+  },
+]
+
 export function SpiegelView(props: ModuleViewProps<SpiegelModuleConfig>) {
-  const { config } = props
-  const [tab, setTab] = useState<SpiegelTab>(config?.defaultTab ?? "skill")
+  const { activeGroup } = props
 
-  // Bridge-State: aktiver Tab kommuniziert seine Nav-API zurueck
-  const [navApi, setNavApi] = useState<{
-    prev: () => void
-    next: () => void
-    canPrev: boolean
-    canNext: boolean
-  } | null>(null)
-
-  // Bei Tab-Wechsel Nav-API zuruecksetzen
-  const handleTabChange = (next: SpiegelTab) => {
-    setNavApi(null)
-    setTab(next)
+  if (!activeGroup) {
+    return (
+      <div className="h-full w-full flex items-center justify-center p-8">
+        <p className="text-sm text-muted-foreground">
+          Bitte einen Space waehlen, um das Profil zu sehen.
+        </p>
+      </div>
+    )
   }
 
   return (
-    <div className="flex flex-col h-full">
-      <SpiegelHero tab={tab} onTabChange={handleTabChange} />
-
-      {/* Container-Wrapper mit Pfeilen aussen */}
-      <div className="flex-1 flex items-stretch min-h-0 px-0 py-1.5 gap-0">
-        <button
-          type="button"
-          onClick={() => navApi?.prev()}
-          disabled={!navApi?.canPrev}
-          className="self-center shrink-0 p-1 text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
-          aria-label="Zurueck"
-        >
-          <ChevronLeft className="h-8 w-8" strokeWidth={1.5} />
-        </button>
-
-        <div className="flex-1 flex flex-col min-w-0 p-2">
-          {tab === "avatar" && <SpiegelAvatarTab {...props} onNavReady={setNavApi} />}
-          {tab === "quest" && <SpiegelQuestTab {...props} onNavReady={setNavApi} />}
-          {tab === "skill" && <SpiegelSkillTab {...props} onNavReady={setNavApi} />}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => navApi?.next()}
-          disabled={!navApi?.canNext}
-          className="self-center shrink-0 p-1 text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
-          aria-label="Weiter"
-        >
-          <ChevronRight className="h-8 w-8" strokeWidth={1.5} />
-        </button>
-      </div>
-    </div>
+    <SelectionProvider>
+      <SpiegelInner {...props} />
+    </SelectionProvider>
   )
 }
 
-// ============================================================
-// SpiegelHero — Tab-Buttons + XP + Trust in einer Zeile
-// ============================================================
+function SpiegelInner(props: ModuleViewProps<SpiegelModuleConfig>) {
+  const { spaceId } = props
+  const spaceKey = spaceId ?? "default"
+  const nav = useNavigation()
+  const { seed, busy, alreadySeeded } = useDemoSeed()
 
-function SpiegelHero({
-  tab,
-  onTabChange,
-}: {
-  tab: SpiegelTab
-  onTabChange: (t: SpiegelTab) => void
-}) {
-  const { seed: seedDemo, busy: seeding, alreadySeeded } = useDemoSeed()
+  const renderWidget = (widgetId: string) => {
+    switch (widgetId) {
+      case "profil-avatar":
+        return (
+          <div className="h-full w-full rounded-xl border bg-card overflow-hidden p-2">
+            <SpiegelAvatarTab {...props} />
+          </div>
+        )
+      case "profil-quest":
+        return (
+          <div className="h-full w-full rounded-xl border bg-card overflow-hidden p-2">
+            <SpiegelQuestTab {...props} />
+          </div>
+        )
+      case "profil-skill":
+        return (
+          <div className="h-full w-full rounded-xl border bg-card overflow-hidden p-2">
+            <SpiegelSkillTab {...props} />
+          </div>
+        )
+      default:
+        return (
+          <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground italic">
+            Unbekanntes Widget: {widgetId}
+          </div>
+        )
+    }
+  }
+
+  const navApi = nav.activeChannelId
+    ? {
+        prev: nav.prev,
+        next: nav.next,
+        canPrev: nav.canPrev,
+        canNext: nav.canNext,
+      }
+    : undefined
 
   return (
-    <div
-      className="border-b px-3 sm:px-4 py-2 flex items-center gap-3 flex-wrap shrink-0"
-      style={{
-        background:
-          "linear-gradient(90deg, rgba(232,117,26,0.05) 0%, rgba(251,191,36,0.04) 50%, rgba(168,85,247,0.04) 100%)",
-      }}
-    >
-      {/* Tab-Buttons im neuen Stil */}
-      <div className="flex items-center gap-1 shrink-0">
-        <TabButton icon={User} label="Avatar" active={tab === "avatar"} onClick={() => onTabChange("avatar")} />
-        <TabButton icon={Trophy} label="Quest" active={tab === "quest"} onClick={() => onTabChange("quest")} />
-        <TabButton icon={Network} label="Skill" active={tab === "skill"} onClick={() => onTabChange("skill")} />
-      </div>
-
-      <div className="flex-1" />
-
-      <StatsBar />
-
-      {!alreadySeeded && (
-        <button
-          type="button"
-          onClick={() => seedDemo().catch((err) => alert(err.message))}
-          disabled={seeding}
-          className="text-[10px] px-2 py-1 rounded border border-muted-foreground/20 hover:border-primary hover:bg-primary/5 transition-colors disabled:opacity-50 shrink-0"
-          title="Demo-Daten anlegen — Lv ~42, Items, Quests, Log"
-        >
-          {seeding ? "Lade Demo..." : "Demo"}
-        </button>
-      )}
-    </div>
-  )
-}
-
-function TabButton({
-  icon: Icon,
-  label,
-  active,
-  onClick,
-}: {
-  icon: typeof User
-  label: string
-  active: boolean
-  onClick: () => void
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`px-2.5 py-1.5 text-sm font-medium flex items-center gap-1.5 rounded-md transition-colors ${
-        active
-          ? "bg-foreground text-background font-semibold"
-          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-      }`}
-    >
-      <Icon className="h-4 w-4" />
-      <span className="hidden sm:inline">{label}</span>
-    </button>
+    <PageGrid
+      storageKey={`rln-profil-${spaceKey}`}
+      defaultPages={DEFAULT_PAGES}
+      availableWidgets={PROFIL_WIDGETS}
+      renderWidget={renderWidget}
+      lockPages
+      navApi={navApi}
+      headerRight={
+        <>
+          <StatsBar />
+          {!alreadySeeded && (
+            <button
+              type="button"
+              onClick={() => seed().catch((err) => alert(err.message))}
+              disabled={busy}
+              className="text-[10px] px-2 py-1 rounded border border-muted-foreground/20 hover:border-primary hover:bg-primary/5 transition-colors disabled:opacity-50 shrink-0"
+              title="Demo-Daten anlegen — Lv ~42, Items, Quests, Log"
+            >
+              {busy ? "Lade Demo..." : "Demo"}
+            </button>
+          )}
+        </>
+      }
+    />
   )
 }

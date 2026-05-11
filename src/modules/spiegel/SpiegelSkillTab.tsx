@@ -8,6 +8,8 @@ import {
   Sparkles,
   Users,
   UsersRound,
+  ChevronLeft,
+  ChevronRight,
   type LucideIcon,
 } from "lucide-react"
 import * as LucideIcons from "lucide-react"
@@ -54,11 +56,9 @@ type PanelState =
    *  returnBereichIdx = Bereich, der vor dem Skill-Klick in DIESEM Panel war. */
   | { kind: "skill"; bereichIdx: number; skillId: string; returnBereichIdx: number }
 
-export interface SpiegelSkillTabProps extends ModuleViewProps {
-  onNavReady?: (api: { prev: () => void; next: () => void; canPrev: boolean; canNext: boolean }) => void
-}
+export interface SpiegelSkillTabProps extends ModuleViewProps {}
 
-export function SpiegelSkillTab({ activeGroup, onNavReady }: SpiegelSkillTabProps) {
+export function SpiegelSkillTab({ activeGroup }: SpiegelSkillTabProps) {
   const spaceSlug = (activeGroup?.data as { slug?: string } | undefined)?.slug
   const { skillXp, skillProgress, isUnlocked } = useUserProgress()
   const { data: skillItems } = useItems({ type: GAMIFICATION_ITEM_TYPES.skill })
@@ -227,30 +227,13 @@ export function SpiegelSkillTab({ activeGroup, onNavReady }: SpiegelSkillTabProp
   const mobileSide: "left" | "right" =
     mobilePanel === leftPanel ? "left" : "right"
 
-  // Nav-API ans Parent durchreichen (Pfeile leben dort, aussen am Tab)
-  // Skill offen → durch die Skills des Bereichs rotieren.
-  // Sonst → durch die Bereiche carouseln.
-  useEffect(() => {
-    if (!onNavReady) return
-    if (skillNavPanel) {
-      const skills = skillsByBereich[TREE_BEREICHE[skillNavPanel.state.bereichIdx].id]
-      const canCycle = (skills?.length ?? 0) > 1
-      onNavReady({
-        prev: skillGoPrev,
-        next: skillGoNext,
-        canPrev: canCycle,
-        canNext: canCycle,
-      })
-    } else {
-      onNavReady({
-        prev: isMobile ? mobilePrev : goPrev,
-        next: isMobile ? mobileNext : goNext,
-        canPrev: carouselActive || isMobile,
-        canNext: carouselActive || isMobile,
-      })
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onNavReady, isMobile, carouselActive, leftPanel, rightPanel, skillsByBereich])
+  // Interne Pfeil-Navigation: Skill offen → durch Skills des Bereichs,
+  // sonst durch die Bereiche carouseln.
+  const navPrev = skillNavPanel ? skillGoPrev : isMobile ? mobilePrev : goPrev
+  const navNext = skillNavPanel ? skillGoNext : isMobile ? mobileNext : goNext
+  const navEnabled = skillNavPanel
+    ? (skillsByBereich[TREE_BEREICHE[skillNavPanel.state.bereichIdx].id]?.length ?? 0) > 1
+    : carouselActive || isMobile
 
   return (
     <div className="flex flex-col h-full" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
@@ -323,22 +306,47 @@ export function SpiegelSkillTab({ activeGroup, onNavReady }: SpiegelSkillTabProp
         )}
       </div>
 
-      {/* Indikator-Punkte unten */}
-      {carouselActive && (
-        <div className="flex justify-center gap-1.5 pt-2 shrink-0">
-          {TREE_BEREICHE.map((_, i) => {
-            const leftIdx = leftPanel.kind === "bereich" ? leftPanel.bereichIdx : -1
-            const rightIdx = rightPanel.kind === "bereich" ? rightPanel.bereichIdx : -1
-            const active = i === leftIdx || (!isMobile && i === rightIdx)
-            return (
-              <div
-                key={i}
-                className={`h-1 rounded-full transition-all ${active ? "w-4 bg-primary" : "w-1 bg-muted"}`}
-              />
-            )
-          })}
-        </div>
-      )}
+      {/* Interne Pfeile + Indikator-Punkte unten */}
+      <div className="flex justify-center items-center gap-2 pt-2 shrink-0">
+        <button
+          type="button"
+          onClick={navPrev}
+          disabled={!navEnabled}
+          className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
+          aria-label="Zurueck"
+        >
+          <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
+        </button>
+        {carouselActive && (
+          <div className="flex items-center gap-1.5">
+            {TREE_BEREICHE.map((_, i) => {
+              const leftIdx = leftPanel.kind === "bereich" ? leftPanel.bereichIdx : -1
+              const rightIdx = rightPanel.kind === "bereich" ? rightPanel.bereichIdx : -1
+              const active = i === leftIdx || (!isMobile && i === rightIdx)
+              return (
+                <div
+                  key={i}
+                  className={`h-1 rounded-full transition-all ${active ? "w-4 bg-primary" : "w-1 bg-muted"}`}
+                />
+              )
+            })}
+          </div>
+        )}
+        {skillNavPanel && (
+          <span className="text-[10px] text-muted-foreground font-mono">
+            Skills im Bereich
+          </span>
+        )}
+        <button
+          type="button"
+          onClick={navNext}
+          disabled={!navEnabled}
+          className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
+          aria-label="Weiter"
+        >
+          <ChevronRight className="h-5 w-5" strokeWidth={1.5} />
+        </button>
+      </div>
     </div>
   )
 }

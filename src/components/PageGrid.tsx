@@ -73,6 +73,13 @@ export interface PageGridProps {
    * Tab-Klick gewechselt.
    */
   navApi?: PageGridNavApi
+  /**
+   * Wenn true: Pages sind fest — kein "+" Button zum Hinzufuegen,
+   * kein Loeschen, kein Umbenennen im Zahnrad-Modal.
+   * Slots innerhalb einer Page bleiben konfigurierbar.
+   * Verwendung: Funktions-Module wie Profil (Avatar/Quest/Skill).
+   */
+  lockPages?: boolean
 }
 
 const COL_SPANS: ColSpan[] = [1, 2, 3, 6]
@@ -106,6 +113,7 @@ export function PageGrid({
   renderWidget,
   headerRight,
   navApi,
+  lockPages = false,
 }: PageGridProps) {
   const [pages, setPages] = useState<GridPage[]>(() => loadPages(storageKey, defaultPages))
   const [activeIdx, setActiveIdx] = useState(0)
@@ -174,15 +182,17 @@ export function PageGrid({
               {p.name}
             </button>
           ))}
-          <button
-            type="button"
-            onClick={addPage}
-            className="ml-0.5 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-            aria-label="Seite hinzufuegen"
-            title="Seite hinzufuegen"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
+          {!lockPages && (
+            <button
+              type="button"
+              onClick={addPage}
+              className="ml-0.5 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              aria-label="Seite hinzufuegen"
+              title="Seite hinzufuegen"
+            >
+              <Plus className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
         <div className="flex-1" />
@@ -237,10 +247,11 @@ export function PageGrid({
         <PageConfigModal
           page={activePage}
           availableWidgets={availableWidgets}
+          lockPages={lockPages}
           onClose={() => setConfigOpen(false)}
           onChange={updatePage}
           onRemovePage={
-            pages.length > 1
+            !lockPages && pages.length > 1
               ? () => {
                   removePage(activePage.id)
                   setConfigOpen(false)
@@ -295,12 +306,14 @@ function PageGridLayout({
 function PageConfigModal({
   page,
   availableWidgets,
+  lockPages,
   onClose,
   onChange,
   onRemovePage,
 }: {
   page: GridPage
   availableWidgets: AvailableWidget[]
+  lockPages: boolean
   onClose: () => void
   onChange: (next: GridPage) => void
   onRemovePage?: () => void
@@ -354,13 +367,17 @@ function PageConfigModal({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-4 py-3 border-b flex items-center gap-2">
-          <input
-            type="text"
-            value={page.name}
-            onChange={(e) => rename(e.target.value)}
-            className="flex-1 text-base font-semibold bg-transparent border-b border-transparent focus:border-primary outline-none px-1"
-            placeholder="Seitenname"
-          />
+          {lockPages ? (
+            <span className="flex-1 text-base font-semibold px-1">{page.name}</span>
+          ) : (
+            <input
+              type="text"
+              value={page.name}
+              onChange={(e) => rename(e.target.value)}
+              className="flex-1 text-base font-semibold bg-transparent border-b border-transparent focus:border-primary outline-none px-1"
+              placeholder="Seitenname"
+            />
+          )}
           <button
             type="button"
             onClick={onClose}
