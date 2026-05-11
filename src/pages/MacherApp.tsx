@@ -649,9 +649,11 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
         </div>
       </header>
 
-      {/* HUD oben rechts — momentan deaktiviert, kommt spaeter als Space-Setting
-          wieder. Code in src/modules/gamification/HudBar.tsx bleibt erhalten. */}
-      {false && activeGroup && (
+      {/* HUD oben rechts — aktiv in Modulen ohne eigene StatsBar (Map,
+          Kalender, Marketplace, etc.). In Dashboard und Profil ist die
+          StatsBar bereits im PageGrid-Header, dort blendet sich das
+          HUD selbst aus. */}
+      {activeGroup && (
         <HudBar
           spaceSlug={getSpaceMeta(activeGroup).slug ?? activeGroup.id}
           currentModule={activeModule}

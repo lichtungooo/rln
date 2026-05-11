@@ -401,7 +401,7 @@ XP-Balken + Trust-Zahl + Marker (Aelteste, Synergien) sind als wiederverwendbare
 - **Settings als Grid-Modul:** Allgemein / Themes / Module / ... als Tabs in einem Grid-Modul.
 - ✅ **Drag-and-Drop** fuer Slots (Desktop, 11.05.2026)
 - **Mobile** — vermutlich 1-spaltig, Slots stapeln untereinander.
-- **HUD** (Total-Level + XP-Balken oben rechts) wieder anschaltbar als Space-Setting.
+- ✅ **HUD** aktiv in Modulen ohne eigene StatsBar (Dashboard/Profil zeigen StatsBar im Header). Spaeter: Setting zum vollstaendigen Ausblenden.
 
 ---
 

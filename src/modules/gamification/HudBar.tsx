@@ -57,8 +57,14 @@ export function HudBar({ spaceSlug, currentModule }: HudBarProps) {
     if (spaceSlug) navigate(`/${spaceSlug}/skill-tree`)
   }
 
-  // Wenn schon im Skill-Tree oder Profil → HUD ausblenden (vermeidet doppelte Info)
-  if (currentModule === "skill-tree" || currentModule === "profil") return null
+  // HUD ausblenden in Modulen mit eigener StatsBar (im PageGrid-Header)
+  if (
+    currentModule === "skill-tree" ||
+    currentModule === "profil" ||
+    currentModule === "dashboard"
+  ) {
+    return null
+  }
 
   // Wenn null XP UND null Trust — HUD ausblenden, gibt nix zu zeigen
   if (totalXp === 0 && reputation.trustScore === 0) return null
