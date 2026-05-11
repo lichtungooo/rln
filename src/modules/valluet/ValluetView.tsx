@@ -38,7 +38,7 @@ import { useTrustLevel, describeTrustLevel } from './use-trust-level'
 
 type FilterTab = 'alle' | 'neu' | 'empfangen' | 'ausgegeben'
 
-export function ValluetView(_props: ModuleViewProps) {
+export function ValluetView({ spaceId }: ModuleViewProps) {
   const { data: currentUser } = useCurrentUser()
   const { data: alleVouchers } = useItems({ type: 'voucher' })
   const { map: currencyMap } = useCurrencies()

@@ -69,7 +69,7 @@ const FELD_BY_ID: Record<string, ThemenFeld> = Object.fromEntries(
   THEMEN_FELDER.map((f) => [f.id, f])
 )
 
-export function WissensfeldView({ activeGroup }: ModuleViewProps) {
+export function WissensfeldView({ activeGroup, spaceId }: ModuleViewProps) {
   const [activeTab, setActiveTab] = useState<WissensfeldTab>("fragen")
   const [activeFrageId, setActiveFrageId] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
