@@ -261,6 +261,11 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
   // Funktions-Module die immer als Tab sichtbar sein sollen, auch wenn ein
   // Space sie nicht in group.data.modules hat.
   const ALWAYS_VISIBLE_MODULES = ['spiegel', 'marketplace', 'calendar', 'wissensfeld', 'valluet']
+  // Module, die NIE als Tab erscheinen — auch wenn sie in group.data.modules
+  // stehen. Sie bleiben registriert (Dashboard-Widgets brauchen sie), aber
+  // tauchen nicht in der Tab-Leiste auf. Avatar/Quest/Skill-Tree sind jetzt
+  // im Spiegel-Modul vereint.
+  const HIDDEN_TAB_MODULES = ['avatar', 'quest', 'skill-tree']
 
   const isOverview = activeWorkspace?.scope === 'overview'
   const activeGroup = isOverview ? null : groups.find((g) => g.id === activeWorkspace?.id) ?? null
@@ -282,7 +287,8 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
     for (const id of ALWAYS_VISIBLE_MODULES) {
       if (!merged.includes(id)) merged.push(id)
     }
-    return merged
+    // HIDDEN_TAB_MODULES rausfiltern — sie sind im Spiegel vereint
+    return merged.filter((id) => !HIDDEN_TAB_MODULES.includes(id))
   }, [isOverview, activeGroup])
 
   // Modul-Definitionen: Code-Module (Registry) + Daten-Module (WoT-Templates).
