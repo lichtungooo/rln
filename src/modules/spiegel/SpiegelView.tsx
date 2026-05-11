@@ -60,19 +60,17 @@ export function SpiegelView(props: ModuleViewProps<SpiegelModuleConfig>) {
       <SpiegelHero tab={tab} onTabChange={handleTabChange} />
 
       {/* Container-Wrapper mit Pfeilen aussen — bei JEDEM Tab */}
-      <div className="flex-1 flex items-stretch min-h-0 px-2 sm:px-4 py-3 gap-2 sm:gap-3">
-        {/* Pfeil links */}
-        <div className="flex items-center shrink-0">
-          <button
-            type="button"
-            onClick={() => navApi?.prev()}
-            disabled={!navApi?.canPrev}
-            className="h-12 w-12 rounded-full grid place-items-center border bg-card hover:bg-muted disabled:opacity-30 transition-colors shadow-md"
-            aria-label="Zurueck"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-        </div>
+      <div className="flex-1 flex items-stretch min-h-0 px-0 py-1.5 gap-0">
+        {/* Pfeil links — minimal */}
+        <button
+          type="button"
+          onClick={() => navApi?.prev()}
+          disabled={!navApi?.canPrev}
+          className="self-center shrink-0 p-1 text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
+          aria-label="Zurueck"
+        >
+          <ChevronLeft className="h-8 w-8" strokeWidth={1.5} />
+        </button>
 
         {/* Inhalts-Container — gleiche Hoehe und Breite fuer alle Tabs */}
         <div className="flex-1 flex flex-col min-w-0">
@@ -81,18 +79,16 @@ export function SpiegelView(props: ModuleViewProps<SpiegelModuleConfig>) {
           {tab === "skill" && <SpiegelSkillTab {...props} onNavReady={setNavApi} />}
         </div>
 
-        {/* Pfeil rechts */}
-        <div className="flex items-center shrink-0">
-          <button
-            type="button"
-            onClick={() => navApi?.next()}
-            disabled={!navApi?.canNext}
-            className="h-12 w-12 rounded-full grid place-items-center border bg-card hover:bg-muted disabled:opacity-30 transition-colors shadow-md"
-            aria-label="Weiter"
-          >
-            <ChevronRight className="h-5 w-5" />
-          </button>
-        </div>
+        {/* Pfeil rechts — minimal */}
+        <button
+          type="button"
+          onClick={() => navApi?.next()}
+          disabled={!navApi?.canNext}
+          className="self-center shrink-0 p-1 text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
+          aria-label="Weiter"
+        >
+          <ChevronRight className="h-8 w-8" strokeWidth={1.5} />
+        </button>
       </div>
     </div>
   )

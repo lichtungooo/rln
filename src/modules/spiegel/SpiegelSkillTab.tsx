@@ -51,7 +51,9 @@ interface RenderSkill {
 
 type PanelState =
   | { kind: "bereich"; bereichIdx: number }
-  | { kind: "skill"; bereichIdx: number; skillId: string }
+  /** bereichIdx = Bereich, zu dem der Skill gehoert.
+   *  returnBereichIdx = Bereich, der vor dem Skill-Klick in DIESEM Panel war. */
+  | { kind: "skill"; bereichIdx: number; skillId: string; returnBereichIdx: number }
 
 export interface SpiegelSkillTabProps extends ModuleViewProps {
   /** Optional callback fuer Pfeil-Navigation, damit die Buttons ausserhalb des Tabs leben */
@@ -104,17 +106,58 @@ export function SpiegelSkillTab({ activeGroup, onNavReady }: SpiegelSkillTabProp
   const carouselActive = leftPanel.kind === "bereich" && rightPanel.kind === "bereich"
 
   const handleSelectSkill = (side: "left" | "right", skillId: string, bereichIdx: number) => {
-    const detail: PanelState = { kind: "skill", bereichIdx, skillId }
-    if (side === "left") setRightPanel(detail)
-    else setLeftPanel(detail)
+    // Klick links → Detail im RECHTEN Panel. Right merkt sich seinen vorigen Bereich.
+    if (side === "left") {
+      setRightPanel({
+        kind: "skill",
+        bereichIdx,
+        skillId,
+        returnBereichIdx: rightPanel.bereichIdx,
+      })
+    } else {
+      setLeftPanel({
+        kind: "skill",
+        bereichIdx,
+        skillId,
+        returnBereichIdx: leftPanel.bereichIdx,
+      })
+    }
   }
 
   const handleCloseSkill = (side: "left" | "right") => {
+    // Schliessen kehrt zum vorher gezeigten Bereich des SELBEN Panels zurueck,
+    // nicht zum Bereich des Skills (sonst doppelt).
     if (side === "left" && leftPanel.kind === "skill") {
-      setLeftPanel({ kind: "bereich", bereichIdx: leftPanel.bereichIdx })
+      setLeftPanel({ kind: "bereich", bereichIdx: leftPanel.returnBereichIdx })
     } else if (side === "right" && rightPanel.kind === "skill") {
-      setRightPanel({ kind: "bereich", bereichIdx: rightPanel.bereichIdx })
+      setRightPanel({ kind: "bereich", bereichIdx: rightPanel.returnBereichIdx })
     }
+  }
+
+  // Skill-Navigation: rotiert durch die Skills desselben Bereichs (wrap-around)
+  const skillNavPanel: { state: Extract<PanelState, { kind: "skill" }>; setter: typeof setLeftPanel } | null =
+    leftPanel.kind === "skill"
+      ? { state: leftPanel, setter: setLeftPanel }
+      : rightPanel.kind === "skill"
+      ? { state: rightPanel, setter: setRightPanel }
+      : null
+
+  const skillGoPrev = () => {
+    if (!skillNavPanel) return
+    const skills = skillsByBereich[TREE_BEREICHE[skillNavPanel.state.bereichIdx].id]
+    if (!skills || skills.length === 0) return
+    const idx = skills.findIndex((s) => s.id === skillNavPanel.state.skillId)
+    const next = idx <= 0 ? skills[skills.length - 1] : skills[idx - 1]
+    skillNavPanel.setter({ ...skillNavPanel.state, skillId: next.id })
+  }
+
+  const skillGoNext = () => {
+    if (!skillNavPanel) return
+    const skills = skillsByBereich[TREE_BEREICHE[skillNavPanel.state.bereichIdx].id]
+    if (!skills || skills.length === 0) return
+    const idx = skills.findIndex((s) => s.id === skillNavPanel.state.skillId)
+    const next = idx >= skills.length - 1 ? skills[0] : skills[idx + 1]
+    skillNavPanel.setter({ ...skillNavPanel.state, skillId: next.id })
   }
 
   const goPrev = () => {
@@ -150,7 +193,7 @@ export function SpiegelSkillTab({ activeGroup, onNavReady }: SpiegelSkillTabProp
   const touchStartY = useRef<number | null>(null)
   const SWIPE_THRESHOLD = 50
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (!carouselActive) return
+    if (!carouselActive && !skillNavPanel) return
     touchStartX.current = e.touches[0].clientX
     touchStartY.current = e.touches[0].clientY
   }
@@ -161,8 +204,13 @@ export function SpiegelSkillTab({ activeGroup, onNavReady }: SpiegelSkillTabProp
     touchStartX.current = null
     touchStartY.current = null
     if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy)) return
-    if (dx > 0) (isMobile ? mobilePrev : goPrev)()
-    else (isMobile ? mobileNext : goNext)()
+    if (skillNavPanel) {
+      if (dx > 0) skillGoPrev()
+      else skillGoNext()
+    } else {
+      if (dx > 0) (isMobile ? mobilePrev : goPrev)()
+      else (isMobile ? mobileNext : goNext)()
+    }
   }
 
   // Mobile: ein Panel sichtbar — Detail-Panel hat Vorrang
@@ -177,15 +225,29 @@ export function SpiegelSkillTab({ activeGroup, onNavReady }: SpiegelSkillTabProp
     mobilePanel === leftPanel ? "left" : "right"
 
   // Nav-API ans Parent durchreichen (Pfeile leben dort, ausserhalb)
+  // Skill offen → durch die Skills des Bereichs rotieren.
+  // Sonst → durch die Bereiche carouseln.
   useEffect(() => {
     if (!onNavReady) return
-    onNavReady({
-      prev: isMobile ? mobilePrev : goPrev,
-      next: isMobile ? mobileNext : goNext,
-      canPrev: carouselActive || isMobile,
-      canNext: carouselActive || isMobile,
-    })
-  }, [onNavReady, isMobile, carouselActive, leftPanel, rightPanel])
+    if (skillNavPanel) {
+      const skills = skillsByBereich[TREE_BEREICHE[skillNavPanel.state.bereichIdx].id]
+      const canCycle = (skills?.length ?? 0) > 1
+      onNavReady({
+        prev: skillGoPrev,
+        next: skillGoNext,
+        canPrev: canCycle,
+        canNext: canCycle,
+      })
+    } else {
+      onNavReady({
+        prev: isMobile ? mobilePrev : goPrev,
+        next: isMobile ? mobileNext : goNext,
+        canPrev: carouselActive || isMobile,
+        canNext: carouselActive || isMobile,
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onNavReady, isMobile, carouselActive, leftPanel, rightPanel, skillsByBereich])
 
   return (
     <div className="flex flex-col h-full" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
@@ -204,7 +266,7 @@ export function SpiegelSkillTab({ activeGroup, onNavReady }: SpiegelSkillTabProp
 
       {/* Two-Panel-Layout — gleiche Groesse, keine Pfeile (leben im Parent) */}
       <div
-        className="flex-1 grid items-stretch gap-3 min-h-0"
+        className="flex-1 grid items-stretch gap-2 min-h-0"
         style={{
           gridTemplateColumns: isMobile ? "minmax(0, 1fr)" : "minmax(0, 1fr) minmax(0, 1fr)",
         }}
