@@ -377,7 +377,7 @@ Dort uebernimmt man nur den **Tab-Button-Stil** (Pille, Gradient-Hintergrund) un
 | Marketplace | ✅ PageGrid mit 3 lockPages (Sachen/Begabungen/Beduerfnisse) |
 | Wissensfeld | ✅ PageGrid mit 4 lockPages (Fragen/Erkenntnisse/Konsent/Spirit) |
 | Valluet | ✅ PageGrid mit 4 lockPages (Alle/Geschoepft/Empfangen/Geteilt) |
-| Settings | ✅ Vollbild-Dialog (100vw/100vh) mit Tab-Header oben + 3-Spalten-Drilldown |
+| Settings | ✅ PageGrid mit 7 lockPages (Vollbild-Dialog), controlled-mode + 3-Spalten-Drilldown im Slot |
 | Map | Bleibt fullscreen (Karte = Inhalt, kein Tab-Header) |
 | Kanban | Eigener Header (toolkit-extern), StatsBar drueber |
 
