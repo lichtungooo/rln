@@ -127,7 +127,7 @@ export function SpaceSettings({
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
       <DialogContent
-        className="max-w-none w-screen h-[100dvh] sm:w-[95vw] sm:h-[92vh] sm:max-w-6xl p-0 gap-0 overflow-hidden"
+        className="max-w-none w-screen h-[100dvh] sm:w-[98vw] sm:h-[96vh] p-0 gap-0 overflow-hidden"
         onInteractOutside={(e) => e.preventDefault()}
         showCloseButton={false}
       >
@@ -244,7 +244,9 @@ export function SpaceSettings({
 }
 
 // ============================================================
-// SplitContent — Layout fuer Editor + optionale Live-Vorschau
+// SplitContent — 3-Spalten-Drilldown: Sidebar links (extern), Mitte (Editor),
+// Rechts (Detail/Preview). Auf grossen Bildschirmen alle drei nebeneinander,
+// auf Tablet zweispaltig (Detail unten), auf Mobile single-column.
 // ============================================================
 
 function SplitContent({
@@ -261,19 +263,37 @@ function SplitContent({
   const showPreview = previewVisible && hasPreview
   return (
     <div className="flex h-full">
-      <div className={`overflow-y-auto ${showPreview ? "flex-1 lg:w-1/2" : "w-full"}`}>
+      {/* Mitte: Editor / Liste / Form */}
+      <div className={`overflow-y-auto ${showPreview ? "flex-1 lg:w-1/2" : "flex-1 w-full"}`}>
         <div className="p-3 sm:p-6 pb-[max(1rem,env(safe-area-inset-bottom))]">{editor}</div>
       </div>
-      {showPreview && (
-        <div className="hidden lg:flex flex-1 lg:w-1/2 border-l bg-muted/10 overflow-y-auto">
-          <div className="w-full p-4 sm:p-6">
-            <div className="text-[10px] uppercase font-semibold text-muted-foreground mb-3 tracking-wider">
-              Live-Vorschau
+      {/* Rechts: Detail / Preview — immer reservierter Platz auf lg+,
+          zeigt Hint wenn nichts ausgewaehlt. */}
+      <div
+        className="hidden lg:flex flex-1 lg:w-1/2 border-l overflow-y-auto"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(232,117,26,0.02) 0%, rgba(168,85,247,0.03) 100%)",
+        }}
+      >
+        <div className="w-full p-4 sm:p-6">
+          {showPreview ? (
+            <>
+              <div className="text-[10px] uppercase font-semibold text-muted-foreground mb-3 tracking-wider">
+                Live-Vorschau
+              </div>
+              {preview}
+            </>
+          ) : (
+            <div className="h-full flex items-center justify-center text-center text-xs text-muted-foreground italic px-6">
+              <p>
+                Detail-Ansicht. Klick auf einen Eintrag in der mittleren Spalte zeigt hier
+                die Konfiguration oder Vorschau.
+              </p>
             </div>
-            {preview}
-          </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 }
