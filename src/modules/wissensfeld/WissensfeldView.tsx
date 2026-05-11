@@ -34,6 +34,7 @@ import {
 } from "./types"
 import { useWissensfeld } from "./use-wissensfeld"
 import { StatsBar } from "../gamification"
+import { PageGrid } from "../../components/PageGrid"
 import { KonsentSection } from "./KonsentSection"
 import { ErkenntnisSection } from "./ErkenntnisSection"
 import { SpiritSection } from "./SpiritSection"
@@ -224,69 +225,34 @@ export function WissensfeldView({ activeGroup }: ModuleViewProps) {
     )
   }
 
-  // Liste-Modus
+  // Liste-Modus — PageGrid mit 4 lockPages (Fragen/Erkenntnisse/Konsent/Spirit)
+  const wissensfeldPages = [
+    { id: "fragen", name: "Fragen", slots: [{ id: "s1", widget: "content", colSpan: 6 as const, rowSpan: 4 as const }] },
+    { id: "erkenntnisse", name: "Erkenntnisse", slots: [{ id: "s1", widget: "content", colSpan: 6 as const, rowSpan: 4 as const }] },
+    { id: "konsent", name: "Konsent", slots: [{ id: "s1", widget: "content", colSpan: 6 as const, rowSpan: 4 as const }] },
+    { id: "spirit", name: "Spirit", slots: [{ id: "s1", widget: "content", colSpan: 6 as const, rowSpan: 4 as const }] },
+  ]
+
   return (
-    <div className="container mx-auto max-w-4xl p-4 space-y-5">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Flame className="h-6 w-6" style={{ color: "#E8751A" }} />
-            <h1 className="text-2xl font-bold">Wissensfeld</h1>
-          </div>
-          <p className="text-sm text-muted-foreground italic max-w-xl">
-            Hier saet ihr Fragen — und tragt Antworten. Jede Frage ist ein
-            Samen. Jede Antwort eine Bluete. Was beruehrt, leuchtet sanft auf.
-          </p>
-        </div>
-        {activeTab === "fragen" && (
-          <Button onClick={() => setCreating(true)} size="sm">
-            <Plus className="h-4 w-4 mr-1" />
-            Frage saeen
-          </Button>
-        )}
-      </div>
-
-      {/* Tab-Switcher im Modul-Doktrin-Stil — Aktiv-Farbe je Tab + StatsBar rechts */}
-      <div
-        className="rounded-md p-1.5 flex items-center gap-2 border"
-        style={{
-          background:
-            "linear-gradient(90deg, rgba(232,117,26,0.05) 0%, rgba(168,85,247,0.04) 100%)",
-        }}
-      >
-        <div className="flex items-center gap-1 flex-1 min-w-0">
-          {[
-            { id: "fragen", label: "Fragen", color: "#E8751A", icon: Flame, count: fragen.length },
-            { id: "erkenntnisse", label: "Erkenntnisse", color: "#FBBF24", icon: Lightbulb, count: erkenntnisse.length },
-            { id: "konsent", label: "Konsent", color: "#10B981", icon: Scale, count: vorschlaege.length },
-            { id: "spirit", label: "Spirit", color: "#A855F7", icon: Sparkles, count: undefined },
-          ].map((t) => {
-            const Icon = t.icon
-            const isOn = activeTab === t.id
-            return (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => setActiveTab(t.id as WissensfeldTab)}
-                className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-sm rounded-md transition-colors ${
-                  isOn
-                    ? "text-white font-semibold shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                }`}
-                style={isOn ? { background: t.color } : undefined}
-              >
-                <Icon className="h-4 w-4" />
-                <span className="hidden sm:inline">{t.label}</span>
-                {t.count !== undefined && (
-                  <span className="text-[10px] opacity-80">({t.count})</span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-        <StatsBar />
-      </div>
-
+    <PageGrid
+      storageKey={`rln-wissensfeld-${spaceId ?? "default"}`}
+      defaultPages={wissensfeldPages}
+      availableWidgets={[{ id: "content", label: "Wissensfeld-Inhalt", defaultColSpan: 6, defaultRowSpan: 4 }]}
+      lockPages
+      onActivePageChange={(id) => setActiveTab(id as WissensfeldTab)}
+      headerRight={
+        <>
+          <StatsBar />
+          {activeTab === "fragen" && (
+            <Button onClick={() => setCreating(true)} size="sm" className="h-7">
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Frage saeen
+            </Button>
+          )}
+        </>
+      }
+      renderWidget={() => (
+        <div className="h-full w-full overflow-y-auto p-4 space-y-4">
       {activeTab === "erkenntnisse" && (
         <ErkenntnisSection
           erkenntnisse={erkenntnisse}
@@ -450,7 +416,9 @@ export function WissensfeldView({ activeGroup }: ModuleViewProps) {
       )}
         </>
       )}
-    </div>
+        </div>
+      )}
+    />
   )
 }
 

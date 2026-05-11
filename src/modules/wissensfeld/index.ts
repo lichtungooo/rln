@@ -16,6 +16,7 @@ export const wissensfeldModule: ModuleDefinition = {
   id: "wissensfeld",
   label: "Wissensfeld",
   icon: Flame,
+  fullWidth: true,
   View: WissensfeldView,
   itemTypes: [
     WISSENSFELD_ITEM_TYPES.frage,
