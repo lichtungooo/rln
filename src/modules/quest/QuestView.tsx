@@ -171,22 +171,21 @@ export function QuestView({ spaceId }: ModuleViewProps<QuestModuleConfig>) {
     )
   }
 
+  // Stats fuer Header
+  const openCount = quests.filter((q) => !isCompleted(q.id)).length
+  const doneCount = quests.filter((q) => isCompleted(q.id)).length
+  const seriesCount = grouped.series.length
+
   // Liste-Modus
   return (
     <div className="container mx-auto max-w-4xl p-4 space-y-4">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold mb-1">Quests</h1>
-          <p className="text-sm text-muted-foreground">
-            Klare Aufgaben mit klarer Belohnung — XP fuer deine Skills, Items
-            fuer deinen Avatar.
-          </p>
-        </div>
-        <Button onClick={() => setCreating(true)} size="sm">
-          <Plus className="h-4 w-4 mr-1" />
-          Neue Quest
-        </Button>
-      </div>
+      <QuestStatsHero
+        title="Quests"
+        openCount={openCount}
+        doneCount={doneCount}
+        seriesCount={seriesCount}
+        onCreate={() => setCreating(true)}
+      />
 
       {/* Inbox: eingehende Verifikations-Anfragen */}
       {verification.incoming.length > 0 && (
@@ -1098,5 +1097,93 @@ function QuestForm({
         </Button>
       </div>
     </Card>
+  )
+}
+
+// ============================================================
+// QuestStatsHero — kompakter Header mit Stats (Polish-9)
+// ============================================================
+
+function QuestStatsHero({
+  title,
+  openCount,
+  doneCount,
+  seriesCount,
+  onCreate,
+}: {
+  title: string
+  openCount: number
+  doneCount: number
+  seriesCount: number
+  onCreate: () => void
+}) {
+  const total = openCount + doneCount
+  const ratio = total > 0 ? doneCount / total : 0
+  return (
+    <div
+      className="rounded-xl border p-4 md:p-5"
+      style={{
+        background:
+          "linear-gradient(135deg, rgba(232,117,26,0.05) 0%, rgba(251,191,36,0.04) 50%, rgba(168,85,247,0.04) 100%)",
+      }}
+    >
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div
+            className="w-10 h-10 rounded-xl grid place-items-center text-white shadow"
+            style={{ background: "linear-gradient(135deg, #E8751A, #FBBF24)" }}
+          >
+            <Hammer className="h-5 w-5" />
+          </div>
+          <div>
+            <h1 className="text-xl font-bold leading-tight">{title}</h1>
+            <p className="text-[11px] text-muted-foreground">
+              Klare Aufgaben mit klarer Belohnung.
+            </p>
+          </div>
+        </div>
+        <Button onClick={onCreate} size="sm">
+          <Plus className="h-4 w-4 mr-1" />
+          Neue Quest
+        </Button>
+      </div>
+
+      {/* Stats-Pillen */}
+      <div className="flex flex-wrap items-center gap-1.5 mt-3">
+        <span className="text-xs px-2.5 py-1 rounded-full bg-card border font-semibold">
+          {openCount} offen
+        </span>
+        <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-semibold">
+          {doneCount} erledigt
+        </span>
+        {seriesCount > 0 && (
+          <span className="text-xs px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 flex items-center gap-1">
+            <Layers className="h-3 w-3" />
+            {seriesCount} Reihe{seriesCount === 1 ? "" : "n"}
+          </span>
+        )}
+      </div>
+
+      {/* Fortschrittsbalken — wenn schon Quests da */}
+      {total > 0 && (
+        <div className="mt-3">
+          <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+            <span>Fortschritt</span>
+            <span>
+              {doneCount} / {total} erledigt
+            </span>
+          </div>
+          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all"
+              style={{
+                width: `${Math.min(100, ratio * 100)}%`,
+                background: "linear-gradient(90deg, #E8751A, #FBBF24)",
+              }}
+            />
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
