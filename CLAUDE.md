@@ -157,6 +157,103 @@ Skalierung: ein Macher-Root mit Macher-Berlin, Macher-Hamburg, Macher-Kassel —
 
 ---
 
+## PageGrid — Default-Pattern fuer Modul-UIs (Meilenstein 11.05.2026)
+
+`src/components/PageGrid.tsx` ist die geteilte Grundlage fuer alle neuen Modul-UIs. **Wer ein neues Modul baut oder ein bestehendes refactor't, nimmt PageGrid.** Dashboard und Profil teilen sich diesen Code; Kalender/Marketplace/Wissensfeld folgen als naechstes.
+
+### Was es ist
+
+Ein konfigurierbares Grid: Mensch baut sich seine Modul-Oberflaeche selbst — wie ein Chrome-Startbildschirm. Mehrere Seiten, pro Seite ein 6-spaltiges Grid mit Widget-Slots.
+
+### Wie es funktioniert
+
+- **6-spaltiges Grid** pro Seite. Slots haben `colSpan: 1|2|3|6` und `rowSpan: 1|2|3|4`.
+- **Mehrere Seiten** als Tabs oben. Default-Pages liefert das Modul, der User legt eigene an mit `+`.
+- **Pfeile aussen** = Page-Wechsel. Pfeile innen (im Widget) = Inhalts-Wechsel innerhalb des Slots.
+- **Zahnrad rechts oben** = Widget hinzu/entfernen/Groesse aendern, Seite umbenennen, Seite loeschen.
+- **NICHT scrollbar global.** Nur Widgets scrollen intern (`overflow-auto` im Widget-Inneren).
+- **Persistenz** in `localStorage` pro Space: Key-Konvention `rln-<modulId>-<spaceId>`.
+
+### Wie man es einbindet
+
+```ts
+// Im Modul-index.ts:
+export const dingModule: ModuleDefinition = {
+  id: "ding",
+  label: "Ding",
+  icon: SomeIcon,
+  fullWidth: true,         // <-- WICHTIG: PageGrid nimmt vollen Platz
+  View: DingView,
+}
+
+// In DingView.tsx:
+import { PageGrid, type GridPage, type AvailableWidget } from "../../components/PageGrid"
+
+const WIDGETS: AvailableWidget[] = [
+  { id: "foo", label: "Foo", defaultColSpan: 2, defaultRowSpan: 2 },
+  // ...
+]
+
+const DEFAULT_PAGES: GridPage[] = [
+  { id: "start", name: "Start", slots: [{ id: "s1", widget: "foo", colSpan: 6, rowSpan: 4 }] },
+]
+
+export function DingView({ spaceId, activeGroup }: ModuleViewProps) {
+  const renderWidget = (widgetId: string) => {
+    switch (widgetId) {
+      case "foo": return <FooWidget />
+      // ...
+    }
+  }
+  return (
+    <PageGrid
+      storageKey={`rln-ding-${spaceId ?? "default"}`}
+      defaultPages={DEFAULT_PAGES}
+      availableWidgets={WIDGETS}
+      renderWidget={renderWidget}
+    />
+  )
+}
+```
+
+### Konventionen
+
+- **Kein eigenes Settings-Zahnrad** im Modul-Toolbar — das hat PageGrid schon. Modul-spezifische Konfig (z.B. Mode, Item-Typen) lebt in Space-Settings.
+- **Keine eigene Suche** im Modul — die globale Suche oben im Header reicht.
+- **Widget-Box-Standard:** `rounded-xl border bg-card overflow-hidden`
+- **Widget-Self-Sizing:** Widget rendert sich `h-full w-full` in seinen Slot. Wenn das Widget sich an Slot-Groesse anpassen soll, ResizeObserver (Vorbild `DashboardHero`: bei `width >= 480` volle Optik, sonst kompakt).
+- **XL-Widgets** (default 6x4) zeigen volle Tab-Layouts (Two-Panel etc.). **Kompakte Widgets** (default 2x2) zeigen Snapshot/Liste mit Klick auf "Mehr" zum entsprechenden Modul.
+
+### Header-Stil (auch fuer Module ohne volles Grid)
+
+Selbst Module die noch kein PageGrid haben (z.B. Calendar mit seinen festen View-Modi) uebernehmen den **Tab-Button-Stil** aus PageGrid:
+
+- Linear-Gradient orange→violett als Toolbar-Hintergrund
+- Aktiv: `bg-foreground text-background font-semibold`
+- Inaktiv: `text-muted-foreground hover:text-foreground hover:bg-muted/50`
+- `rounded-md` Pille, `px-2.5 py-1.5 text-sm`
+
+So fuehlen sich alle Module aus einem Guss an, auch wenn intern unterschiedlich strukturiert.
+
+### Stand 11.05.2026
+
+| Modul | Status |
+|-------|--------|
+| Dashboard | ✅ Volles PageGrid |
+| Profil (Spiegel) | ✅ Volles PageGrid mit XL- + kompakten Widgets |
+| Calendar | Tab-Stil uebernommen, volles Grid noch offen |
+| Marketplace, Wissensfeld | Noch nicht umgestellt |
+| Map | Bleibt fullscreen (die Karte ist der ganze Inhalt) |
+
+### Offene Themen
+
+- **Klick-Routing im Dashboard:** Klick im Widget oeffnet Detail in einem anderen Slot statt zum Modul zu switchen. Vorschlag: spezieller Widget-Typ "Detail" + Zahnrad-Option "Klick oeffnet hier".
+- **Drag-and-Drop** fuer Slots zusaetzlich zum Zahnrad.
+- **Mobile** — vermutlich 1-spaltig, Slots stapeln untereinander.
+- **HUD** (Total-Level + XP-Balken oben rechts) wieder anschaltbar als Space-Setting.
+
+---
+
 ## Profile (Sonderfall)
 
 Antons WoT-Connector speichert nur `name`, `bio`, `avatar`. Alles andere (Skills, Offers, Needs, Address, Phone) wandert in ein **Profile-Extension-Item** (`type: "profile-extension"`). Plus: Avatar persistiert ueber Reload nicht zuverlaessig in Antons doc — deshalb auch im Extension-Item.

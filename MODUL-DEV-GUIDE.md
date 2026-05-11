@@ -254,8 +254,9 @@ In `ModuleDefinition` deklariere die Anforderungen mit `requiredCapabilities: ["
 
 ## Verwandte Dokumente
 
-- [CLAUDE.md](CLAUDE.md) — Projekt-Struktur + Architektur-Stand
+- [CLAUDE.md](CLAUDE.md) — Projekt-Struktur + Architektur-Stand + **PageGrid-Pattern** (Default fuer neue Modul-UIs seit 11.05.2026)
 - [ARCHITEKTUR.md](ARCHITEKTUR.md) — All-WoT-Entscheidung, was rausgeflogen ist
 - [MODULSCHMIEDE.md](MODULSCHMIEDE.md) — Vision + Phasen
 - [src/modules/registry.ts](src/modules/registry.ts) — ModuleDefinition Typ
 - [src/modules/schema-types.ts](src/modules/schema-types.ts) — ModuleSchema (fuer Daten-Module)
+- [src/components/PageGrid.tsx](src/components/PageGrid.tsx) — geteilte Grid-Komponente. Vorbild: [src/modules/dashboard/DashboardView.tsx](src/modules/dashboard/DashboardView.tsx) und [src/modules/spiegel/SpiegelView.tsx](src/modules/spiegel/SpiegelView.tsx).
