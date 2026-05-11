@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Crown, Sparkles } from "lucide-react"
 import { useCurrentUser } from "@real-life-stack/toolkit"
 import { Avatar } from "../avatar/Avatar"
@@ -8,7 +8,6 @@ import {
   TREE_BEREICHE,
   SYNERGIES,
   progressInLevel,
-  type TreeBereichId,
 } from "../gamification"
 import { useElderStatus } from "../profile/use-elder-status"
 
@@ -69,15 +68,37 @@ export function DashboardHero({ spaceId }: { spaceId: string | null }) {
     return archetypesForSpace?.length ?? 0
   }, [archetypesForSpace])
 
+  // Container-Breite messen → kompakte oder volle Variante
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [isWide, setIsWide] = useState(false)
+  useEffect(() => {
+    if (!containerRef.current) return
+    const el = containerRef.current
+    const obs = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setIsWide(entry.contentRect.width >= 480)
+      }
+    })
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
+
+  const avatarSize = isWide ? 120 : 80
+
   return (
     <div
-      className="rounded-2xl border overflow-hidden relative"
+      ref={containerRef}
+      className="rounded-2xl border overflow-hidden relative h-full w-full"
       style={{
         background:
           "linear-gradient(135deg, rgba(232,117,26,0.04) 0%, rgba(251,191,36,0.04) 50%, rgba(168,85,247,0.04) 100%)",
       }}
     >
-      <div className="p-5 md:p-6 flex flex-col md:flex-row items-center md:items-start gap-5">
+      <div
+        className={`p-3 sm:p-4 flex items-center gap-3 ${
+          isWide ? "flex-row items-start" : "flex-col"
+        } h-full`}
+      >
         {/* Avatar */}
         <div className="shrink-0">
           <Avatar
@@ -85,27 +106,37 @@ export function DashboardHero({ spaceId }: { spaceId: string | null }) {
             level={totalProgress.level}
             displayedItems={displayed}
             synergyActive={activeSynergies.length > 0}
-            size={140}
+            size={avatarSize}
           />
         </div>
 
         {/* Info-Spalte */}
-        <div className="flex-1 min-w-0 w-full space-y-3 text-center md:text-left">
+        <div
+          className={`flex-1 min-w-0 w-full space-y-2 ${
+            isWide ? "text-left" : "text-center"
+          }`}
+        >
           {/* Greeting + Name + Titel */}
-          <div>
-            <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-semibold">
+          <div className="min-w-0">
+            <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
               {greeting}
             </p>
-            <h1 className="text-2xl md:text-3xl font-bold leading-tight">{userName}</h1>
+            <h1 className={`font-bold leading-tight truncate ${isWide ? "text-2xl" : "text-lg"}`}>
+              {userName}
+            </h1>
             {titleForSpace && (
-              <p className="text-sm text-muted-foreground italic mt-0.5">
+              <p className="text-xs text-muted-foreground italic mt-0.5 truncate">
                 {titleForSpace}
               </p>
             )}
           </div>
 
           {/* Status-Pillen */}
-          <div className="flex flex-wrap items-center gap-1.5 justify-center md:justify-start">
+          <div
+            className={`flex flex-wrap items-center gap-1 ${
+              isWide ? "justify-start" : "justify-center"
+            }`}
+          >
             <span
               className="text-xs px-2.5 py-1 rounded-full font-semibold text-white shadow-sm"
               style={{ background: "linear-gradient(135deg, #E8751A, #FBBF24)" }}
@@ -152,13 +183,13 @@ export function DashboardHero({ spaceId }: { spaceId: string | null }) {
             </div>
           )}
 
-          {/* Top-3 Bereiche */}
-          {topBereiche.length > 0 && (
+          {/* Top-3 Bereiche — nur bei breitem Slot */}
+          {isWide && topBereiche.length > 0 && (
             <div>
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1.5">
                 Staerkste Bereiche
               </p>
-              <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+              <div className="flex flex-wrap gap-2 justify-start">
                 {topBereiche.map((row) => {
                   const Icon = row.bereich.icon
                   return (
@@ -186,9 +217,9 @@ export function DashboardHero({ spaceId }: { spaceId: string | null }) {
             </div>
           )}
 
-          {/* Aktive Synergien */}
-          {activeSynergies.length > 0 && (
-            <div className="flex flex-wrap gap-1.5 justify-center md:justify-start">
+          {/* Aktive Synergien — nur bei breitem Slot */}
+          {isWide && activeSynergies.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 justify-start">
               {activeSynergies.map((syn) => (
                 <div
                   key={syn.id}

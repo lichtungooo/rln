@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react"
-import { Plus, Settings, ChevronLeft, ChevronRight, CalendarDays, List, Layers, MapPin, Tag, Ticket, Search, Clock, Grid3x3, User as UserIcon } from "lucide-react"
+import { Plus, ChevronLeft, ChevronRight, CalendarDays, List, Layers, MapPin, Tag, Ticket, Clock, Grid3x3, User as UserIcon } from "lucide-react"
 import {
   useItems,
   useCreateItem,
@@ -123,7 +123,6 @@ export function CalendarView({ spaceId, activeGroup, config, isPreview, onOpenSe
   const [creating, setCreating] = useState(false)
   const [editItem, setEditItem] = useState<Item | null>(null)
   const [filter, setFilter] = useState<CalendarFilterState>(emptyFilter)
-  const [filterOpen, setFilterOpen] = useState(false)
   const { data: currentUser } = useCurrentUser()
   const { mutate: createItem } = useCreateItem()
   const { mutate: updateItem } = useUpdateItem()
@@ -261,10 +260,16 @@ export function CalendarView({ spaceId, activeGroup, config, isPreview, onOpenSe
 
   return (
     <div className="space-y-4 relative">
-      {/* Toolbar */}
-      <div className="flex gap-2 items-center flex-wrap">
+      {/* Toolbar — Tab-Buttons im Dashboard/Profil-Stil */}
+      <div
+        className="border-b -mx-4 px-3 sm:px-4 py-2 flex items-center gap-2 flex-wrap"
+        style={{
+          background:
+            "linear-gradient(90deg, rgba(59,130,246,0.04) 0%, rgba(168,85,247,0.04) 100%)",
+        }}
+      >
         {/* View-Switcher */}
-        <div className="inline-flex rounded-md border bg-muted/30 p-0.5 flex-wrap">
+        <div className="flex items-center gap-1 shrink-0 flex-wrap">
           {(["day", "week", "month", "year", "agenda", "events", "mine"] as CalendarView[]).map((v) => {
             const Icon =
               v === "day" ? Clock
@@ -286,12 +291,15 @@ export function CalendarView({ spaceId, activeGroup, config, isPreview, onOpenSe
             return (
               <button
                 key={v}
+                type="button"
                 onClick={() => setActiveView(v)}
-                className={`px-2.5 h-8 inline-flex items-center gap-1.5 text-xs rounded transition-colors ${
-                  isActive ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"
+                className={`px-2.5 py-1.5 text-sm font-medium flex items-center gap-1.5 rounded-md transition-colors ${
+                  isActive
+                    ? "bg-foreground text-background font-semibold"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}
               >
-                <Icon className="h-3.5 w-3.5" />
+                <Icon className="h-4 w-4" />
                 <span className="hidden sm:inline">{label}</span>
               </button>
             )
@@ -301,30 +309,8 @@ export function CalendarView({ spaceId, activeGroup, config, isPreview, onOpenSe
         {/* Spacer */}
         <div className="flex-1" />
 
-        {/* Filter-Toggle */}
-        <Button
-          variant={filter.search || filter.hashtags.length > 0 || filter.status !== "all" ? "default" : "ghost"}
-          size="sm"
-          onClick={() => setFilterOpen(!filterOpen)}
-          title="Suche und Filter"
-        >
-          <Search className="h-3.5 w-3.5" />
-        </Button>
-
-        {/* Zahnrad */}
-        {!isPreview && isAdmin && (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => onOpenSettings?.("modules", "calendar")}
-            title="Kalender konfigurieren"
-            aria-label="Kalender konfigurieren"
-          >
-            <Settings className="h-4 w-4" />
-          </Button>
-        )}
-
-        {/* Create-Button */}
+        {/* Create-Button — Suche & altes Zahnrad raus (globale Suche oben,
+            Modul-Settings ueber Space-Settings) */}
         {cfg.showCreateButton && (
           <Button onClick={() => setCreating(true)} size="sm">
             <Plus className="h-4 w-4 mr-1" />
@@ -332,16 +318,6 @@ export function CalendarView({ spaceId, activeGroup, config, isPreview, onOpenSe
           </Button>
         )}
       </div>
-
-      {/* Filter-Bar (collapsible) */}
-      {filterOpen && (
-        <CalendarFilterBar
-          filter={filter}
-          onChange={setFilter}
-          availableHashtags={availableHashtags}
-          resultCount={allItems.length}
-        />
-      )}
 
       {/* Empty-State: keiner Termin im Space → Demo-Banner mit Lade-Knopf */}
       {!isPreview && activeGroup && (
