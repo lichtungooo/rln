@@ -367,21 +367,23 @@ So fuehlen sich alle Module aus einem Guss an, auch wenn intern unterschiedlich 
 
 Dort uebernimmt man nur den **Tab-Button-Stil** (Pille, Gradient-Hintergrund) und die **Pfeile-aussen-Konvention** (intern durch Inhalt blaettern via onNavReady-API), aber NICHT die konfigurierbaren Pages.
 
-### Stand 11.05.2026
+### Stand 12.05.2026 — alle Module auf PageGrid
 
 | Modul | Status |
 |-------|--------|
-| Dashboard | ✅ Volles PageGrid (Pages konfigurierbar) + 5 Channels (quest, event, bereich, log, place) |
-| Profil (Spiegel) | ✅ PageGrid mit lockPages — feste 3 Tabs + Slot-Konfig + Channels (skill, bereich) |
-| Calendar | ✅ Tab-Stil + Active-View-Persistenz, kein volles Grid (View-Modi sind fest) |
-| Marketplace | ✅ Welt-Tabs (Sachen/Begabungen/Beduerfnisse) im Tab-Stil |
-| Wissensfeld | ✅ Tab-Switcher (Fragen/Erkenntnisse/Konsent/Spirit) im Tab-Stil |
-| Settings | ✅ Tab-Sidebar im Tab-Stil (7 Tabs) |
-| Map | Bleibt fullscreen (die Karte ist der ganze Inhalt) — kein Tab-Header |
+| Dashboard | ✅ PageGrid (Pages konfigurierbar) + 6 Channels (quest, event, bereich, log, place, skill) |
+| Profil (Spiegel) | ✅ PageGrid mit lockPages — 3 feste Tabs + Channels |
+| Calendar | ✅ PageGrid mit 7 lockPages (Tag/Woche/Monat/Jahr/Agenda/Events/Meine) |
+| Marketplace | ✅ PageGrid mit 3 lockPages (Sachen/Begabungen/Beduerfnisse) |
+| Wissensfeld | ✅ PageGrid mit 4 lockPages (Fragen/Erkenntnisse/Konsent/Spirit) |
+| Valluet | ✅ PageGrid mit 4 lockPages (Alle/Geschoepft/Empfangen/Geteilt) |
+| Settings | ✅ Vollbild-Dialog (100vw/100vh) mit Tab-Header oben + 3-Spalten-Drilldown |
+| Map | Bleibt fullscreen (Karte = Inhalt, kein Tab-Header) |
+| Kanban | Eigener Header (toolkit-extern), StatsBar drueber |
 
-**Alle 6 sichtbaren Modul-Header sind jetzt visuell konsistent** —
-Linear-Gradient orange→violett, Pille-Tabs mit foreground/background
-bzw. Modul-Farbe als Active-Background.
+**Alle Module mit Tabs nutzen jetzt PageGrid mit `lockPages: true`** —
+einheitliches Tab-Pattern (Pille, Linear-Gradient, foreground/background),
+StatsBar im headerRight, fullWidth.
 
 ### Klick-Routing — Kernkonzept fuer Pfeile (Timo-Klarstellung 11.05.2026)
 
