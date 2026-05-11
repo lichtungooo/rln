@@ -107,12 +107,14 @@ export function SpiegelSkillTab({ activeGroup }: SpiegelSkillTabProps) {
   // Klick-Routing: alle Skills im "skill"-Channel registrieren. So kann
   // ein optionales SpiegelSkillDetailWidget in einem anderen Slot das
   // aktuell gewaehlte Skill-Detail spiegeln (parallel zum internen
-  // Two-Panel-Detail).
+  // Two-Panel-Detail). Genauso die 8 Bereiche im "bereich"-Channel.
   const allSkills = useMemo(() => {
     return TREE_BEREICHE.flatMap((b) => skillsByBereich[b.id] ?? [])
   }, [skillsByBereich])
   useChannelSync("skill", allSkills)
+  useChannelSync("bereich", TREE_BEREICHE)
   const skillChannel = useChannel("skill")
+  const bereichChannel = useChannel("bereich")
 
   const handleSelectSkill = (side: "left" | "right", skillId: string, bereichIdx: number) => {
     // Externen Channel synchron halten
@@ -283,6 +285,7 @@ export function SpiegelSkillTab({ activeGroup }: SpiegelSkillTabProps) {
             activeSkillId={skillNavPanel?.state.skillId ?? null}
             activeSkillBereichIdx={skillNavPanel?.state.bereichIdx ?? null}
             onSelectSkill={(skillId, bereichIdx) => handleSelectSkill(mobileSide, skillId, bereichIdx)}
+            onSelectBereich={(bereichId) => bereichChannel.select(bereichId)}
             onClose={() => handleCloseSkill(mobileSide)}
           />
         ) : (
@@ -299,6 +302,7 @@ export function SpiegelSkillTab({ activeGroup }: SpiegelSkillTabProps) {
               activeSkillId={skillNavPanel?.state.skillId ?? null}
               activeSkillBereichIdx={skillNavPanel?.state.bereichIdx ?? null}
               onSelectSkill={(skillId, bereichIdx) => handleSelectSkill("left", skillId, bereichIdx)}
+              onSelectBereich={(bereichId) => bereichChannel.select(bereichId)}
               onClose={() => handleCloseSkill("left")}
             />
             <Panel
@@ -313,6 +317,7 @@ export function SpiegelSkillTab({ activeGroup }: SpiegelSkillTabProps) {
               activeSkillId={skillNavPanel?.state.skillId ?? null}
               activeSkillBereichIdx={skillNavPanel?.state.bereichIdx ?? null}
               onSelectSkill={(skillId, bereichIdx) => handleSelectSkill("right", skillId, bereichIdx)}
+              onSelectBereich={(bereichId) => bereichChannel.select(bereichId)}
               onClose={() => handleCloseSkill("right")}
             />
           </>
@@ -380,6 +385,7 @@ function Panel({
   activeSkillId,
   activeSkillBereichIdx,
   onSelectSkill,
+  onSelectBereich,
   onClose,
 }: {
   state: PanelState
@@ -393,6 +399,7 @@ function Panel({
   activeSkillId: string | null
   activeSkillBereichIdx: number | null
   onSelectSkill: (skillId: string, bereichIdx: number) => void
+  onSelectBereich?: (bereichId: string) => void
   onClose: () => void
 }) {
   const bereich = TREE_BEREICHE[state.bereichIdx]
@@ -407,7 +414,13 @@ function Panel({
         className="rounded-xl border bg-card overflow-hidden flex flex-col h-full"
         style={{ borderLeftWidth: 3, borderLeftColor: bereich.color }}
       >
-        <div className="px-2.5 py-1.5 border-b bg-muted/20 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => onSelectBereich?.(bereich.id)}
+          disabled={!onSelectBereich}
+          className="px-2.5 py-1.5 border-b bg-muted/20 flex items-center gap-2 text-left w-full hover:bg-muted/30 transition-colors disabled:cursor-default"
+          title={onSelectBereich ? "Klick zeigt Bereich-Detail" : undefined}
+        >
           <div
             className="w-5 h-5 rounded-full flex items-center justify-center shrink-0"
             style={{ background: `${bereich.color}18` }}
@@ -415,7 +428,7 @@ function Panel({
             <Icon className="h-3 w-3" style={{ color: bereich.color }} />
           </div>
           <span className="text-xs font-semibold truncate flex-1">{bereich.label}</span>
-        </div>
+        </button>
 
         <div className="p-3 flex-1 overflow-y-auto flex items-center justify-center">
           {skills.length === 0 ? (
