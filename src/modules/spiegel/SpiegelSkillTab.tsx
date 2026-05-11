@@ -15,7 +15,6 @@ import { useItems } from "@real-life-stack/toolkit"
 import type { ModuleViewProps } from "../registry"
 import {
   TREE_BEREICHE,
-  INNERE_BEREICHE,
   progressInLevel,
   useUserProgress,
   useGamificationSeed,
@@ -107,19 +106,24 @@ export function SpiegelSkillTab({ activeGroup, onNavReady }: SpiegelSkillTabProp
 
   const handleSelectSkill = (side: "left" | "right", skillId: string, bereichIdx: number) => {
     // Klick links → Detail im RECHTEN Panel. Right merkt sich seinen vorigen Bereich.
+    // Wenn das Detail-Panel schon Skill-State ist, bleibt sein urspruenglicher
+    // returnBereichIdx erhalten — sonst wuerde der zum Bereich des Skills mutieren
+    // und X-Close zeigte denselben Bereich wie das andere Panel (doppelt).
     if (side === "left") {
       setRightPanel({
         kind: "skill",
         bereichIdx,
         skillId,
-        returnBereichIdx: rightPanel.bereichIdx,
+        returnBereichIdx:
+          rightPanel.kind === "bereich" ? rightPanel.bereichIdx : rightPanel.returnBereichIdx,
       })
     } else {
       setLeftPanel({
         kind: "skill",
         bereichIdx,
         skillId,
-        returnBereichIdx: leftPanel.bereichIdx,
+        returnBereichIdx:
+          leftPanel.kind === "bereich" ? leftPanel.bereichIdx : leftPanel.returnBereichIdx,
       })
     }
   }
@@ -281,6 +285,8 @@ export function SpiegelSkillTab({ activeGroup, onNavReady }: SpiegelSkillTabProp
             isUnlocked={isUnlocked}
             getVisibility={getVisibility}
             setVisibility={setVisibility}
+            activeSkillId={skillNavPanel?.state.skillId ?? null}
+            activeSkillBereichIdx={skillNavPanel?.state.bereichIdx ?? null}
             onSelectSkill={(skillId, bereichIdx) => handleSelectSkill(mobileSide, skillId, bereichIdx)}
             onClose={() => handleCloseSkill(mobileSide)}
           />
@@ -295,6 +301,8 @@ export function SpiegelSkillTab({ activeGroup, onNavReady }: SpiegelSkillTabProp
               isUnlocked={isUnlocked}
               getVisibility={getVisibility}
               setVisibility={setVisibility}
+              activeSkillId={skillNavPanel?.state.skillId ?? null}
+              activeSkillBereichIdx={skillNavPanel?.state.bereichIdx ?? null}
               onSelectSkill={(skillId, bereichIdx) => handleSelectSkill("left", skillId, bereichIdx)}
               onClose={() => handleCloseSkill("left")}
             />
@@ -307,6 +315,8 @@ export function SpiegelSkillTab({ activeGroup, onNavReady }: SpiegelSkillTabProp
               isUnlocked={isUnlocked}
               getVisibility={getVisibility}
               setVisibility={setVisibility}
+              activeSkillId={skillNavPanel?.state.skillId ?? null}
+              activeSkillBereichIdx={skillNavPanel?.state.bereichIdx ?? null}
               onSelectSkill={(skillId, bereichIdx) => handleSelectSkill("right", skillId, bereichIdx)}
               onClose={() => handleCloseSkill("right")}
             />
@@ -347,6 +357,8 @@ function Panel({
   isUnlocked,
   getVisibility,
   setVisibility,
+  activeSkillId,
+  activeSkillBereichIdx,
   onSelectSkill,
   onClose,
 }: {
@@ -358,15 +370,18 @@ function Panel({
   isUnlocked: (id: string) => { unlocked: boolean; missing: string[] }
   getVisibility: (id: string) => SkillVisibilityLevel | undefined
   setVisibility: (id: string, level: SkillVisibilityLevel | undefined) => Promise<void>
+  activeSkillId: string | null
+  activeSkillBereichIdx: number | null
   onSelectSkill: (skillId: string, bereichIdx: number) => void
   onClose: () => void
 }) {
   const bereich = TREE_BEREICHE[state.bereichIdx]
   const Icon = bereich.icon as LucideIcon
   const skills = skillsByBereich[bereich.id]
-  const isInner = INNERE_BEREICHE.includes(bereich.id)
 
   if (state.kind === "bereich") {
+    // Nur markieren, wenn der aktive Skill auch zu diesem Bereich gehoert
+    const showActive = activeSkillBereichIdx === state.bereichIdx
     return (
       <div
         className="rounded-xl border bg-card overflow-hidden flex flex-col h-full"
@@ -380,11 +395,6 @@ function Panel({
             <Icon className="h-3 w-3" style={{ color: bereich.color }} />
           </div>
           <span className="text-xs font-semibold truncate flex-1">{bereich.label}</span>
-          {isInner && (
-            <span className="text-[8px] uppercase tracking-wider text-purple-700" title="Innerer Kreis">
-              innen
-            </span>
-          )}
         </div>
 
         <div className="p-3 flex-1 overflow-y-auto flex items-center justify-center">
@@ -401,6 +411,7 @@ function Panel({
                   bereichColor={bereich.color}
                   xp={skillXp(skill.id)}
                   progress={skillProgress(skill.id)}
+                  isActive={showActive && activeSkillId === skill.id}
                   locked={!isUnlocked(skill.id).unlocked}
                   onClick={() => onSelectSkill(skill.id, state.bereichIdx)}
                 />
@@ -458,6 +469,7 @@ function SkillCircle({
   xp,
   progress,
   locked,
+  isActive,
   onClick,
 }: {
   skill: RenderSkill
@@ -465,6 +477,7 @@ function SkillCircle({
   xp: number
   progress: ReturnType<typeof progressInLevel>
   locked: boolean
+  isActive?: boolean
   onClick: () => void
 }) {
   const color = skill.data.color ?? bereichColor
@@ -485,11 +498,15 @@ function SkillCircle({
       title={skill.data.description ?? skill.data.name}
       className={`group flex flex-col items-center gap-0.5 transition-all ${
         locked ? "opacity-50" : ""
-      }`}
+      } ${isActive ? "scale-110" : ""}`}
     >
       <div
         className="relative transition-transform group-hover:scale-110"
-        style={{ width: size, height: size }}
+        style={{
+          width: size,
+          height: size,
+          filter: isActive ? `drop-shadow(0 0 8px ${color})` : undefined,
+        }}
       >
         {/* Progress-Ring + Hintergrund */}
         <svg width={size} height={size} className="absolute inset-0">
