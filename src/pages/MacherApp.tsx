@@ -59,6 +59,7 @@ import { questModule } from '../modules/quest'
 import { skillTreeModule } from '../modules/skill-tree'
 import { dashboardModule } from '../modules/dashboard'
 import { avatarModule } from '../modules/avatar'
+import { spiegelModule } from '../modules/spiegel'
 import { wissensfeldModule } from '../modules/wissensfeld'
 import { valluetModule } from '../modules/valluet'
 import { HudBar } from '../modules/gamification/HudBar'
@@ -87,6 +88,7 @@ registerModule(questModule)
 registerModule(skillTreeModule)
 registerModule(dashboardModule)
 registerModule(avatarModule)
+registerModule(spiegelModule)
 registerModule(wissensfeldModule)
 registerModule(valluetModule)
 
