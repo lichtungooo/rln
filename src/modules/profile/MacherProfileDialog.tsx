@@ -18,6 +18,7 @@ import { PastExperiencesSection } from "./PastExperiencesSection"
 import { ViaStrengthsSection } from "./ViaStrengthsSection"
 import { CirclesSection } from "./CirclesSection"
 import { ShareProfilesSection } from "./ShareProfilesSection"
+import { VisibilityPreviewSection } from "./VisibilityPreviewSection"
 
 export interface MacherProfileDialogProps {
   open: boolean
@@ -210,6 +211,9 @@ export function MacherProfileDialog({
 
             {/* Sicht-Profile (Phase F8) — Quick-Share, wer sieht was */}
             <ShareProfilesSection />
+
+            {/* Sicht-Vorschau (Phase F9) — was sehen meine Kreise tatsaechlich */}
+            <VisibilityPreviewSection />
 
             {error && <p className="text-xs text-destructive">{error}</p>}
           </div>

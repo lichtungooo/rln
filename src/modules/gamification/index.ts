@@ -44,6 +44,14 @@ export {
 export { DEFAULT_CIRCLES, DEFAULT_SHARE_PROFILES } from "./sharing-defaults"
 export { useCircles } from "./use-circles"
 export { useShareProfiles } from "./use-share-profiles"
+export { useSkillVisibility } from "./use-skill-visibility"
+export {
+  resolveSkillVisibility,
+  buildViewerContext,
+  type SkillVisibilityLevel,
+  type VisibilityDecision,
+  type ViewerContext,
+} from "./visibility"
 
 export {
   isSkillUnlocked,

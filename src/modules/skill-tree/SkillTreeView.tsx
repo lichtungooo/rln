@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { ChevronDown, ChevronRight, Lock, Sparkles, TrendingUp, type LucideIcon } from "lucide-react"
+import { ChevronDown, ChevronRight, Eye, EyeOff, Globe, Lock, Sparkles, TrendingUp, Users, UsersRound, type LucideIcon } from "lucide-react"
 import {
   Card,
   CardContent,
@@ -15,9 +15,11 @@ import {
   progressInLevel,
   useUserProgress,
   useGamificationSeed,
+  useSkillVisibility,
   UNIVERSAL_SKILLS,
   GAMIFICATION_ITEM_TYPES,
   type SkillData,
+  type SkillVisibilityLevel,
   type TreeBereich,
   type TreeBereichId,
 } from "../gamification"
@@ -50,6 +52,7 @@ export function SkillTreeView({ activeGroup }: ModuleViewProps) {
   const { data, bereichXp, bereichProgress, skillXp, skillProgress, isUnlocked } = useUserProgress()
   const { data: skillItems } = useItems({ type: GAMIFICATION_ITEM_TYPES.skill })
   const { seed, busy: seeding, status: seedStatus } = useGamificationSeed(spaceSlug)
+  const { get: getVisibility, set: setVisibility } = useSkillVisibility()
 
   // Skills nach Bereich gruppieren — Universal-Skills aus Code +
   // space-spezifische Items aus WoT zusammen rendern.
@@ -147,6 +150,8 @@ export function SkillTreeView({ activeGroup }: ModuleViewProps) {
             skillXp={skillXp}
             skillProgress={skillProgress}
             isUnlocked={isUnlocked}
+            getVisibility={getVisibility}
+            setVisibility={setVisibility}
             isInner={INNERE_BEREICHE.includes(bereich.id)}
           />
         ))}
@@ -167,10 +172,12 @@ interface BereichCardProps {
   skillXp: (id: string) => number
   skillProgress: (id: string) => ReturnType<typeof progressInLevel>
   isUnlocked: (id: string) => { unlocked: boolean; missing: string[] }
+  getVisibility: (id: string) => SkillVisibilityLevel | undefined
+  setVisibility: (id: string, level: SkillVisibilityLevel | undefined) => Promise<void>
   isInner: boolean
 }
 
-function BereichCard({ bereich, xp, progress, skills, skillXp, skillProgress, isUnlocked, isInner }: BereichCardProps) {
+function BereichCard({ bereich, xp, progress, skills, skillXp, skillProgress, isUnlocked, getVisibility, setVisibility, isInner }: BereichCardProps) {
   const [open, setOpen] = useState(false)
   const Icon = bereich.icon as LucideIcon
 
@@ -285,9 +292,15 @@ function BereichCard({ bereich, xp, progress, skills, skillXp, skillProgress, is
                             </span>
                           )}
                         </div>
-                        <span className="text-[10px] text-muted-foreground">
-                          {sXp} XP
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <VisibilityToggle
+                            level={getVisibility(skill.id)}
+                            onChange={(next) => setVisibility(skill.id, next)}
+                          />
+                          <span className="text-[10px] text-muted-foreground">
+                            {sXp} XP
+                          </span>
+                        </div>
                       </div>
                       {!unlock.unlocked && (
                         <div className="text-[10px] text-muted-foreground italic">
@@ -322,5 +335,56 @@ function BereichCard({ bereich, xp, progress, skills, skillXp, skillProgress, is
         )}
       </CardContent>
     </Card>
+  )
+}
+
+// ============================================================
+// VisibilityToggle — Auge-Klick fuer per-Skill Sichtbarkeit (Phase F9)
+// ============================================================
+
+const VISIBILITY_CYCLE: Array<SkillVisibilityLevel | undefined> = [
+  undefined,    // Default — folgt Sicht-Profil
+  "public",     // jeder
+  "network",    // alle in meinen Kreisen
+  "circle",     // Kreis-Mitglieder
+  "private",    // nur ich
+]
+
+const VISIBILITY_META: Record<
+  SkillVisibilityLevel | "default",
+  { icon: LucideIcon; label: string; color: string }
+> = {
+  default: { icon: Eye, label: "Folgt Sicht-Profil", color: "#94A3B8" },
+  public:  { icon: Globe, label: "Oeffentlich", color: "#10B981" },
+  network: { icon: UsersRound, label: "Netzwerk", color: "#3B82F6" },
+  circle:  { icon: Users, label: "Kreis", color: "#A855F7" },
+  private: { icon: EyeOff, label: "Privat", color: "#94A3B8" },
+}
+
+function VisibilityToggle({
+  level,
+  onChange,
+}: {
+  level: SkillVisibilityLevel | undefined
+  onChange: (next: SkillVisibilityLevel | undefined) => void
+}) {
+  const meta = VISIBILITY_META[level ?? "default"]
+  const Icon = meta.icon
+
+  const handleClick = () => {
+    const currentIdx = VISIBILITY_CYCLE.indexOf(level)
+    const nextIdx = (currentIdx + 1) % VISIBILITY_CYCLE.length
+    onChange(VISIBILITY_CYCLE[nextIdx])
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      title={`Sichtbarkeit: ${meta.label}. Klick wechselt durch die Stufen.`}
+      className="p-1 rounded hover:bg-muted/50 transition-colors"
+    >
+      <Icon className="h-3 w-3" style={{ color: meta.color }} />
+    </button>
   )
 }
