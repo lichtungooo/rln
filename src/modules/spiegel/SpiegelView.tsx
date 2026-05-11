@@ -9,9 +9,9 @@ import {
   trustLabel,
 } from "../gamification"
 import { useElderStatus } from "../profile/use-elder-status"
-import { SkillTreeView } from "../skill-tree/SkillTreeView"
 import { SpiegelAvatarTab } from "./SpiegelAvatarTab"
 import { SpiegelQuestTab } from "./SpiegelQuestTab"
+import { SpiegelSkillTab } from "./SpiegelSkillTab"
 
 /**
  * SpiegelView — der Charakter-Spiegel des Real-Life-Rollenspiels.
@@ -90,7 +90,7 @@ export function SpiegelView(props: ModuleViewProps<SpiegelModuleConfig>) {
       <div className="flex-1 overflow-auto">
         {tab === "avatar" && <SpiegelAvatarTab {...props} />}
         {tab === "quest" && <SpiegelQuestTab {...props} />}
-        {tab === "skill" && <SkillTreeView {...props} />}
+        {tab === "skill" && <SpiegelSkillTab {...props} />}
       </div>
     </div>
   )
