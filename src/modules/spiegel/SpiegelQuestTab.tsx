@@ -94,7 +94,7 @@ export function SpiegelQuestTab(_props: ModuleViewProps) {
   const completedOfSelected = selectedQuest ? isCompleted(selectedQuest.id) : false
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 max-w-5xl mx-auto">
+    <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-3 min-h-0">
       {/* Links: Offene Quests */}
       <div className="rounded-xl border bg-card overflow-hidden flex flex-col">
         <div className="px-3 py-2 border-b bg-muted/20 flex items-center gap-2">

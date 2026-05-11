@@ -1,7 +1,5 @@
 import { useMemo, useState, useEffect, useRef } from "react"
 import {
-  ChevronLeft,
-  ChevronRight,
   X,
   Eye,
   EyeOff,
@@ -55,7 +53,12 @@ type PanelState =
   | { kind: "bereich"; bereichIdx: number }
   | { kind: "skill"; bereichIdx: number; skillId: string }
 
-export function SpiegelSkillTab({ activeGroup }: ModuleViewProps) {
+export interface SpiegelSkillTabProps extends ModuleViewProps {
+  /** Optional callback fuer Pfeil-Navigation, damit die Buttons ausserhalb des Tabs leben */
+  onNavReady?: (api: { prev: () => void; next: () => void; canPrev: boolean; canNext: boolean }) => void
+}
+
+export function SpiegelSkillTab({ activeGroup, onNavReady }: SpiegelSkillTabProps) {
   const spaceSlug = (activeGroup?.data as { slug?: string } | undefined)?.slug
   const { skillXp, skillProgress, isUnlocked } = useUserProgress()
   const { data: skillItems } = useItems({ type: GAMIFICATION_ITEM_TYPES.skill })
@@ -173,8 +176,19 @@ export function SpiegelSkillTab({ activeGroup }: ModuleViewProps) {
   const mobileSide: "left" | "right" =
     mobilePanel === leftPanel ? "left" : "right"
 
+  // Nav-API ans Parent durchreichen (Pfeile leben dort, ausserhalb)
+  useEffect(() => {
+    if (!onNavReady) return
+    onNavReady({
+      prev: isMobile ? mobilePrev : goPrev,
+      next: isMobile ? mobileNext : goNext,
+      canPrev: carouselActive || isMobile,
+      canNext: carouselActive || isMobile,
+    })
+  }, [onNavReady, isMobile, carouselActive, leftPanel, rightPanel])
+
   return (
-    <div className="flex flex-col h-full p-3" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
+    <div className="flex flex-col h-full" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       {seedStatus.skillsTodo > 0 && (
         <div className="mb-2 flex justify-end">
           <button
@@ -188,27 +202,13 @@ export function SpiegelSkillTab({ activeGroup }: ModuleViewProps) {
         </div>
       )}
 
-      {/* Karussell-Layout: Pfeil LINKS | Panel | Panel | Pfeil RECHTS */}
+      {/* Two-Panel-Layout — gleiche Groesse, keine Pfeile (leben im Parent) */}
       <div
-        className="flex-1 grid items-stretch gap-3 sm:gap-6 min-h-0"
+        className="flex-1 grid items-stretch gap-3 min-h-0"
         style={{
-          gridTemplateColumns: isMobile
-            ? "auto minmax(0, 1fr) auto"
-            : "auto minmax(0, 1fr) minmax(0, 1fr) auto",
+          gridTemplateColumns: isMobile ? "minmax(0, 1fr)" : "minmax(0, 1fr) minmax(0, 1fr)",
         }}
       >
-        {/* Pfeil links — mittig vertikal */}
-        <button
-          type="button"
-          onClick={isMobile ? mobilePrev : goPrev}
-          disabled={!carouselActive && !isMobile}
-          className="self-center h-12 w-12 rounded-full grid place-items-center border bg-card hover:bg-muted disabled:opacity-30 transition-colors shadow-md"
-          aria-label="Zurueck"
-        >
-          <ChevronLeft className="h-6 w-6" />
-        </button>
-
-        {/* Panels */}
         {isMobile && mobilePanel ? (
           <Panel
             state={mobilePanel}
@@ -250,17 +250,6 @@ export function SpiegelSkillTab({ activeGroup }: ModuleViewProps) {
             />
           </>
         )}
-
-        {/* Pfeil rechts — mittig vertikal */}
-        <button
-          type="button"
-          onClick={isMobile ? mobileNext : goNext}
-          disabled={!carouselActive && !isMobile}
-          className="self-center h-12 w-12 rounded-full grid place-items-center border bg-card hover:bg-muted disabled:opacity-30 transition-colors shadow-md"
-          aria-label="Weiter"
-        >
-          <ChevronRight className="h-6 w-6" />
-        </button>
       </div>
 
       {/* Indikator-Punkte unten */}

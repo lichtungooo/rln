@@ -95,14 +95,14 @@ export function SpiegelAvatarTab({ spaceId }: ModuleViewProps) {
   const isItemDisplayed = (id: string) => displayed.some((d) => d.id === id)
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 max-w-5xl mx-auto">
+    <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-3 min-h-0">
       {/* Links: Avatar */}
-      <div className="rounded-xl border bg-card p-5 flex flex-col items-center gap-3 self-start">
+      <div className="rounded-xl border bg-card p-3 flex flex-col items-center gap-2 overflow-y-auto">
         <Avatar
           name={userName}
           displayedItems={displayed}
           synergyActive={synergyActive}
-          size={220}
+          size={180}
           onItemDropped={(itemId) => toggleDisplayed(itemId)}
           onHaloItemClick={(itemId) => toggleDisplayed(itemId)}
         />
