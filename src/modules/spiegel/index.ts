@@ -1,4 +1,4 @@
-import { Sparkles } from "lucide-react"
+import { Aperture } from "lucide-react"
 import type { ModuleDefinition } from "../registry"
 import { SpiegelView, spiegelDefaultConfig, type SpiegelModuleConfig } from "./SpiegelView"
 
@@ -12,7 +12,7 @@ import { SpiegelView, spiegelDefaultConfig, type SpiegelModuleConfig } from "./S
 export const spiegelModule: ModuleDefinition<SpiegelModuleConfig> = {
   id: "spiegel",
   label: "Spiegel",
-  icon: Sparkles,
+  icon: Aperture,
   View: SpiegelView,
   defaultConfig: spiegelDefaultConfig,
   itemTypes: [

@@ -189,16 +189,23 @@ export function SpiegelSkillTab({ activeGroup }: ModuleViewProps) {
       )}
 
       {/* Karussell-Layout: Pfeil LINKS | Panel | Panel | Pfeil RECHTS */}
-      <div className="flex-1 grid items-center gap-2 min-h-0" style={{ gridTemplateColumns: isMobile ? "auto 1fr auto" : "auto 1fr 1fr auto" }}>
+      <div
+        className="flex-1 grid items-stretch gap-3 sm:gap-6 min-h-0"
+        style={{
+          gridTemplateColumns: isMobile
+            ? "auto minmax(0, 1fr) auto"
+            : "auto minmax(0, 1fr) minmax(0, 1fr) auto",
+        }}
+      >
         {/* Pfeil links — mittig vertikal */}
         <button
           type="button"
           onClick={isMobile ? mobilePrev : goPrev}
           disabled={!carouselActive && !isMobile}
-          className="self-center h-10 w-10 rounded-full grid place-items-center border bg-card hover:bg-muted disabled:opacity-30 transition-colors shadow-sm"
+          className="self-center h-12 w-12 rounded-full grid place-items-center border bg-card hover:bg-muted disabled:opacity-30 transition-colors shadow-md"
           aria-label="Zurueck"
         >
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-6 w-6" />
         </button>
 
         {/* Panels */}
@@ -249,10 +256,10 @@ export function SpiegelSkillTab({ activeGroup }: ModuleViewProps) {
           type="button"
           onClick={isMobile ? mobileNext : goNext}
           disabled={!carouselActive && !isMobile}
-          className="self-center h-10 w-10 rounded-full grid place-items-center border bg-card hover:bg-muted disabled:opacity-30 transition-colors shadow-sm"
+          className="self-center h-12 w-12 rounded-full grid place-items-center border bg-card hover:bg-muted disabled:opacity-30 transition-colors shadow-md"
           aria-label="Weiter"
         >
-          <ChevronRight className="h-5 w-5" />
+          <ChevronRight className="h-6 w-6" />
         </button>
       </div>
 
@@ -329,13 +336,13 @@ function Panel({
           )}
         </div>
 
-        <div className="p-2 flex-1 overflow-y-auto flex items-start justify-center">
+        <div className="p-3 flex-1 overflow-y-auto flex items-center justify-center">
           {skills.length === 0 ? (
-            <p className="text-xs text-muted-foreground italic py-4 self-center">
+            <p className="text-xs text-muted-foreground italic">
               Keine Skills im Bereich.
             </p>
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-1.5 justify-items-center">
+            <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 max-w-full">
               {skills.map((skill) => (
                 <SkillCircle
                   key={skill.id}
@@ -411,43 +418,89 @@ function SkillCircle({
 }) {
   const color = skill.data.color ?? bereichColor
   const activated = xp > 0
-  const dots = masteryDots(progress.level)
+  const level = progress.level
+
+  // Skill-Kreise wachsen leicht mit dem Level — organisches Bild, nicht alle gleich
+  const size = level >= 50 ? 52 : level >= 10 ? 46 : 40
+  const stroke = 3
+  const r = size / 2 - stroke / 2
+  const circumference = 2 * Math.PI * r
+  const progressOffset = circumference * (1 - Math.min(1, Math.max(0, progress.ratio)))
 
   return (
     <button
       type="button"
       onClick={onClick}
       title={skill.data.description ?? skill.data.name}
-      className="group flex flex-col items-center gap-0.5 transition-all"
+      className={`group flex flex-col items-center gap-0.5 transition-all ${
+        locked ? "opacity-50" : ""
+      }`}
     >
       <div
-        className={`relative w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center border-2 transition-all group-hover:scale-110 group-hover:shadow-md ${
-          locked ? "opacity-50" : ""
-        }`}
-        style={{
-          background: activated ? `${color}15` : "rgba(148,163,184,0.05)",
-          borderColor: activated ? color : "rgba(148,163,184,0.3)",
-          boxShadow: activated ? `0 0 8px ${color}30` : undefined,
-        }}
+        className="relative transition-transform group-hover:scale-110"
+        style={{ width: size, height: size }}
       >
-        {locked ? (
-          <Lock className="h-3 w-3 text-muted-foreground" />
-        ) : skill.data.icon ? (
-          <DynamicIcon name={skill.data.icon} className="h-3.5 w-3.5 sm:h-4 sm:w-4" color={activated ? color : "#94A3B8"} />
-        ) : (
-          <Sparkles className="h-3.5 w-3.5" style={{ color: activated ? color : "#94A3B8" }} />
+        {/* Progress-Ring + Hintergrund */}
+        <svg width={size} height={size} className="absolute inset-0">
+          {/* Hintergrund-Kreis */}
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill={activated ? `${color}15` : "rgba(148,163,184,0.05)"}
+            stroke={activated ? `${color}30` : "rgba(148,163,184,0.25)"}
+            strokeWidth={stroke}
+          />
+          {/* Fortschritts-Bogen (von oben startend) */}
+          {activated && progress.ratio > 0 && (
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={r}
+              fill="none"
+              stroke={color}
+              strokeWidth={stroke}
+              strokeLinecap="round"
+              strokeDasharray={circumference}
+              strokeDashoffset={progressOffset}
+              transform={`rotate(-90 ${size / 2} ${size / 2})`}
+              style={{
+                filter: level >= 50 ? `drop-shadow(0 0 4px ${color})` : undefined,
+              }}
+            />
+          )}
+        </svg>
+
+        {/* Icon zentriert */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          {locked ? (
+            <Lock className="h-3.5 w-3.5 text-muted-foreground" />
+          ) : skill.data.icon ? (
+            <DynamicIcon
+              name={skill.data.icon}
+              className={`${size >= 50 ? "h-5 w-5" : "h-4 w-4"}`}
+              color={activated ? color : "#94A3B8"}
+            />
+          ) : (
+            <Sparkles
+              className="h-4 w-4"
+              style={{ color: activated ? color : "#94A3B8" }}
+            />
+          )}
+        </div>
+
+        {/* Level-Zahl unten in der Mitte */}
+        {level > 0 && (
+          <div
+            className="absolute -bottom-1 left-1/2 -translate-x-1/2 min-w-[16px] h-[14px] px-1 rounded text-[9px] font-bold text-white grid place-items-center shadow"
+            style={{ background: color }}
+          >
+            {level}
+          </div>
         )}
       </div>
-      <div className="flex items-center gap-0.5 mt-0.5">
-        {[1, 2, 3].map((i) => (
-          <span
-            key={i}
-            className="w-0.5 h-0.5 rounded-full"
-            style={{ background: i <= dots ? color : "rgba(148,163,184,0.25)" }}
-          />
-        ))}
-      </div>
-      <div className="text-[8px] font-medium text-center leading-tight max-w-[56px] truncate">
+
+      <div className="text-[8px] font-medium text-center leading-tight max-w-[60px] truncate mt-1">
         {skill.data.name}
       </div>
     </button>
