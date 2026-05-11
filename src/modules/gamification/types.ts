@@ -211,6 +211,60 @@ export interface UserAvatarData {
 }
 
 // ============================================================
+// Past Experience (Phase F5, 11.05.2026)
+// ============================================================
+
+/**
+ * Vergangenheits-Erfahrung — was war, bevor du auf RLN kamst.
+ *
+ * Eine Lehre, ein Werk, eine Reise, ein Werkzeug das du gelernt hast.
+ * Wird im Profil eingetragen, gibt XP in den Bereichen, die sie traegt.
+ *
+ * Bis ein Peer attestiert hat (`attestedBy` leer), ist die Erfahrung
+ * **vorlaeufig** — sichtbar im Profil, XP zaehlt im Tree, aber das
+ * Profil zeigt deutlich "noch nicht bestaetigt". Sobald Peers
+ * attestieren, faellt diese Markierung weg.
+ *
+ * XP-Mapping nach Reife-Stufe:
+ *   - memory     →  50 XP pro Bereich   (Ich erinnere mich, ich kann es noch grob)
+ *   - practiced  → 200 XP pro Bereich   (Ich habe es geuebt, ich kann es im Alltag)
+ *   - mastered   → 800 XP pro Bereich   (Ich bin Meister/in, ich kann es lehren)
+ *
+ * Item: `type: "past-experience"`, `createdBy` = User-DID.
+ */
+export type PastExperienceMastery = "memory" | "practiced" | "mastered"
+
+export interface PastExperienceData {
+  /** Titel, kurz — z.B. "Tischlerlehre", "Drei Jahre Permakultur-Hof", "Studium Architektur" */
+  title: string
+  /** Freitext-Beschreibung, was diese Erfahrung war */
+  description?: string
+  /** Beginn-Jahr (optional) */
+  startYear?: number
+  /** Ende-Jahr (optional, fehlt bei laufendem) */
+  endYear?: number
+  /** Lebens-Phase-Index (0..10) wenn berechenbar aus Geburtsjahr + startYear */
+  lifePhaseIndex?: number
+  /** Welche Bereiche hat diese Erfahrung getraegt? Ein oder mehrere. */
+  bereiche: TreeBereichId[]
+  /** Wie tief reicht das, was du dabei gelernt hast? */
+  mastery: PastExperienceMastery
+  /** Optionales Foto (Base64 oder URL) */
+  photoUrl?: string
+  /** DIDs der Peers, die bestaetigt haben — leer = vorlaeufig */
+  attestedBy?: string[]
+}
+
+/**
+ * XP-Werte pro Reife-Stufe (pro Bereich).
+ */
+export const PAST_EXPERIENCE_XP: Record<PastExperienceMastery, number> = {
+  memory: 50,
+  practiced: 200,
+  mastered: 800,
+}
+
+// ============================================================
 // Item-Type-Konstanten
 // ============================================================
 
@@ -221,4 +275,5 @@ export const GAMIFICATION_ITEM_TYPES = {
   avatarItem: "avatar-item",
   userAvatar: "user-avatar",
   quest: "quest",
+  pastExperience: "past-experience",
 } as const

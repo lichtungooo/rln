@@ -23,6 +23,7 @@ export {
 
 export {
   GAMIFICATION_ITEM_TYPES,
+  PAST_EXPERIENCE_XP,
   type SkillData,
   type SkillPrerequisites,
   type UserProgressData,
@@ -33,6 +34,8 @@ export {
   type AvatarItemData,
   type AvatarItemRarity,
   type UserAvatarData,
+  type PastExperienceData,
+  type PastExperienceMastery,
 } from "./types"
 
 export {
@@ -46,6 +49,7 @@ export { useLog } from "./use-log"
 export { useUserAvatar } from "./use-avatar"
 export { useGamificationSeed } from "./use-seed"
 export { useReputation, useReputationMap, trustLabel, type ReputationStats } from "./use-reputation"
+export { usePastExperiences } from "./use-past-experiences"
 
 export { MACHER_DEFAULT_SKILLS, MACHER_DEFAULT_AVATAR_ITEMS } from "./macher-skills"
 

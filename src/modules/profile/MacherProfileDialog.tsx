@@ -14,6 +14,7 @@ import type { ProfileModuleConfig, ModuleFieldConfig } from "../types"
 import { TagInput } from "./TagInput"
 import { LifeThreadCard } from "./LifeThreadCard"
 import type { LifeThreadData } from "./life-thread"
+import { PastExperiencesSection } from "./PastExperiencesSection"
 
 export interface MacherProfileDialogProps {
   open: boolean
@@ -194,6 +195,9 @@ export function MacherProfileDialog({
 
             {/* Lebens-Faden (Phase F4) — Steiner/Lievegoed 7-Jahres-Phasen */}
             <LifeThreadCard value={lifeThread} onChange={setLifeThread} />
+
+            {/* Vergangenheits-Erfahrungen (Phase F5) — Backdating mit XP */}
+            <PastExperiencesSection lifeThread={lifeThread} />
 
             {error && <p className="text-xs text-destructive">{error}</p>}
           </div>
