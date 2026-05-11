@@ -55,9 +55,62 @@ interface SelectionContextValue {
 
 const SelectionContext = createContext<SelectionContextValue | null>(null)
 
-export function SelectionProvider({ children }: { children: ReactNode }) {
-  const [channels, setChannels] = useState<Record<string, ChannelState>>({})
-  const [activeChannelId, setActiveChannelId] = useState<string | null>(null)
+export function SelectionProvider({
+  children,
+  storageKey,
+}: {
+  children: ReactNode
+  /**
+   * Wenn gesetzt: selectedId pro Channel + activeChannelId persistieren.
+   * Items werden NICHT persistiert (kommen vom Source-Widget bei jedem Render).
+   */
+  storageKey?: string
+}) {
+  const persistKey = storageKey ? `${storageKey}-selection` : null
+
+  const initial = useMemo(() => {
+    if (!persistKey) return { channels: {} as Record<string, ChannelState>, activeChannelId: null as string | null }
+    try {
+      const raw = localStorage.getItem(persistKey)
+      if (raw) {
+        const parsed = JSON.parse(raw) as {
+          activeChannelId?: string | null
+          selectedIds?: Record<string, string | null>
+        }
+        const channelsInit: Record<string, ChannelState> = {}
+        for (const [id, selectedId] of Object.entries(parsed.selectedIds ?? {})) {
+          channelsInit[id] = { items: [], selectedId: selectedId ?? null }
+        }
+        return {
+          channels: channelsInit,
+          activeChannelId: parsed.activeChannelId ?? null,
+        }
+      }
+    } catch {
+      // egal — fallback
+    }
+    return { channels: {} as Record<string, ChannelState>, activeChannelId: null as string | null }
+  }, [persistKey])
+
+  const [channels, setChannels] = useState<Record<string, ChannelState>>(initial.channels)
+  const [activeChannelId, setActiveChannelId] = useState<string | null>(initial.activeChannelId)
+
+  // Persistenz bei Aenderung
+  useEffect(() => {
+    if (!persistKey) return
+    try {
+      const selectedIds: Record<string, string | null> = {}
+      for (const [id, ch] of Object.entries(channels)) {
+        if (ch.selectedId) selectedIds[id] = ch.selectedId
+      }
+      localStorage.setItem(
+        persistKey,
+        JSON.stringify({ activeChannelId, selectedIds })
+      )
+    } catch {
+      // egal
+    }
+  }, [persistKey, channels, activeChannelId])
 
   const setChannelItems = useCallback((channelId: string, items: ChannelItem[]) => {
     setChannels((prev) => {

@@ -374,6 +374,13 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
     localStorage.setItem(STORAGE_KEY_OPEN_MODULES, JSON.stringify(openModuleIds))
   }, [openModuleIds])
 
+  // Custom-Event: StatsBar dispatched 'rln-open-contacts' bei Trust-Klick
+  useEffect(() => {
+    const handler = () => setContactsDialogOpen(true)
+    window.addEventListener("rln-open-contacts", handler)
+    return () => window.removeEventListener("rln-open-contacts", handler)
+  }, [])
+
   // Aktives Modul muss immer in der Liste sein — rechts anhaengen, falls
   // noch nicht offen. Auch ungueltige IDs (Modul nicht mehr verfuegbar)
   // werden hier herausgefiltert.

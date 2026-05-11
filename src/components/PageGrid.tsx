@@ -137,6 +137,21 @@ export function PageGrid({
     }
   }, [storageKey, activeIdx])
 
+  // Custom-Event: 'rln-focus-widget' — springt zur ersten Page, die das Widget enthaelt.
+  // Beispiel: Klick auf XP-Balken in StatsBar dispatcht das Event fuer 'log'.
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ widget: string }>).detail
+      if (!detail?.widget) return
+      const idx = pages.findIndex((p) =>
+        p.slots.some((s) => s.widget === detail.widget || s.widget === `${detail.widget}-detail`)
+      )
+      if (idx >= 0) setActiveIdx(idx)
+    }
+    window.addEventListener("rln-focus-widget", handler)
+    return () => window.removeEventListener("rln-focus-widget", handler)
+  }, [pages])
+
   // Mobile-Erkennung via ResizeObserver auf dem Container.
   // Bei schmaler Breite: Grid wird einspaltig, Slots stapeln, Page scrollt.
   const containerRef = useRef<HTMLDivElement>(null)

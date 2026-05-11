@@ -75,8 +75,9 @@ export function SpiegelView(props: ModuleViewProps<SpiegelModuleConfig>) {
     )
   }
 
+  const spaceKey = props.spaceId ?? "default"
   return (
-    <SelectionProvider>
+    <SelectionProvider storageKey={`rln-profil-${spaceKey}`}>
       <SpiegelInner {...props} />
     </SelectionProvider>
   )

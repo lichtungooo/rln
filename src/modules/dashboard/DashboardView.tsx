@@ -83,8 +83,9 @@ export function DashboardView({ spaceId, activeGroup }: ModuleViewProps) {
     )
   }
 
+  const spaceKey = spaceId ?? "default"
   return (
-    <SelectionProvider>
+    <SelectionProvider storageKey={`rln-dashboard-${spaceKey}`}>
       <DashboardInner spaceId={spaceId} activeGroup={activeGroup} />
     </SelectionProvider>
   )

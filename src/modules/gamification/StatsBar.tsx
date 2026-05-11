@@ -13,6 +13,12 @@ import { useElderStatus } from "../profile/use-elder-status"
  * Reine Zahl, keine Bewertung. Eine 1 koennte Fake sein, das sieht man am
  * niedrigen Wert.
  *
+ * Klickbar:
+ * - XP-Balken: dispatched 'rln-focus-widget' event mit { widget: 'log' }.
+ *   Module (PageGrid) reagieren und navigieren zur Page mit log-Widget.
+ * - Trust-Zahl: dispatched 'rln-open-contacts' event. MacherApp oeffnet
+ *   die Kontakte-Liste.
+ *
  * Marker: Aelteste-Krone, aktive Synergien.
  */
 export function StatsBar({
@@ -40,10 +46,22 @@ export function StatsBar({
 
   const trustCount = activeContacts.length
 
+  const openLog = () => {
+    window.dispatchEvent(new CustomEvent("rln-focus-widget", { detail: { widget: "log" } }))
+  }
+  const openContacts = () => {
+    window.dispatchEvent(new CustomEvent("rln-open-contacts"))
+  }
+
   return (
     <div className="flex items-center gap-3 shrink-0">
-      {/* XP-Balken mit Level-Kreis */}
-      <div className="flex items-center gap-2 min-w-[140px]">
+      {/* XP-Balken mit Level-Kreis — Klick fuehrt zum Log */}
+      <button
+        type="button"
+        onClick={openLog}
+        className="flex items-center gap-2 min-w-[140px] rounded-md px-1 py-0.5 hover:bg-muted/40 transition-colors text-left"
+        title="Klick fuehrt zum Log"
+      >
         <div
           className="w-7 h-7 rounded-full grid place-items-center text-[10px] font-bold text-white shadow shrink-0"
           style={{ background: "linear-gradient(135deg, #E8751A, #FBBF24)" }}
@@ -64,16 +82,18 @@ export function StatsBar({
             {totalXp.toLocaleString("de-DE")} XP
           </div>
         </div>
-      </div>
+      </button>
 
-      {/* Trust = Anzahl vertrauter Menschen */}
-      <div
-        className="flex items-center gap-1.5 shrink-0"
-        title="Vertraute Menschen (verifiziert per Handshake)"
+      {/* Trust — Klick oeffnet Kontakte */}
+      <button
+        type="button"
+        onClick={openContacts}
+        className="flex items-center gap-1.5 shrink-0 rounded-md px-1.5 py-1 hover:bg-muted/40 transition-colors"
+        title="Vertraute Menschen — Klick oeffnet Kontakte"
       >
         <ShieldCheck className="h-4 w-4 text-purple-600" />
         <span className="text-sm font-bold text-purple-700">{trustCount}</span>
-      </div>
+      </button>
 
       {/* Marker — Aelteste + Synergien */}
       {showMarkers && (
