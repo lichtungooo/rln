@@ -5,10 +5,12 @@ import { PageGrid, type GridPage, type AvailableWidget } from "../../components/
 import { SelectionProvider, useNavigation } from "../../components/SelectionContext"
 import { StatsBar } from "../gamification"
 import { TreeWidget } from "./widgets/TreeWidget"
+import { BereichDetailWidget } from "./widgets/BereichDetailWidget"
 import { QuestWidget } from "./widgets/QuestWidget"
 import { QuestDetailWidget } from "./widgets/QuestDetailWidget"
 import { LogWidget } from "./widgets/LogWidget"
 import { CalendarWidget } from "./widgets/CalendarWidget"
+import { EventDetailWidget } from "./widgets/EventDetailWidget"
 import { AvatarWidget } from "../avatar"
 import { DashboardHero } from "./DashboardHero"
 
@@ -23,9 +25,11 @@ const DASHBOARD_WIDGETS: AvailableWidget[] = [
   { id: "hero", label: "Begruessung", defaultColSpan: 6, defaultRowSpan: 2 },
   { id: "avatar", label: "Avatar", defaultColSpan: 2, defaultRowSpan: 2 },
   { id: "tree", label: "Faehigkeiten", defaultColSpan: 2, defaultRowSpan: 2 },
+  { id: "bereich-detail", label: "Bereich-Detail", defaultColSpan: 3, defaultRowSpan: 2 },
   { id: "quest", label: "Quests", defaultColSpan: 2, defaultRowSpan: 2 },
   { id: "quest-detail", label: "Quest-Detail", defaultColSpan: 3, defaultRowSpan: 2 },
-  { id: "calendar", label: "Kalender", defaultColSpan: 6, defaultRowSpan: 2 },
+  { id: "calendar", label: "Kalender", defaultColSpan: 3, defaultRowSpan: 2 },
+  { id: "event-detail", label: "Termin-Detail", defaultColSpan: 3, defaultRowSpan: 2 },
   { id: "log", label: "Log", defaultColSpan: 3, defaultRowSpan: 2 },
 ]
 
@@ -44,10 +48,20 @@ const DEFAULT_PAGES: GridPage[] = [
     id: "tag",
     name: "Tag",
     slots: [
-      { id: "s1", widget: "calendar", colSpan: 6, rowSpan: 2 },
-      // Quest links + Quest-Detail rechts — Klick-Routing-Vorbild
-      { id: "s2", widget: "quest", colSpan: 3, rowSpan: 2 },
-      { id: "s3", widget: "quest-detail", colSpan: 3, rowSpan: 2 },
+      // Klick-Routing-Vorbild: Source links, Detail rechts
+      { id: "s1", widget: "calendar", colSpan: 3, rowSpan: 2 },
+      { id: "s2", widget: "event-detail", colSpan: 3, rowSpan: 2 },
+      { id: "s3", widget: "quest", colSpan: 3, rowSpan: 2 },
+      { id: "s4", widget: "quest-detail", colSpan: 3, rowSpan: 2 },
+    ],
+  },
+  {
+    id: "skills",
+    name: "Skills",
+    slots: [
+      // Klick auf einen Bereich links → Detail rechts
+      { id: "s1", widget: "tree", colSpan: 3, rowSpan: 4 },
+      { id: "s2", widget: "bereich-detail", colSpan: 3, rowSpan: 4 },
     ],
   },
 ]
@@ -96,12 +110,16 @@ function DashboardInner({
         return <AvatarWidget spaceSlug={spaceSlug} spaceId={spaceId} />
       case "tree":
         return <TreeWidget spaceSlug={spaceSlug} />
+      case "bereich-detail":
+        return <BereichDetailWidget />
       case "quest":
         return <QuestWidget spaceSlug={spaceSlug} />
       case "quest-detail":
         return <QuestDetailWidget />
       case "calendar":
         return <CalendarWidget spaceSlug={spaceSlug} />
+      case "event-detail":
+        return <EventDetailWidget />
       case "log":
         return <LogWidget />
       default:

@@ -8,10 +8,14 @@ import {
   useUserProgress,
   type TreeBereichId,
 } from "../../gamification"
+import { useChannel, useChannelSync } from "../../../components/SelectionContext"
 
 /**
  * TreeWidget — kompakte Sicht auf die 8 Bereiche.
- * Klick auf einen Bereich oder den Header springt zum Skill-Tree-Modul.
+ *
+ * Klick-Routing: Klick auf einen Bereich setzt ihn im "bereich"-Channel.
+ * Ein BereichDetailWidget zeigt das Detail. Pfeile blaettern durch die
+ * 8 Bereiche. Pfeil-Icon rechts oben fuehrt weiterhin zum Skill-Tree-Modul.
  */
 export function TreeWidget({ spaceSlug }: { spaceSlug: string | null }) {
   const navigate = useNavigate()
@@ -28,6 +32,10 @@ export function TreeWidget({ spaceSlug }: { spaceSlug: string | null }) {
     [data.bereichXp]
   )
 
+  // Bereiche als Channel-Items registrieren
+  useChannelSync("bereich", TREE_BEREICHE)
+  const { selectedId, select } = useChannel("bereich")
+
   const goTree = () => {
     if (spaceSlug) navigate(`/${spaceSlug}/skill-tree`)
   }
@@ -35,12 +43,7 @@ export function TreeWidget({ spaceSlug }: { spaceSlug: string | null }) {
   return (
     <div className="bg-card border rounded-xl p-4 h-full flex flex-col">
       {/* Header */}
-      <button
-        type="button"
-        onClick={goTree}
-        disabled={!spaceSlug}
-        className="flex items-center justify-between mb-3 text-left group disabled:cursor-default"
-      >
+      <div className="flex items-center justify-between mb-3">
         <div>
           <div className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
             Faehigkeitenbaum
@@ -50,19 +53,38 @@ export function TreeWidget({ spaceSlug }: { spaceSlug: string | null }) {
             {synergyActive && <Sparkles className="h-4 w-4 text-purple-500" />}
           </div>
         </div>
-        <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
-      </button>
+        <button
+          type="button"
+          onClick={goTree}
+          disabled={!spaceSlug}
+          className="p-1 rounded hover:bg-muted/30 transition-colors disabled:opacity-40"
+          aria-label="Zum Skill-Tree-Modul"
+          title="Zum Skill-Tree-Modul"
+        >
+          <ArrowRight className="h-4 w-4 text-muted-foreground" />
+        </button>
+      </div>
 
-      {/* 8 Bereiche kompakt */}
+      {/* 8 Bereiche kompakt — klickbar */}
       <div className="space-y-1.5 flex-1 overflow-y-auto">
         {TREE_BEREICHE.map((bereich) => {
           const xp = bereichXp(bereich.id as TreeBereichId)
           const prog = bereichProgress(bereich.id as TreeBereichId)
           const Icon = bereich.icon
+          const isSelected = selectedId === bereich.id
           return (
-            <div key={bereich.id} className="flex items-center gap-2 text-xs">
+            <button
+              key={bereich.id}
+              type="button"
+              onClick={() => select(bereich.id)}
+              className={`w-full flex items-center gap-2 text-xs p-1 rounded transition-colors ${
+                isSelected
+                  ? "bg-primary/5 ring-1 ring-primary"
+                  : "hover:bg-muted/30"
+              }`}
+            >
               <Icon className="h-3 w-3 shrink-0" style={{ color: bereich.color }} />
-              <span className="font-medium w-20 truncate">{bereich.label}</span>
+              <span className="font-medium w-20 truncate text-left">{bereich.label}</span>
               <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
                 <div
                   className="h-full rounded-full"
@@ -72,10 +94,13 @@ export function TreeWidget({ spaceSlug }: { spaceSlug: string | null }) {
                   }}
                 />
               </div>
-              <span className="text-[10px] font-semibold tabular-nums w-10 text-right" style={{ color: bereich.color }}>
+              <span
+                className="text-[10px] font-semibold tabular-nums w-10 text-right"
+                style={{ color: bereich.color }}
+              >
                 Lv {prog.level}
               </span>
-            </div>
+            </button>
           )
         })}
       </div>
@@ -83,7 +108,9 @@ export function TreeWidget({ spaceSlug }: { spaceSlug: string | null }) {
       {/* Footer */}
       <div className="text-[10px] text-muted-foreground mt-3 pt-2 border-t flex justify-between">
         <span>{totalXp.toLocaleString("de-DE")} XP gesamt</span>
-        <span>{totalProgress.xpInLevel} / {totalProgress.xpNeeded} zum naechsten</span>
+        <span>
+          {totalProgress.xpInLevel} / {totalProgress.xpNeeded} zum naechsten
+        </span>
       </div>
     </div>
   )
