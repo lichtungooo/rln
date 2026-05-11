@@ -25,6 +25,10 @@ import {
   useUserProgress,
   useGamificationSeed,
   useSkillVisibility,
+  useCircles,
+  useShareProfiles,
+  buildViewerContext,
+  resolveSkillVisibility,
   UNIVERSAL_SKILLS,
   GAMIFICATION_ITEM_TYPES,
   type SkillData,
@@ -75,24 +79,71 @@ export function SkillTreeView({ activeGroup }: ModuleViewProps) {
   const { data, bereichXp, bereichProgress, skillXp, skillProgress, isUnlocked } = useUserProgress()
   const { data: skillItems } = useItems({ type: GAMIFICATION_ITEM_TYPES.skill })
   const { seed, busy: seeding, status: seedStatus } = useGamificationSeed(spaceSlug)
-  const { get: getVisibility, set: setVisibility } = useSkillVisibility()
+  const { get: getVisibility, set: setVisibility, map: visibilityMap } = useSkillVisibility()
+  const { mine: circles } = useCircles()
+  const { mine: shareProfiles } = useShareProfiles()
 
-  // Skills nach Bereich gruppieren
+  // Sicht-Modus: null = eigene Sicht, sonst Kreis-ID
+  const [viewAsCircleId, setViewAsCircleId] = useState<string | null>(null)
+
+  // ViewerContext fuer den gewaehlten Kreis (simuliertes Pseudo-Mitglied)
+  const viewerContext = useMemo(() => {
+    if (!viewAsCircleId) return null
+    const circle = circles.find((c) => c.id === viewAsCircleId)
+    if (!circle) return null
+    const pseudoDid = `preview-member:${circle.id}`
+    return buildViewerContext(
+      pseudoDid,
+      [
+        {
+          id: circle.id,
+          data: {
+            ...circle.data,
+            memberIds: circle.data.memberIds.includes(pseudoDid)
+              ? circle.data.memberIds
+              : [pseudoDid, ...circle.data.memberIds],
+          },
+        },
+      ],
+      shareProfiles,
+    )
+  }, [viewAsCircleId, circles, shareProfiles])
+
+  // Filter: ist dieser Skill aus Sicht des Schauenden sichtbar?
+  const isSkillVisibleForViewer = (skill: RenderSkill): boolean => {
+    if (!viewerContext) return true
+    const override = visibilityMap[skill.id]
+    const decision = resolveSkillVisibility(skill.data, override, viewerContext, false)
+    return decision.visible
+  }
+
+  // Skills nach Bereich gruppieren — filtert auch nach Viewer-Context
+  // wenn ein anderer Kreis als "eigene Sicht" gewaehlt ist.
   const skillsByBereich = useMemo(() => {
     const map: Record<TreeBereichId, RenderSkill[]> = {} as Record<TreeBereichId, RenderSkill[]>
     for (const bereich of TREE_BEREICHE) map[bereich.id] = []
 
     for (const u of UNIVERSAL_SKILLS) {
-      if (map[u.bereichId]) {
-        const { id, ...data } = u
-        map[u.bereichId].push({ id, data, isUniversal: true })
+      if (!map[u.bereichId]) continue
+      const { id, ...data } = u
+      const rs: RenderSkill = { id, data, isUniversal: true }
+      // Filter: in Vorschau-Modus nur sichtbare Skills aufnehmen
+      if (viewerContext) {
+        const override = visibilityMap[id]
+        const dec = resolveSkillVisibility(data, override, viewerContext, false)
+        if (!dec.visible) continue
       }
+      map[u.bereichId].push(rs)
     }
     for (const item of skillItems) {
       const sd = item.data as SkillData
-      if (map[sd.bereichId]) {
-        map[sd.bereichId].push({ id: item.id, data: sd, isUniversal: false })
+      if (!map[sd.bereichId]) continue
+      if (viewerContext) {
+        const override = visibilityMap[item.id]
+        const dec = resolveSkillVisibility(sd, override, viewerContext, false)
+        if (!dec.visible) continue
       }
+      map[sd.bereichId].push({ id: item.id, data: sd, isUniversal: false })
     }
     for (const bId of Object.keys(map) as TreeBereichId[]) {
       map[bId].sort((a, b) => {
@@ -101,7 +152,7 @@ export function SkillTreeView({ activeGroup }: ModuleViewProps) {
       })
     }
     return map
-  }, [skillItems])
+  }, [skillItems, viewerContext, visibilityMap])
 
   // Header-Werte
   const totalXp = useMemo(
@@ -253,6 +304,15 @@ export function SkillTreeView({ activeGroup }: ModuleViewProps) {
           </button>
         )}
       </div>
+
+      {/* Sicht-Modus-Selector (nur wenn Kreise existieren) */}
+      {circles.length > 0 && (
+        <ViewAsSelector
+          circles={circles.map((c) => ({ id: c.id, name: c.data.name }))}
+          value={viewAsCircleId}
+          onChange={setViewAsCircleId}
+        />
+      )}
 
       {/* Panel-Layout */}
       <div onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
@@ -839,5 +899,73 @@ function VisibilityChip({
       <Icon className="h-2.5 w-2.5" />
       {label}
     </button>
+  )
+}
+
+// ============================================================
+// ViewAsSelector — Sicht-Modus Selector (Polish-10)
+// ============================================================
+
+function ViewAsSelector({
+  circles,
+  value,
+  onChange,
+}: {
+  circles: Array<{ id: string; name: string }>
+  value: string | null
+  onChange: (id: string | null) => void
+}) {
+  const inPreview = value !== null
+  const activeCircle = inPreview ? circles.find((c) => c.id === value) : null
+
+  return (
+    <div
+      className={`rounded-lg border px-3 py-2 flex items-center gap-2 flex-wrap transition-colors ${
+        inPreview ? "border-primary/40 bg-primary/5" : "bg-muted/20"
+      }`}
+    >
+      <Eye
+        className={`h-3.5 w-3.5 shrink-0 ${
+          inPreview ? "text-primary" : "text-muted-foreground"
+        }`}
+      />
+      <span
+        className={`text-[10px] uppercase font-semibold tracking-wider shrink-0 ${
+          inPreview ? "text-primary" : "text-muted-foreground"
+        }`}
+      >
+        Sicht
+      </span>
+      <button
+        type="button"
+        onClick={() => onChange(null)}
+        className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+          value === null
+            ? "border-transparent bg-foreground text-background font-semibold"
+            : "border-muted-foreground/20 text-muted-foreground hover:border-foreground/40"
+        }`}
+      >
+        Eigene
+      </button>
+      {circles.map((c) => (
+        <button
+          key={c.id}
+          type="button"
+          onClick={() => onChange(value === c.id ? null : c.id)}
+          className={`text-xs px-2 py-0.5 rounded-full border transition-colors ${
+            value === c.id
+              ? "border-transparent bg-primary text-primary-foreground font-semibold"
+              : "border-muted-foreground/20 text-muted-foreground hover:border-foreground/40"
+          }`}
+        >
+          {c.name}
+        </button>
+      ))}
+      {inPreview && activeCircle && (
+        <span className="ml-auto text-[10px] text-primary italic">
+          Du schaust durch die Augen von "{activeCircle.name}"
+        </span>
+      )}
+    </div>
   )
 }
