@@ -11,7 +11,7 @@ import { SpiegelView, spiegelDefaultConfig, type SpiegelModuleConfig } from "./S
  */
 export const spiegelModule: ModuleDefinition<SpiegelModuleConfig> = {
   id: "spiegel",
-  label: "Spiegel",
+  label: "Profil",
   icon: Aperture,
   View: SpiegelView,
   defaultConfig: spiegelDefaultConfig,

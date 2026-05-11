@@ -57,21 +57,36 @@ export function SpiegelQuestTab({ onNavReady }: SpiegelQuestTabProps) {
   }, [quests, filter, isCompleted])
   const openQuests = filteredQuests // alte Variable beibehalten fuer minimale Aenderung
 
-  // Pfeil-Navigation: rotiert durch Filter
-  const filterOrder: QuestFilter[] = ["open", "done", "all"]
+  // Pfeil-Navigation: durch die aktuelle Quest-Liste blaettern.
+  // Detail wandert ins rechte Panel mit.
   const goPrev = () => {
-    const i = filterOrder.indexOf(filter)
-    setFilter(filterOrder[(i - 1 + filterOrder.length) % filterOrder.length])
+    if (filteredQuests.length === 0) return
+    const idx = filteredQuests.findIndex((q) => q.id === selectedQuestId)
+    const next =
+      idx <= 0
+        ? filteredQuests[filteredQuests.length - 1]
+        : filteredQuests[idx - 1]
+    setSelectedQuestId(next?.id ?? null)
   }
   const goNext = () => {
-    const i = filterOrder.indexOf(filter)
-    setFilter(filterOrder[(i + 1) % filterOrder.length])
+    if (filteredQuests.length === 0) return
+    const idx = filteredQuests.findIndex((q) => q.id === selectedQuestId)
+    const next =
+      idx === -1 || idx >= filteredQuests.length - 1
+        ? filteredQuests[0]
+        : filteredQuests[idx + 1]
+    setSelectedQuestId(next?.id ?? null)
   }
   useEffect(() => {
     if (!onNavReady) return
-    onNavReady({ prev: goPrev, next: goNext, canPrev: true, canNext: true })
+    onNavReady({
+      prev: goPrev,
+      next: goNext,
+      canPrev: filteredQuests.length > 0,
+      canNext: filteredQuests.length > 0,
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onNavReady, filter])
+  }, [onNavReady, filteredQuests, selectedQuestId])
 
   // Gruppiere nach Series + Singles
   const grouped = useMemo(() => {
@@ -124,11 +139,22 @@ export function SpiegelQuestTab({ onNavReady }: SpiegelQuestTabProps) {
       <div className="rounded-xl border bg-card overflow-hidden flex flex-col">
         <div className="px-3 py-2 border-b bg-muted/20 flex items-center gap-2">
           <Trophy className="h-4 w-4 text-primary shrink-0" />
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold flex-1">
-            {filter === "open" ? "Offen" : filter === "done" ? "Erledigt" : "Alle"}
-          </span>
-          <span className="text-[10px] text-muted-foreground">
-            {openQuests.length} {openQuests.length === 1 ? "Quest" : "Quests"}
+          {(["open", "done", "all"] as QuestFilter[]).map((f) => (
+            <button
+              key={f}
+              type="button"
+              onClick={() => setFilter(f)}
+              className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
+                filter === f
+                  ? "border-transparent bg-foreground text-background font-semibold"
+                  : "border-muted-foreground/20 text-muted-foreground hover:border-foreground/40"
+              }`}
+            >
+              {f === "open" ? "Offen" : f === "done" ? "Erledigt" : "Alle"}
+            </button>
+          ))}
+          <span className="text-[10px] text-muted-foreground ml-auto">
+            {filteredQuests.length}
           </span>
         </div>
 
@@ -146,6 +172,7 @@ export function SpiegelQuestTab({ onNavReady }: SpiegelQuestTabProps) {
                   items={s.items}
                   skills={skills}
                   selectedId={selectedQuestId}
+                  isCompleted={isCompleted}
                   onSelect={setSelectedQuestId}
                 />
               ))}
@@ -163,6 +190,7 @@ export function SpiegelQuestTab({ onNavReady }: SpiegelQuestTabProps) {
                       quest={q}
                       skills={skills}
                       active={selectedQuestId === q.id}
+                      completed={isCompleted(q.id)}
                       onClick={() => setSelectedQuestId(q.id)}
                     />
                   ))}
@@ -200,11 +228,13 @@ function SeriesBlock({
   items,
   skills,
   selectedId,
+  isCompleted,
   onSelect,
 }: {
   items: Item[]
   skills: Item[]
   selectedId: string | null
+  isCompleted: (id: string) => boolean
   onSelect: (id: string) => void
 }) {
   const seriesId = (items[0]?.data as QuestData).questSeriesId
@@ -226,6 +256,7 @@ function SeriesBlock({
             quest={q}
             skills={skills}
             active={selectedId === q.id}
+            completed={isCompleted(q.id)}
             seriesIndex={idx + 1}
             onClick={() => onSelect(q.id)}
           />
@@ -243,12 +274,14 @@ function QuestRow({
   quest,
   skills,
   active,
+  completed,
   seriesIndex,
   onClick,
 }: {
   quest: Item
   skills: Item[]
   active: boolean
+  completed: boolean
   seriesIndex?: number
   onClick: () => void
 }) {
@@ -288,7 +321,11 @@ function QuestRow({
       }`}
     >
       <div className="flex items-start gap-2">
-        <Circle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+        {completed ? (
+          <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+        ) : (
+          <Circle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+        )}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap">
             {seriesIndex !== undefined && (
