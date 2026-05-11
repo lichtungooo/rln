@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Sparkles, Check, Lock, Filter } from "lucide-react"
 import * as LucideIcons from "lucide-react"
 import { useCurrentUser } from "@real-life-stack/toolkit"
@@ -59,9 +59,11 @@ function DynamicIcon({ name, className, color }: { name: string; className?: str
   return <Icon className={className} style={color ? { color } : undefined} />
 }
 
-export interface SpiegelAvatarTabProps extends ModuleViewProps {}
+export interface SpiegelAvatarTabProps extends ModuleViewProps {
+  onNavReady?: (api: { prev: () => void; next: () => void; canPrev: boolean; canNext: boolean }) => void
+}
 
-export function SpiegelAvatarTab({ spaceId }: SpiegelAvatarTabProps) {
+export function SpiegelAvatarTab({ spaceId, onNavReady }: SpiegelAvatarTabProps) {
   const { data: currentUser } = useCurrentUser()
   const { owned, displayed, titleForSpace, toggleDisplayed } = useUserAvatar(spaceId)
   const { data: progress } = useUserProgress()
@@ -93,6 +95,32 @@ export function SpiegelAvatarTab({ spaceId }: SpiegelAvatarTabProps) {
     if (filter === "all") return owned
     return owned.filter((item) => item.def.bereichId === filter)
   }, [owned, filter])
+
+  // Pfeil-Navigation: rotiert durch Filter (Alle + verfuegbare Bereiche)
+  const filterOrder = useMemo<Array<TreeBereichId | "all">>(
+    () => ["all", ...bereicheMitItems.map((b) => b.id)],
+    [bereicheMitItems]
+  )
+  const goPrev = () => {
+    const idx = filterOrder.indexOf(filter)
+    const next = idx <= 0 ? filterOrder[filterOrder.length - 1] : filterOrder[idx - 1]
+    if (next !== undefined) setFilter(next)
+  }
+  const goNext = () => {
+    const idx = filterOrder.indexOf(filter)
+    const next = idx >= filterOrder.length - 1 ? filterOrder[0] : filterOrder[idx + 1]
+    if (next !== undefined) setFilter(next)
+  }
+  useEffect(() => {
+    if (!onNavReady) return
+    onNavReady({
+      prev: goPrev,
+      next: goNext,
+      canPrev: filterOrder.length > 1,
+      canNext: filterOrder.length > 1,
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onNavReady, filter, filterOrder.length])
 
   const isItemDisplayed = (id: string) => displayed.some((d) => d.id === id)
 

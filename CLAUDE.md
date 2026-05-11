@@ -235,13 +235,23 @@ Selbst Module die noch kein PageGrid haben (z.B. Calendar mit seinen festen View
 
 So fuehlen sich alle Module aus einem Guss an, auch wenn intern unterschiedlich strukturiert.
 
+### Wann PageGrid, wann eigene Struktur?
+
+**PageGrid** ist fuer Module die ein **persoenliches Cockpit** sind — der User stellt sich seine Sicht selbst zusammen (Dashboard).
+
+**Eigene Struktur** ist fuer Module mit **fester Funktions-Logik**, wo Tabs unterschiedliche Modi bedeuten:
+- Profil: 3 feste Linsen (Avatar / Quest / Skill)
+- Kalender: 7 feste View-Modi (Tag / Woche / Monat / Jahr / Agenda / Events / Meine)
+
+Dort uebernimmt man nur den **Tab-Button-Stil** (Pille, Gradient-Hintergrund) und die **Pfeile-aussen-Konvention** (intern durch Inhalt blaettern via onNavReady-API), aber NICHT die konfigurierbaren Pages.
+
 ### Stand 11.05.2026
 
 | Modul | Status |
 |-------|--------|
-| Dashboard | ✅ Volles PageGrid |
-| Profil (Spiegel) | ✅ Volles PageGrid mit XL- + kompakten Widgets |
-| Calendar | Tab-Stil uebernommen, volles Grid noch offen |
+| Dashboard | ✅ Volles PageGrid (Pages konfigurierbar) |
+| Profil (Spiegel) | ✅ Tab-Stil + Pfeile aussen — FESTE 3-Tab-Struktur, kein Pages-Grid |
+| Calendar | Tab-Stil uebernommen, feste View-Modi |
 | Marketplace, Wissensfeld | Noch nicht umgestellt |
 | Map | Bleibt fullscreen (die Karte ist der ganze Inhalt) |
 

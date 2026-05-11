@@ -1,24 +1,39 @@
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
+import {
+  ChevronLeft,
+  ChevronRight,
+  User,
+  Trophy,
+  Network,
+  ShieldCheck,
+  Crown,
+  Sparkles,
+} from "lucide-react"
+import { useContacts } from "@real-life-stack/toolkit"
 import type { ModuleViewProps } from "../registry"
-import { getSpaceMeta } from "../../spaces/space-data"
-import { PageGrid, type GridPage, type AvailableWidget } from "../../components/PageGrid"
+import {
+  useUserProgress,
+  SYNERGIES,
+  progressInLevel,
+} from "../gamification"
+import { useElderStatus } from "../profile/use-elder-status"
 import { SpiegelAvatarTab } from "./SpiegelAvatarTab"
 import { SpiegelQuestTab } from "./SpiegelQuestTab"
 import { SpiegelSkillTab } from "./SpiegelSkillTab"
-import { DashboardHero } from "../dashboard/DashboardHero"
-import { TreeWidget } from "../dashboard/widgets/TreeWidget"
-import { QuestWidget } from "../dashboard/widgets/QuestWidget"
-import { LogWidget } from "../dashboard/widgets/LogWidget"
-import { CalendarWidget } from "../dashboard/widgets/CalendarWidget"
-import { AvatarWidget } from "../avatar"
+import { useDemoSeed } from "./use-demo-seed"
 
 /**
- * SpiegelView (Profil-Modul) — drei Linsen + freies Grid.
+ * SpiegelView — drei Linsen auf den Menschen in einem Modul.
  *
- * Volle Grid-Transformation: Avatar, Quest, Skill-Tree sind XL-Widgets
- * mit eigener Two-Panel-Logik (interne Pfeile am Footer). User kann
- * sich Seiten selbst zusammenstellen — Default sind drei Seiten mit
- * je einem XL-Widget.
+ * Profil hat eine FESTE Tab-Struktur (Avatar / Quest / Skill) — kein
+ * konfigurierbares Grid wie das Dashboard. Pfeile aussen blaettern
+ * INTERN durch den aktuellen Tab (Filter, Quest-Liste, Skill-Bereich)
+ * via onNavReady-API, die jeder Tab bedient.
+ *
+ * Hero-Zeile oben: Tabs links, XP-Balken + Trust-Anzeige rechts.
+ * Trust = Anzahl vertrauter Menschen (verifizierte Kontakte). Wenn
+ * jemand nur 1 hat, koennte das auch ein guter Fake sein — also reine
+ * Zahl, keine Bewertung.
  */
 
 export type SpiegelTab = "avatar" | "quest" | "skill"
@@ -31,97 +46,196 @@ export const spiegelDefaultConfig: SpiegelModuleConfig = {
   defaultTab: "skill",
 }
 
-const PROFIL_WIDGETS: AvailableWidget[] = [
-  // Profil-XL: ganze Spiegel-Tabs als grosse Widgets
-  { id: "profil-avatar", label: "Avatar + Inventar", defaultColSpan: 6, defaultRowSpan: 4 },
-  { id: "profil-quest", label: "Quests + Log", defaultColSpan: 6, defaultRowSpan: 4 },
-  { id: "profil-skill", label: "Faehigkeitsbaum", defaultColSpan: 6, defaultRowSpan: 4 },
-  // Kompakte Widgets aus Dashboard wiederverwendet
-  { id: "hero", label: "Begruessung", defaultColSpan: 6, defaultRowSpan: 2 },
-  { id: "avatar", label: "Avatar (kompakt)", defaultColSpan: 2, defaultRowSpan: 2 },
-  { id: "tree", label: "Faehigkeiten (kompakt)", defaultColSpan: 2, defaultRowSpan: 2 },
-  { id: "quest", label: "Quests (kompakt)", defaultColSpan: 2, defaultRowSpan: 2 },
-  { id: "calendar", label: "Kalender", defaultColSpan: 6, defaultRowSpan: 2 },
-  { id: "log", label: "Log", defaultColSpan: 3, defaultRowSpan: 2 },
-]
-
-const DEFAULT_PAGES: GridPage[] = [
-  {
-    id: "avatar",
-    name: "Avatar",
-    slots: [{ id: "s1", widget: "profil-avatar", colSpan: 6, rowSpan: 4 }],
-  },
-  {
-    id: "quest",
-    name: "Quest",
-    slots: [{ id: "s1", widget: "profil-quest", colSpan: 6, rowSpan: 4 }],
-  },
-  {
-    id: "skill",
-    name: "Skill",
-    slots: [{ id: "s1", widget: "profil-skill", colSpan: 6, rowSpan: 4 }],
-  },
-]
-
 export function SpiegelView(props: ModuleViewProps<SpiegelModuleConfig>) {
-  const { spaceId, activeGroup } = props
-  const spaceSlug = useMemo(() => {
-    if (!activeGroup) return null
-    return getSpaceMeta(activeGroup).slug ?? activeGroup.id
-  }, [activeGroup])
-  const spaceKey = spaceId ?? "default"
+  const { config } = props
+  const [tab, setTab] = useState<SpiegelTab>(config?.defaultTab ?? "skill")
 
-  const renderWidget = (widgetId: string) => {
-    switch (widgetId) {
-      case "profil-avatar":
-        return (
-          <div className="h-full w-full rounded-xl border bg-card overflow-hidden p-2">
-            <SpiegelAvatarTab {...props} />
-          </div>
-        )
-      case "profil-quest":
-        return (
-          <div className="h-full w-full rounded-xl border bg-card overflow-hidden p-2">
-            <SpiegelQuestTab {...props} />
-          </div>
-        )
-      case "profil-skill":
-        return (
-          <div className="h-full w-full rounded-xl border bg-card overflow-hidden p-2">
-            <SpiegelSkillTab {...props} />
-          </div>
-        )
-      case "hero":
-        return (
-          <div className="h-full w-full overflow-auto">
-            <DashboardHero spaceId={spaceId} />
-          </div>
-        )
-      case "avatar":
-        return <AvatarWidget spaceSlug={spaceSlug} spaceId={spaceId} />
-      case "tree":
-        return <TreeWidget spaceSlug={spaceSlug} />
-      case "quest":
-        return <QuestWidget spaceSlug={spaceSlug} />
-      case "calendar":
-        return <CalendarWidget spaceSlug={spaceSlug} />
-      case "log":
-        return <LogWidget />
-      default:
-        return (
-          <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground italic">
-            Unbekanntes Widget: {widgetId}
-          </div>
-        )
-    }
+  // Bridge-State: aktiver Tab kommuniziert seine Nav-API zurueck
+  const [navApi, setNavApi] = useState<{
+    prev: () => void
+    next: () => void
+    canPrev: boolean
+    canNext: boolean
+  } | null>(null)
+
+  // Bei Tab-Wechsel Nav-API zuruecksetzen
+  const handleTabChange = (next: SpiegelTab) => {
+    setNavApi(null)
+    setTab(next)
   }
 
   return (
-    <PageGrid
-      storageKey={`rln-profil-${spaceKey}`}
-      defaultPages={DEFAULT_PAGES}
-      availableWidgets={PROFIL_WIDGETS}
-      renderWidget={renderWidget}
-    />
+    <div className="flex flex-col h-full">
+      <SpiegelHero tab={tab} onTabChange={handleTabChange} />
+
+      {/* Container-Wrapper mit Pfeilen aussen */}
+      <div className="flex-1 flex items-stretch min-h-0 px-0 py-1.5 gap-0">
+        <button
+          type="button"
+          onClick={() => navApi?.prev()}
+          disabled={!navApi?.canPrev}
+          className="self-center shrink-0 p-1 text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
+          aria-label="Zurueck"
+        >
+          <ChevronLeft className="h-8 w-8" strokeWidth={1.5} />
+        </button>
+
+        <div className="flex-1 flex flex-col min-w-0 p-2">
+          {tab === "avatar" && <SpiegelAvatarTab {...props} onNavReady={setNavApi} />}
+          {tab === "quest" && <SpiegelQuestTab {...props} onNavReady={setNavApi} />}
+          {tab === "skill" && <SpiegelSkillTab {...props} onNavReady={setNavApi} />}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => navApi?.next()}
+          disabled={!navApi?.canNext}
+          className="self-center shrink-0 p-1 text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
+          aria-label="Weiter"
+        >
+          <ChevronRight className="h-8 w-8" strokeWidth={1.5} />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// SpiegelHero — Tab-Buttons + XP + Trust in einer Zeile
+// ============================================================
+
+function SpiegelHero({
+  tab,
+  onTabChange,
+}: {
+  tab: SpiegelTab
+  onTabChange: (t: SpiegelTab) => void
+}) {
+  const { data: progress } = useUserProgress()
+  const { activeContacts } = useContacts()
+  const elder = useElderStatus()
+  const { seed: seedDemo, busy: seeding, alreadySeeded } = useDemoSeed()
+
+  const totalXp = useMemo(
+    () => Object.values(progress.bereichXp).reduce((a, b) => a + (b ?? 0), 0),
+    [progress.bereichXp]
+  )
+  const totalProgress = useMemo(() => progressInLevel(totalXp), [totalXp])
+
+  const activeSynergyCount = useMemo(
+    () =>
+      SYNERGIES.filter((syn) =>
+        syn.bereiche.every((b) => (progress.bereichXp[b] ?? 0) > 0)
+      ).length,
+    [progress.bereichXp]
+  )
+
+  // Trust = Anzahl vertrauter Menschen. Reine Zahl, keine Bewertung.
+  // Wenn einer 1 hat, koennte das ein guter Fake sein.
+  const trustCount = activeContacts.length
+
+  return (
+    <div
+      className="border-b px-3 sm:px-4 py-2 flex items-center gap-3 flex-wrap shrink-0"
+      style={{
+        background:
+          "linear-gradient(90deg, rgba(232,117,26,0.05) 0%, rgba(251,191,36,0.04) 50%, rgba(168,85,247,0.04) 100%)",
+      }}
+    >
+      {/* Tab-Buttons im neuen Stil */}
+      <div className="flex items-center gap-1 shrink-0">
+        <TabButton icon={User} label="Avatar" active={tab === "avatar"} onClick={() => onTabChange("avatar")} />
+        <TabButton icon={Trophy} label="Quest" active={tab === "quest"} onClick={() => onTabChange("quest")} />
+        <TabButton icon={Network} label="Skill" active={tab === "skill"} onClick={() => onTabChange("skill")} />
+      </div>
+
+      <div className="flex-1" />
+
+      {/* XP-Balken kompakt */}
+      <div className="flex items-center gap-2 min-w-[140px]">
+        <div
+          className="w-7 h-7 rounded-full grid place-items-center text-[10px] font-bold text-white shadow shrink-0"
+          style={{ background: "linear-gradient(135deg, #E8751A, #FBBF24)" }}
+        >
+          {totalProgress.level}
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full"
+              style={{
+                width: `${Math.min(100, totalProgress.ratio * 100)}%`,
+                background: "linear-gradient(90deg, #E8751A, #FBBF24)",
+              }}
+            />
+          </div>
+          <div className="text-[9px] text-muted-foreground font-mono leading-none mt-0.5">
+            {totalXp.toLocaleString("de-DE")} XP
+          </div>
+        </div>
+      </div>
+
+      {/* Trust = Anzahl vertrauter Menschen */}
+      <div className="flex items-center gap-1.5 shrink-0" title="Vertraute Menschen (verifiziert per Handshake)">
+        <ShieldCheck className="h-4 w-4 text-purple-600" />
+        <span className="text-sm font-bold text-purple-700">{trustCount}</span>
+        <span className="text-[10px] text-muted-foreground hidden sm:inline">
+          {trustCount === 1 ? "vertraut" : "vertraut"}
+        </span>
+      </div>
+
+      {/* Marker rechts */}
+      <div className="flex items-center gap-1 shrink-0">
+        {elder.isElder && <Crown className="h-4 w-4 text-amber-500" aria-label="Aelteste" />}
+        {activeSynergyCount > 0 && (
+          <div className="flex items-center gap-0.5" title={`${activeSynergyCount} Synergien aktiv`}>
+            <Sparkles className="h-4 w-4 text-purple-500" />
+            {activeSynergyCount > 1 && (
+              <span className="text-[10px] font-bold text-purple-500">
+                {activeSynergyCount}
+              </span>
+            )}
+          </div>
+        )}
+        {!alreadySeeded && (
+          <button
+            type="button"
+            onClick={() => seedDemo().catch((err) => alert(err.message))}
+            disabled={seeding}
+            className="ml-1 text-[10px] px-2 py-1 rounded border border-muted-foreground/20 hover:border-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
+            title="Demo-Daten anlegen — Lv ~42, Items, Quests, Log"
+          >
+            {seeding ? "Lade Demo..." : "Demo"}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function TabButton({
+  icon: Icon,
+  label,
+  active,
+  onClick,
+}: {
+  icon: typeof User
+  label: string
+  active: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`px-2.5 py-1.5 text-sm font-medium flex items-center gap-1.5 rounded-md transition-colors ${
+        active
+          ? "bg-foreground text-background font-semibold"
+          : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+      }`}
+    >
+      <Icon className="h-4 w-4" />
+      <span className="hidden sm:inline">{label}</span>
+    </button>
   )
 }
