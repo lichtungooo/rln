@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { Crown, Shield, User as UserIcon, ChevronDown, Loader2, ShieldCheck } from "lucide-react"
+import { Crown, Shield, User as UserIcon, ChevronDown, Loader2, ShieldCheck, Users } from "lucide-react"
 import {
   useMembers,
   useCurrentUser,
@@ -67,21 +67,83 @@ export function MembersView({ spaceId, activeGroup }: ModuleViewProps) {
     }
   }
 
+  // Rollen-Stats
+  const ownerCount = sortedMembers.filter((m) => roleOf(m.id) === "owner").length
+  const adminCount = sortedMembers.filter((m) => roleOf(m.id) === "admin").length
+  const memberCount = sortedMembers.filter((m) => roleOf(m.id) === "member").length
+
+  // Hoechster Trust-Score
+  const maxTrust = useMemo(() => {
+    let max = 0
+    for (const m of sortedMembers) {
+      const t = reputationMap[m.id]?.trustScore ?? 0
+      if (t > max) max = t
+    }
+    return max
+  }, [sortedMembers, reputationMap])
+
   return (
     <div className="max-w-2xl mx-auto p-4 space-y-4">
+      {/* Stats-Hero */}
+      <div
+        className="rounded-xl border p-4 md:p-5"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(232,117,26,0.05) 0%, rgba(251,191,36,0.04) 50%, rgba(168,85,247,0.04) 100%)",
+        }}
+      >
+        <div className="flex items-start gap-3 flex-wrap">
+          <div
+            className="w-10 h-10 rounded-xl grid place-items-center text-white shadow shrink-0"
+            style={{ background: "linear-gradient(135deg, #E8751A, #FBBF24)" }}
+          >
+            <Users className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl font-bold leading-tight">{activeGroup.name}</h1>
+            <p className="text-[11px] text-muted-foreground">
+              {isAdmin
+                ? "Du bist Admin — du kannst Mitglieder zu Admins ernennen."
+                : "Nur Admins koennen Rollen aendern."}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5 mt-3">
+          <span className="text-xs px-2.5 py-1 rounded-full bg-card border font-semibold">
+            {sortedMembers.length} insgesamt
+          </span>
+          {ownerCount > 0 && (
+            <span
+              className="text-xs px-2.5 py-1 rounded-full font-semibold flex items-center gap-1"
+              style={{ background: "#FBBF24", color: "#78350F" }}
+            >
+              <Crown className="h-3 w-3" />
+              {ownerCount} Owner
+            </span>
+          )}
+          {adminCount > 0 && (
+            <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 text-primary font-semibold flex items-center gap-1">
+              <Shield className="h-3 w-3" />
+              {adminCount} Admin{adminCount === 1 ? "" : "s"}
+            </span>
+          )}
+          {memberCount > 0 && (
+            <span className="text-xs px-2.5 py-1 rounded-full bg-muted text-muted-foreground">
+              {memberCount} Member
+            </span>
+          )}
+          {maxTrust > 0 && (
+            <span className="text-xs px-2.5 py-1 rounded-full bg-purple-100 text-purple-700 flex items-center gap-1" title={`Hoechster Trust-Score: ${maxTrust}`}>
+              <ShieldCheck className="h-3 w-3" />
+              Top Trust {maxTrust}
+            </span>
+          )}
+        </div>
+      </div>
+
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">
-            Mitglieder von {activeGroup.name}
-          </CardTitle>
-          <p className="text-xs text-muted-foreground mt-1">
-            {sortedMembers.length} {sortedMembers.length === 1 ? "Mitglied" : "Mitglieder"}.
-            {isAdmin
-              ? " Du bist Admin — du kannst Mitglieder zu Admins ernennen."
-              : " Nur Admins koennen Rollen aendern."}
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-2">
+        <CardContent className="space-y-2 p-4">
           {sortedMembers.length === 0 && (
             <div className="text-center py-6 text-sm text-muted-foreground">
               Noch keine Mitglieder.
