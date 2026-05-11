@@ -21,6 +21,7 @@ export const valluetModule: ModuleDefinition = {
   id: 'valluet',
   label: 'Valluet',
   icon: Sparkles,
+  fullWidth: true,
   View: ValluetView,
   itemTypes: ['voucher', 'currency-meta'],
   requiredCapabilities: ['ItemWriter'],

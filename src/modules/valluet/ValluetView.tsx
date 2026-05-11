@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import type { ModuleViewProps } from '../registry'
 import { StatsBar } from '../gamification'
+import { PageGrid } from '../../components/PageGrid'
 import { CreateVoucherDialog } from './CreateVoucherDialog'
 import { ShareVoucherDialog } from './ShareVoucherDialog'
 import { ReceiveVoucherDialog } from './ReceiveVoucherDialog'
@@ -94,93 +95,80 @@ export function ValluetView(_props: ModuleViewProps) {
     return { alle: meineVouchers.length, neu, empfangen, ausgegeben }
   }, [meineVouchers])
 
+  // Valluet als PageGrid mit 4 lockPages (Filter-Werte als Pages)
+  const valluetPages = [
+    { id: "alle", name: "Alle", slots: [{ id: "s1", widget: "vouchers", colSpan: 6 as const, rowSpan: 4 as const }] },
+    { id: "neu", name: "Geschoepft", slots: [{ id: "s1", widget: "vouchers", colSpan: 6 as const, rowSpan: 4 as const }] },
+    { id: "empfangen", name: "Empfangen", slots: [{ id: "s1", widget: "vouchers", colSpan: 6 as const, rowSpan: 4 as const }] },
+    { id: "ausgegeben", name: "Geteilt", slots: [{ id: "s1", widget: "vouchers", colSpan: 6 as const, rowSpan: 4 as const }] },
+  ]
+
   return (
-    <div className="flex h-full w-full flex-col overflow-hidden">
-      {/* Kopf */}
-      <div className="border-b border-border/40 bg-background/60 px-6 py-4 backdrop-blur-sm">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-amber-500" />
-              <h1 className="text-xl font-semibold text-foreground">Valluet</h1>
-            </div>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              Werte schoepfen. Werte schaetzen. Eine Wertboerse.
-            </p>
-          </div>
-          <div className="flex items-center gap-3 flex-wrap">
+    <>
+      <PageGrid
+        storageKey={`rln-valluet-${spaceId ?? "default"}`}
+        defaultPages={valluetPages}
+        availableWidgets={[{ id: "vouchers", label: "Voucher-Liste", defaultColSpan: 6, defaultRowSpan: 4 }]}
+        lockPages
+        onActivePageChange={(id) => setFilter(id as FilterTab)}
+        headerRight={
+          <>
             <StatsBar />
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon-sm"
-                onClick={() => setManagerOpen(true)}
-                title="Wertformen verwalten"
-              >
-                <Settings className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => setReceiveOpen(true)}
-                className="gap-2"
-              >
-                <ClipboardPaste className="h-4 w-4" />
-                Empfangen
-              </Button>
-              <Button onClick={() => setCreateOpen(true)} className="gap-2">
-                <Plus className="h-4 w-4" />
-                Wert schoepfen
-              </Button>
-            </div>
-          </div>
-        </div>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setManagerOpen(true)}
+              title="Wertformen verwalten"
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setReceiveOpen(true)}
+              className="gap-2 h-7"
+            >
+              <ClipboardPaste className="h-3.5 w-3.5" />
+              Empfangen
+            </Button>
+            <Button onClick={() => setCreateOpen(true)} size="sm" className="gap-2 h-7">
+              <Plus className="h-3.5 w-3.5" />
+              Wert schoepfen
+            </Button>
+          </>
+        }
+        renderWidget={() => (
+          <div className="h-full w-full overflow-y-auto p-4">
+            {/* Summen-Leiste pro Waehrung */}
+            {Object.keys(summenJeWaehrung).length > 0 && (
+              <div className="mb-4 flex flex-wrap gap-2">
+                {Object.entries(summenJeWaehrung).map(([currency, summe]) => {
+                  const meta = getCurrencyMeta(currency, currencyMap)
+                  return (
+                    <div
+                      key={currency}
+                      className="flex items-center gap-2 rounded-full px-3 py-1 text-sm"
+                      style={{ backgroundColor: meta.bg }}
+                    >
+                      <span className="text-base font-bold" style={{ color: meta.color }}>
+                        {meta.symbol}
+                      </span>
+                      <span className="font-semibold text-foreground">
+                        {summe} {meta.label}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
 
-        {/* Summen-Leiste pro Waehrung */}
-        {Object.keys(summenJeWaehrung).length > 0 && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            {Object.entries(summenJeWaehrung).map(([currency, summe]) => {
-              const meta = getCurrencyMeta(currency, currencyMap)
-              return (
-                <div
-                  key={currency}
-                  className="flex items-center gap-2 rounded-full px-3 py-1 text-sm"
-                  style={{ backgroundColor: meta.bg }}
-                >
-                  <span
-                    className="text-base font-bold"
-                    style={{ color: meta.color }}
-                  >
-                    {meta.symbol}
-                  </span>
-                  <span className="font-semibold text-foreground">
-                    {summe} {meta.label}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Inhalt */}
-      <div className="flex-1 overflow-y-auto">
-        {meineVouchers.length === 0 ? (
-          <EmptyState onCreate={() => setCreateOpen(true)} />
-        ) : (
-          <div className="mx-auto max-w-3xl px-6 py-6">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                Die Dankbank
-              </h2>
-              <FilterTabs filter={filter} onChange={setFilter} counts={counts} />
-            </div>
-            {gefilterteVouchers.length === 0 ? (
+            {meineVouchers.length === 0 ? (
+              <EmptyState onCreate={() => setCreateOpen(true)} />
+            ) : gefilterteVouchers.length === 0 ? (
               <div className="rounded-xl border border-border/60 bg-background/40 px-6 py-12 text-center">
                 <p className="text-sm text-muted-foreground">
                   Hier sammeln sich{' '}
-                  {filter === 'neu'
-                    ? 'frisch geschoepfte Vouchers'
-                    : 'geteilte Vouchers'}
+                  {filter === 'neu' ? 'frisch geschoepfte Vouchers' : 'geteilte Vouchers'}
                   . Aktuell ist es noch leer.
                 </p>
               </div>
@@ -198,7 +186,7 @@ export function ValluetView(_props: ModuleViewProps) {
             )}
           </div>
         )}
-      </div>
+      />
 
       <CreateVoucherDialog open={createOpen} onOpenChange={setCreateOpen} />
       <ReceiveVoucherDialog open={receiveOpen} onOpenChange={setReceiveOpen} />
@@ -210,7 +198,7 @@ export function ValluetView(_props: ModuleViewProps) {
         voucher={shareVoucher}
       />
       <CurrencyManagerPanel open={managerOpen} onOpenChange={setManagerOpen} />
-    </div>
+    </>
   )
 }
 
