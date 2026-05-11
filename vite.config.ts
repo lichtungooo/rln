@@ -36,6 +36,35 @@ export default defineConfig({
   optimizeDeps: {
     include: ['react', 'react-dom', 'react-router-dom', 'lucide-react'],
   },
+  build: {
+    chunkSizeWarningLimit: 800,
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          // React-Vendor in eigenen Chunk
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router')) {
+            return 'vendor-react'
+          }
+          // Leaflet als eigener Chunk (gross + nur in Map verwendet)
+          if (id.includes('node_modules/leaflet') || id.includes('node_modules/react-leaflet')) {
+            return 'vendor-leaflet'
+          }
+          // WoT-Connector + crypto deps als eigener Chunk
+          if (id.includes('wot-connector') || id.includes('node_modules/@noble') || id.includes('node_modules/scure-base')) {
+            return 'vendor-wot'
+          }
+          // Yjs als eigener Chunk
+          if (id.includes('node_modules/yjs') || id.includes('node_modules/y-')) {
+            return 'vendor-yjs'
+          }
+          // Markdown/Editor als eigener Chunk
+          if (id.includes('node_modules/marked') || id.includes('node_modules/dompurify')) {
+            return 'vendor-markdown'
+          }
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     strictPort: true,
