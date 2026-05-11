@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {
   CheckCircle2,
   Circle,
@@ -36,17 +36,42 @@ import type { QuestData } from "../quest/quest-engine"
  * Mobile: gestapelt — Liste oben, Detail/Log darunter.
  */
 
-export function SpiegelQuestTab(_props: ModuleViewProps) {
+export interface SpiegelQuestTabProps extends ModuleViewProps {
+  onNavReady?: (api: { prev: () => void; next: () => void; canPrev: boolean; canNext: boolean }) => void
+}
+
+type QuestFilter = "open" | "all" | "done"
+
+export function SpiegelQuestTab({ onNavReady }: SpiegelQuestTabProps) {
   const { quests, isCompleted, complete, uncomplete } = useQuests()
   const { data: skills } = useItems({ type: GAMIFICATION_ITEM_TYPES.skill })
   const { entries: logEntries } = useLog()
 
   const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null)
+  const [filter, setFilter] = useState<QuestFilter>("open")
 
-  const openQuests = useMemo(
-    () => quests.filter((q) => !isCompleted(q.id)),
-    [quests, isCompleted]
-  )
+  const filteredQuests = useMemo(() => {
+    if (filter === "all") return quests
+    if (filter === "done") return quests.filter((q) => isCompleted(q.id))
+    return quests.filter((q) => !isCompleted(q.id))
+  }, [quests, filter, isCompleted])
+  const openQuests = filteredQuests // alte Variable beibehalten fuer minimale Aenderung
+
+  // Pfeil-Navigation: rotiert durch Filter
+  const filterOrder: QuestFilter[] = ["open", "done", "all"]
+  const goPrev = () => {
+    const i = filterOrder.indexOf(filter)
+    setFilter(filterOrder[(i - 1 + filterOrder.length) % filterOrder.length])
+  }
+  const goNext = () => {
+    const i = filterOrder.indexOf(filter)
+    setFilter(filterOrder[(i + 1) % filterOrder.length])
+  }
+  useEffect(() => {
+    if (!onNavReady) return
+    onNavReady({ prev: goPrev, next: goNext, canPrev: true, canNext: true })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onNavReady, filter])
 
   // Gruppiere nach Series + Singles
   const grouped = useMemo(() => {
@@ -100,7 +125,7 @@ export function SpiegelQuestTab(_props: ModuleViewProps) {
         <div className="px-3 py-2 border-b bg-muted/20 flex items-center gap-2">
           <Trophy className="h-4 w-4 text-primary shrink-0" />
           <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold flex-1">
-            Offen
+            {filter === "open" ? "Offen" : filter === "done" ? "Erledigt" : "Alle"}
           </span>
           <span className="text-[10px] text-muted-foreground">
             {openQuests.length} {openQuests.length === 1 ? "Quest" : "Quests"}

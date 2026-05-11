@@ -21,6 +21,7 @@ import { useElderStatus } from "../profile/use-elder-status"
 import { SpiegelAvatarTab } from "./SpiegelAvatarTab"
 import { SpiegelQuestTab } from "./SpiegelQuestTab"
 import { SpiegelSkillTab } from "./SpiegelSkillTab"
+import { useDemoSeed } from "./use-demo-seed"
 
 /**
  * SpiegelView — drei Linsen auf den Menschen in einem Modul.
@@ -45,56 +46,52 @@ export function SpiegelView(props: ModuleViewProps<SpiegelModuleConfig>) {
   const { config } = props
   const [tab, setTab] = useState<SpiegelTab>(config?.defaultTab ?? "skill")
 
-  // Bridge-State: SkillTab kommuniziert ueber callbacks
-  const [skillNavApi, setSkillNavApi] = useState<{ prev: () => void; next: () => void; canPrev: boolean; canNext: boolean } | null>(null)
+  // Bridge-State: aktiver Tab kommuniziert seine Nav-API zurueck
+  const [navApi, setNavApi] = useState<{ prev: () => void; next: () => void; canPrev: boolean; canNext: boolean } | null>(null)
+
+  // Bei Tab-Wechsel Nav-API zuruecksetzen
+  const handleTabChange = (next: SpiegelTab) => {
+    setNavApi(null)
+    setTab(next)
+  }
 
   return (
     <div className="flex flex-col h-full">
-      <SpiegelHero tab={tab} onTabChange={setTab} />
+      <SpiegelHero tab={tab} onTabChange={handleTabChange} />
 
-      {/* Container-Wrapper mit Pfeilen aussen */}
+      {/* Container-Wrapper mit Pfeilen aussen — bei JEDEM Tab */}
       <div className="flex-1 flex items-stretch min-h-0 px-2 sm:px-4 py-3 gap-2 sm:gap-3">
-        {/* Pfeil links — nur bei Skill */}
+        {/* Pfeil links */}
         <div className="flex items-center shrink-0">
-          {tab === "skill" && skillNavApi ? (
-            <button
-              type="button"
-              onClick={skillNavApi.prev}
-              disabled={!skillNavApi.canPrev}
-              className="h-12 w-12 rounded-full grid place-items-center border bg-card hover:bg-muted disabled:opacity-30 transition-colors shadow-md"
-              aria-label="Zurueck"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-          ) : (
-            <div className="w-12 hidden sm:block" />
-          )}
+          <button
+            type="button"
+            onClick={() => navApi?.prev()}
+            disabled={!navApi?.canPrev}
+            className="h-12 w-12 rounded-full grid place-items-center border bg-card hover:bg-muted disabled:opacity-30 transition-colors shadow-md"
+            aria-label="Zurueck"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </button>
         </div>
 
         {/* Inhalts-Container — gleiche Hoehe und Breite fuer alle Tabs */}
         <div className="flex-1 flex flex-col min-w-0">
-          {tab === "avatar" && <SpiegelAvatarTab {...props} />}
-          {tab === "quest" && <SpiegelQuestTab {...props} />}
-          {tab === "skill" && (
-            <SpiegelSkillTab {...props} onNavReady={setSkillNavApi} />
-          )}
+          {tab === "avatar" && <SpiegelAvatarTab {...props} onNavReady={setNavApi} />}
+          {tab === "quest" && <SpiegelQuestTab {...props} onNavReady={setNavApi} />}
+          {tab === "skill" && <SpiegelSkillTab {...props} onNavReady={setNavApi} />}
         </div>
 
-        {/* Pfeil rechts — nur bei Skill */}
+        {/* Pfeil rechts */}
         <div className="flex items-center shrink-0">
-          {tab === "skill" && skillNavApi ? (
-            <button
-              type="button"
-              onClick={skillNavApi.next}
-              disabled={!skillNavApi.canNext}
-              className="h-12 w-12 rounded-full grid place-items-center border bg-card hover:bg-muted disabled:opacity-30 transition-colors shadow-md"
-              aria-label="Weiter"
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          ) : (
-            <div className="w-12 hidden sm:block" />
-          )}
+          <button
+            type="button"
+            onClick={() => navApi?.next()}
+            disabled={!navApi?.canNext}
+            className="h-12 w-12 rounded-full grid place-items-center border bg-card hover:bg-muted disabled:opacity-30 transition-colors shadow-md"
+            aria-label="Weiter"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </button>
         </div>
       </div>
     </div>
@@ -115,6 +112,7 @@ function SpiegelHero({
   const { data: progress } = useUserProgress()
   const reputation = useReputation()
   const elder = useElderStatus()
+  const { seed: seedDemo, busy: seeding, alreadySeeded } = useDemoSeed()
 
   const totalXp = useMemo(
     () => Object.values(progress.bereichXp).reduce((a, b) => a + (b ?? 0), 0),
@@ -202,6 +200,17 @@ function SpiegelHero({
               </span>
             )}
           </div>
+        )}
+        {!alreadySeeded && (
+          <button
+            type="button"
+            onClick={() => seedDemo().catch((err) => alert(err.message))}
+            disabled={seeding}
+            className="ml-1 text-[10px] px-2 py-1 rounded border border-muted-foreground/20 hover:border-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
+            title="Demo-Daten anlegen — Lv ~42, Items, Quests, Log"
+          >
+            {seeding ? "Lade Demo..." : "🎲 Demo"}
+          </button>
         )}
       </div>
     </div>
