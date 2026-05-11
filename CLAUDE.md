@@ -371,11 +371,17 @@ Dort uebernimmt man nur den **Tab-Button-Stil** (Pille, Gradient-Hintergrund) un
 
 | Modul | Status |
 |-------|--------|
-| Dashboard | ✅ Volles PageGrid (Pages konfigurierbar) |
-| Profil (Spiegel) | ✅ Tab-Stil + Pfeile aussen — FESTE 3-Tab-Struktur, kein Pages-Grid |
-| Calendar | Tab-Stil uebernommen, feste View-Modi |
-| Marketplace, Wissensfeld | Noch nicht umgestellt |
-| Map | Bleibt fullscreen (die Karte ist der ganze Inhalt) |
+| Dashboard | ✅ Volles PageGrid (Pages konfigurierbar) + 5 Channels (quest, event, bereich, log, place) |
+| Profil (Spiegel) | ✅ PageGrid mit lockPages — feste 3 Tabs + Slot-Konfig + Channels (skill, bereich) |
+| Calendar | ✅ Tab-Stil + Active-View-Persistenz, kein volles Grid (View-Modi sind fest) |
+| Marketplace | ✅ Welt-Tabs (Sachen/Begabungen/Beduerfnisse) im Tab-Stil |
+| Wissensfeld | ✅ Tab-Switcher (Fragen/Erkenntnisse/Konsent/Spirit) im Tab-Stil |
+| Settings | ✅ Tab-Sidebar im Tab-Stil (7 Tabs) |
+| Map | Bleibt fullscreen (die Karte ist der ganze Inhalt) — kein Tab-Header |
+
+**Alle 6 sichtbaren Modul-Header sind jetzt visuell konsistent** —
+Linear-Gradient orange→violett, Pille-Tabs mit foreground/background
+bzw. Modul-Farbe als Active-Background.
 
 ### Klick-Routing — Kernkonzept fuer Pfeile (Timo-Klarstellung 11.05.2026)
 
