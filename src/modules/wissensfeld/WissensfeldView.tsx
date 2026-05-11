@@ -245,55 +245,42 @@ export function WissensfeldView({ activeGroup }: ModuleViewProps) {
         )}
       </div>
 
-      {/* Tab-Switcher: Fragen / Erkenntnisse / Konsent / Spirit */}
-      <div className="grid grid-cols-4 gap-1 p-1 rounded-lg bg-muted">
-        <button
-          type="button"
-          onClick={() => setActiveTab("fragen")}
-          className={`flex items-center justify-center gap-2 px-2 py-2 rounded-md text-sm font-semibold transition-all ${
-            activeTab === "fragen" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
-          }`}
-          style={activeTab === "fragen" ? { color: "#E8751A" } : undefined}
-        >
-          <Flame className="h-4 w-4" />
-          <span className="hidden sm:inline">Fragen</span>
-          <span className="text-[10px] opacity-70">({fragen.length})</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("erkenntnisse")}
-          className={`flex items-center justify-center gap-2 px-2 py-2 rounded-md text-sm font-semibold transition-all ${
-            activeTab === "erkenntnisse" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
-          }`}
-          style={activeTab === "erkenntnisse" ? { color: "#FBBF24" } : undefined}
-        >
-          <Lightbulb className="h-4 w-4" />
-          <span className="hidden sm:inline">Erkenntnisse</span>
-          <span className="text-[10px] opacity-70">({erkenntnisse.length})</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("konsent")}
-          className={`flex items-center justify-center gap-2 px-2 py-2 rounded-md text-sm font-semibold transition-all ${
-            activeTab === "konsent" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
-          }`}
-          style={activeTab === "konsent" ? { color: "#10B981" } : undefined}
-        >
-          <Scale className="h-4 w-4" />
-          <span className="hidden sm:inline">Konsent</span>
-          <span className="text-[10px] opacity-70">({vorschlaege.length})</span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("spirit")}
-          className={`flex items-center justify-center gap-2 px-2 py-2 rounded-md text-sm font-semibold transition-all ${
-            activeTab === "spirit" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
-          }`}
-          style={activeTab === "spirit" ? { color: "#A855F7" } : undefined}
-        >
-          <Sparkles className="h-4 w-4" />
-          <span className="hidden sm:inline">Spirit</span>
-        </button>
+      {/* Tab-Switcher im Modul-Doktrin-Stil — Aktiv-Farbe je Tab */}
+      <div
+        className="rounded-md p-1.5 flex items-center gap-1 border"
+        style={{
+          background:
+            "linear-gradient(90deg, rgba(232,117,26,0.05) 0%, rgba(168,85,247,0.04) 100%)",
+        }}
+      >
+        {[
+          { id: "fragen", label: "Fragen", color: "#E8751A", icon: Flame, count: fragen.length },
+          { id: "erkenntnisse", label: "Erkenntnisse", color: "#FBBF24", icon: Lightbulb, count: erkenntnisse.length },
+          { id: "konsent", label: "Konsent", color: "#10B981", icon: Scale, count: vorschlaege.length },
+          { id: "spirit", label: "Spirit", color: "#A855F7", icon: Sparkles, count: undefined },
+        ].map((t) => {
+          const Icon = t.icon
+          const isOn = activeTab === t.id
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setActiveTab(t.id as WissensfeldTab)}
+              className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 text-sm rounded-md transition-colors ${
+                isOn
+                  ? "text-white font-semibold shadow-sm"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              }`}
+              style={isOn ? { background: t.color } : undefined}
+            >
+              <Icon className="h-4 w-4" />
+              <span className="hidden sm:inline">{t.label}</span>
+              {t.count !== undefined && (
+                <span className="text-[10px] opacity-80">({t.count})</span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       {activeTab === "erkenntnisse" && (
