@@ -157,6 +157,103 @@ Skalierung: ein Macher-Root mit Macher-Berlin, Macher-Hamburg, Macher-Kassel —
 
 ---
 
+## Modul-Doktrin — ein System, ein Design, eine Usability
+
+Alle RLN-Module folgen demselben Pattern. Timo's Worte (11.05.2026):
+*"Definiere unsere Vorgehensweise für alle Module gleich — ein System mit einem Design und einer Usability."*
+
+Diese Doktrin hat vier Schichten. Wer ein Modul baut oder refactor't, beachtet sie alle.
+
+### Schicht 1 — Layout
+
+**Cockpit-Modul** (User stellt sich seine Sicht selbst zusammen):
+→ `PageGrid` aus `src/components/PageGrid.tsx`. Beliebige Pages, konfigurierbar.
+Beispiel: Dashboard. Spaeter: Settings.
+
+**Funktions-Modul** (feste Funktion mit mehreren Ansichten):
+→ `PageGrid` mit `lockPages: true` ODER eigener Hero+Tabs-Header. Pages/Tabs sind fest.
+Beispiel: Profil (Avatar/Quest/Skill), Kalender (Tag/Woche/Monat/...).
+
+**Fullscreen-Modul** (das Modul IST der Inhalt):
+→ `fullWidth: true`, eigene Logik. Beispiel: Map.
+
+### Schicht 2 — Header
+
+| Element | Verwendung |
+|---------|-----------|
+| Linear-Gradient orange→violett | Toolbar-Hintergrund — gleich in allen Modulen |
+| Tab-Buttons (Pille) | `bg-foreground text-background` aktiv, `text-muted-foreground hover:bg-muted/50` inaktiv |
+| `+` Button | Nur in PageGrid ohne lockPages — neue Page anlegen |
+| `headerRight: ReactNode` | Modul-spezifisch — z.B. `<StatsBar />` (XP+Trust) in Dashboard/Profil |
+| Zahnrad rechts oben | **NUR EINES** pro Modul. Aktuell: PageGrid-internes. Spaeter: globales App-Zahnrad kontextsensitiv (offene Aufgabe) |
+| **KEINE** Modul-interne Suche | globale Suche oben im App-Header reicht |
+
+### Schicht 3 — Widget
+
+Jedes Widget rendert sich self-contained in seinen Slot:
+
+```tsx
+<div className="h-full w-full bg-card border rounded-xl overflow-hidden flex flex-col">
+  {/* Optional Header: Icon + Label + X (bei Detail-Widgets) */}
+  <div className="px-3 py-2 border-b bg-muted/20 flex items-center gap-2 shrink-0">
+    <Icon className="h-4 w-4 shrink-0" style={{ color }} />
+    <span className="text-sm font-semibold truncate flex-1">{label}</span>
+    {/* Bei Detail: */}
+    <button onClick={() => select(null)}><X /></button>
+  </div>
+  {/* Content scrollt intern */}
+  <div className="p-3 flex-1 overflow-y-auto">
+    ...
+  </div>
+</div>
+```
+
+Bei Source-Widgets (Liste): `ArrowRight`-Icon oben rechts springt zum Modul-Detail (Backward-Kompat).
+Responsive Layouts via ResizeObserver wenn das Widget sich an Slot-Groesse anpassen soll (Vorbild `DashboardHero`).
+
+### Schicht 4 — Klick-Routing (KERNKONZEPT)
+
+**Pfeile rechts/links sind NIE fuer Page/Tab-Wechsel, sondern IMMER fuer interne Navigation im aktiven Widget.**
+
+Tabs/Pages werden manuell oben geklickt.
+
+Pattern:
+1. **Container** wrappt Inhalt mit `<SelectionProvider>` (aus `src/components/SelectionContext.tsx`)
+2. **Source-Widget**: `useChannelSync(channelId, items)` + `select(item.id)` beim Klick
+3. **Detail-Widget**: `useChannel(channelId)` → `selected` rendern
+4. **Container**: `useNavigation()` liefert prev/next/canPrev/canNext → an PageGrid `navApi` Prop
+5. Pfeile aussen nur sichtbar wenn `activeChannelId !== null`
+6. **Beim Page/Tab-Wechsel**: `select(null)` zuruecksetzen ist Aufgabe des Detail-Widgets (X-Button)
+
+**Channel-Namen-Konvention:**
+- `quest` — Quests (Source: QuestWidget, Detail: QuestDetailWidget)
+- `event` — Termine (CalendarWidget ↔ EventDetailWidget)
+- `bereich` — 8 Bereiche (TreeWidget ↔ BereichDetailWidget)
+- `skill` — einzelne Skills (SpiegelSkillTab intern)
+- `log` — Log-Eintraege (geplant)
+- `place` — Karten-Pins (geplant)
+- `contact` — Personen/Kontakte (geplant)
+
+Item-IDs sind eindeutig im Channel (default: Item.id).
+
+### Konventionen — was NICHT geht
+
+- ❌ **Pfeile fuer Page/Tab-Wechsel.** Tabs werden manuell geklickt.
+- ❌ **Modul-internes Settings-Zahnrad**, das andere Aufgaben hat als das PageGrid-Zahnrad. Aktuell ist nur eines erlaubt — naechstes: globales App-Zahnrad uebernimmt.
+- ❌ **Modul-interne Suche.** Es gibt eine globale Suche oben im App-Header.
+- ❌ **Klick auf Item → Modul-Sprung** als Default. Wenn ein Detail-Widget existiert, sollte der Klick es fuettern. Modul-Sprung gibt's per `ArrowRight`-Icon im Widget-Header (Backward-Kompat).
+- ❌ **Page-Scroll** des gesamten Moduls. Nur Widgets scrollen intern.
+
+### Was DANN passiert
+
+Wenn alle Module dieser Doktrin folgen:
+- Mensch lernt das System einmal, kann es ueberall.
+- Jedes Modul fuehlt sich an wie das gleiche — nur mit anderen Inhalten.
+- Der Mensch baut sich seine Welt selbst zusammen, ueber Slots und Channels.
+- Mobile / Desktop / Tablet gleich (PageGrid responsive, geplant).
+
+---
+
 ## PageGrid — Default-Pattern fuer Modul-UIs (Meilenstein 11.05.2026)
 
 `src/components/PageGrid.tsx` ist die geteilte Grundlage fuer alle neuen Modul-UIs. **Wer ein neues Modul baut oder ein bestehendes refactor't, nimmt PageGrid.** Dashboard und Profil teilen sich diesen Code; Kalender/Marketplace/Wissensfeld folgen als naechstes.

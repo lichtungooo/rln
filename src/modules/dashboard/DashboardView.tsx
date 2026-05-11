@@ -9,6 +9,7 @@ import { BereichDetailWidget } from "./widgets/BereichDetailWidget"
 import { QuestWidget } from "./widgets/QuestWidget"
 import { QuestDetailWidget } from "./widgets/QuestDetailWidget"
 import { LogWidget } from "./widgets/LogWidget"
+import { LogDetailWidget } from "./widgets/LogDetailWidget"
 import { CalendarWidget } from "./widgets/CalendarWidget"
 import { EventDetailWidget } from "./widgets/EventDetailWidget"
 import { AvatarWidget } from "../avatar"
@@ -31,6 +32,7 @@ const DASHBOARD_WIDGETS: AvailableWidget[] = [
   { id: "calendar", label: "Kalender", defaultColSpan: 3, defaultRowSpan: 2 },
   { id: "event-detail", label: "Termin-Detail", defaultColSpan: 3, defaultRowSpan: 2 },
   { id: "log", label: "Log", defaultColSpan: 3, defaultRowSpan: 2 },
+  { id: "log-detail", label: "Log-Detail", defaultColSpan: 3, defaultRowSpan: 2 },
 ]
 
 const DEFAULT_PAGES: GridPage[] = [
@@ -122,6 +124,8 @@ function DashboardInner({
         return <EventDetailWidget />
       case "log":
         return <LogWidget />
+      case "log-detail":
+        return <LogDetailWidget />
       default:
         return (
           <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground italic">
