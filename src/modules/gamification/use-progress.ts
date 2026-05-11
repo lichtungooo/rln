@@ -10,6 +10,7 @@ import type { TreeBereichId } from "./tree"
 import { progressInLevel, INNERE_BEREICHE } from "./tree"
 import type { SkillData, UserProgressData } from "./types"
 import { GAMIFICATION_ITEM_TYPES } from "./types"
+import { UNIVERSAL_SKILLS } from "./universal-skills"
 
 /**
  * Hook fuer User-Progress (XP pro Skill + Bereich) im aktuellen Space.
@@ -91,9 +92,15 @@ export function useUserProgress() {
       if (!currentUser?.id) {
         throw new Error("Nicht eingeloggt — kein User-Progress")
       }
-      const skillById = new Map<string, SkillData>(
-        skillItems.map((it) => [it.id, it.data as SkillData])
-      )
+      // Map kennt sowohl space-spezifische Item-Skills als auch die
+      // universellen Code-Skills — beide tragen XP zum richtigen Bereich.
+      const skillById = new Map<string, SkillData>()
+      for (const u of UNIVERSAL_SKILLS) {
+        skillById.set(u.id, u)
+      }
+      for (const it of skillItems) {
+        skillById.set(it.id, it.data as SkillData)
+      }
 
       const nextSkillXp = { ...data.skillXp }
       const nextBereichXp = { ...data.bereichXp }

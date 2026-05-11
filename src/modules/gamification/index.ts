@@ -42,4 +42,11 @@ export { useReputation, useReputationMap, trustLabel, type ReputationStats } fro
 
 export { MACHER_DEFAULT_SKILLS, MACHER_DEFAULT_AVATAR_ITEMS } from "./macher-skills"
 
+export {
+  UNIVERSAL_SKILLS,
+  UNIVERSAL_SKILL_BY_ID,
+  UNIVERSAL_SKILL_PREFIX,
+  isUniversalSkillId,
+} from "./universal-skills"
+
 export { ARCHETYPES, getArchetype, type Archetype, type ArchetypeId } from "./archetypes"

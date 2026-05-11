@@ -8,20 +8,29 @@ import {
   Button,
   useItems,
 } from "@real-life-stack/toolkit"
-import type { Item } from "@real-life-stack/data-interface"
 import type { ModuleViewProps } from "../registry"
 import {
   TREE_BEREICHE,
   INNERE_BEREICHE,
-  BEREICH_BY_ID,
   progressInLevel,
   useUserProgress,
   useGamificationSeed,
+  UNIVERSAL_SKILLS,
   GAMIFICATION_ITEM_TYPES,
   type SkillData,
   type TreeBereich,
   type TreeBereichId,
 } from "../gamification"
+
+/**
+ * Eine Skill-Anzeige fuer den Tree — vereinheitlicht zwischen
+ * universellen Code-Skills und space-spezifischen WoT-Items.
+ */
+interface RenderSkill {
+  id: string
+  data: SkillData
+  isUniversal: boolean
+}
 
 /**
  * SkillTreeView — der Faehigkeitenbaum sichtbar.
@@ -41,20 +50,31 @@ export function SkillTreeView(_props: ModuleViewProps) {
   const { data: skillItems } = useItems({ type: GAMIFICATION_ITEM_TYPES.skill })
   const { seed, busy: seeding, status: seedStatus } = useGamificationSeed()
 
-  // Skills nach Bereich gruppieren
+  // Skills nach Bereich gruppieren — Universal-Skills aus Code +
+  // space-spezifische Items aus WoT zusammen rendern.
+  // Universal kommen zuerst, dann space-Skills, jeweils nach order sortiert.
   const skillsByBereich = useMemo(() => {
-    const map: Record<TreeBereichId, Item[]> = {} as Record<TreeBereichId, Item[]>
+    const map: Record<TreeBereichId, RenderSkill[]> = {} as Record<TreeBereichId, RenderSkill[]>
     for (const bereich of TREE_BEREICHE) map[bereich.id] = []
+
+    for (const u of UNIVERSAL_SKILLS) {
+      if (map[u.bereichId]) {
+        const { id, ...data } = u
+        map[u.bereichId].push({ id, data, isUniversal: true })
+      }
+    }
     for (const item of skillItems) {
       const sd = item.data as SkillData
-      if (map[sd.bereichId]) map[sd.bereichId].push(item)
+      if (map[sd.bereichId]) {
+        map[sd.bereichId].push({ id: item.id, data: sd, isUniversal: false })
+      }
     }
-    // Sortieren nach order
+
+    // Universal zuerst, dann nach order
     for (const bId of Object.keys(map) as TreeBereichId[]) {
       map[bId].sort((a, b) => {
-        const aOrd = (a.data as SkillData).order ?? 999
-        const bOrd = (b.data as SkillData).order ?? 999
-        return aOrd - bOrd
+        if (a.isUniversal !== b.isUniversal) return a.isUniversal ? -1 : 1
+        return (a.data.order ?? 999) - (b.data.order ?? 999)
       })
     }
     return map
@@ -67,28 +87,6 @@ export function SkillTreeView(_props: ModuleViewProps) {
   const synergyActive = useMemo(() => {
     return INNERE_BEREICHE.every((b) => (data.bereichXp[b] ?? 0) > 0)
   }, [data.bereichXp])
-
-  // Empty-Hint wenn keine Skills im Space
-  if (skillItems.length === 0) {
-    return (
-      <div className="container mx-auto max-w-3xl p-8">
-        <Card className="border-dashed border-2 border-primary/40">
-          <CardContent className="p-8 text-center">
-            <Sparkles className="h-12 w-12 mx-auto mb-4 text-primary" />
-            <h2 className="text-xl font-bold mb-2">Skill-Tree wartet auf Skills</h2>
-            <p className="text-sm text-muted-foreground mb-5 max-w-md mx-auto">
-              Sieben universelle Bereiche stehen bereit — Koerper, Geist, Seele,
-              Bewusstsein, Soziales, Gemeinschaft und Handwerk. Skills darunter
-              definiert jeder Space selbst.
-            </p>
-            <Button onClick={seed} disabled={seeding}>
-              {seeding ? "Lade..." : `${seedStatus.skillsTodo} Macher-Skills anlegen`}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
 
   return (
     <div className="container mx-auto max-w-5xl p-4 space-y-6">
@@ -104,8 +102,19 @@ export function SkillTreeView(_props: ModuleViewProps) {
             </div>
             <h2 className="text-2xl font-bold mt-1">Level {totalLevel}</h2>
             <p className="text-sm text-muted-foreground">
-              {totalXp.toLocaleString("de-DE")} XP gesamt — verteilt auf 7 Bereiche
+              {totalXp.toLocaleString("de-DE")} XP gesamt — verteilt auf 8 Bereiche
             </p>
+            {skillItems.length === 0 && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-2 h-7 text-xs"
+                onClick={seed}
+                disabled={seeding}
+              >
+                {seeding ? "Lade..." : `${seedStatus.skillsTodo} Macher-Skills zusaetzlich anlegen`}
+              </Button>
+            )}
           </div>
           {synergyActive && (
             <div className="px-4 py-2 rounded-full text-sm font-semibold flex items-center gap-2" style={{ background: "rgba(168,85,247,0.1)", color: "#A855F7" }}>
@@ -150,7 +159,7 @@ interface BereichCardProps {
   bereich: TreeBereich
   xp: number
   progress: ReturnType<typeof progressInLevel>
-  skills: Item[]
+  skills: RenderSkill[]
   skillXp: (id: string) => number
   skillProgress: (id: string) => ReturnType<typeof progressInLevel>
   isInner: boolean
@@ -221,19 +230,31 @@ function BereichCard({ bereich, xp, progress, skills, skillXp, skillProgress, is
 
             {open && (
               <div className="mt-2 space-y-1.5">
-                {skills.map((skillItem) => {
-                  const skillData = skillItem.data as SkillData
-                  const sXp = skillXp(skillItem.id)
-                  const sProg = skillProgress(skillItem.id)
+                {skills.map((skill) => {
+                  const sXp = skillXp(skill.id)
+                  const sProg = skillProgress(skill.id)
                   return (
-                    <div key={skillItem.id} className="p-2 rounded border bg-card hover:bg-muted/30 transition-colors">
+                    <div
+                      key={skill.id}
+                      className="p-2 rounded border bg-card hover:bg-muted/30 transition-colors"
+                      title={skill.data.description ?? ""}
+                    >
                       <div className="flex items-center justify-between mb-1">
                         <div className="flex items-center gap-2">
                           <div
                             className="w-2 h-2 rounded-full"
-                            style={{ background: skillData.color ?? bereich.color }}
+                            style={{ background: skill.data.color ?? bereich.color }}
                           />
-                          <span className="text-sm font-medium">{skillData.name}</span>
+                          <span className="text-sm font-medium">{skill.data.name}</span>
+                          {skill.isUniversal && (
+                            <span
+                              className="text-[9px] uppercase font-semibold tracking-wider px-1 py-0 rounded"
+                              style={{ background: "rgba(100,116,139,0.12)", color: "#475569" }}
+                              title="Universeller Skill — in jedem Space gleich"
+                            >
+                              universal
+                            </span>
+                          )}
                           {sProg.level > 0 && (
                             <span className="text-[10px] font-bold px-1.5 py-0 rounded" style={{ background: `${bereich.color}20`, color: bereich.color }}>
                               Lv {sProg.level}
@@ -250,7 +271,7 @@ function BereichCard({ bereich, xp, progress, skills, skillXp, skillProgress, is
                             className="h-full rounded-full"
                             style={{
                               width: `${Math.min(100, sProg.ratio * 100)}%`,
-                              background: skillData.color ?? bereich.color,
+                              background: skill.data.color ?? bereich.color,
                             }}
                           />
                         </div>
