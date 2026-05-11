@@ -40,6 +40,7 @@ import { useCalendars } from "./useCalendars"
 import { TagInput } from "../profile/TagInput"
 import { EmptyDemoBanner } from "../../demo/EmptyDemoBanner"
 import { PageGrid } from "../../components/PageGrid"
+import { StatsBar } from "../gamification"
 
 // ============================================================
 // Types
@@ -301,12 +302,15 @@ export function CalendarView({ spaceId, activeGroup, config, isPreview, onOpenSe
       lockPages
       onActivePageChange={(id) => setActiveView(id as CalendarView)}
       headerRight={
-        cfg.showCreateButton ? (
-          <Button onClick={() => setCreating(true)} size="sm" className="h-7">
-            <Plus className="h-3.5 w-3.5 mr-1" />
-            {cfg.mode === "group-calendar" ? "Neuer Termin" : "Neues Event"}
-          </Button>
-        ) : undefined
+        <>
+          <StatsBar />
+          {cfg.showCreateButton && (
+            <Button onClick={() => setCreating(true)} size="sm" className="h-7">
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              {cfg.mode === "group-calendar" ? "Neuer Termin" : "Neues Event"}
+            </Button>
+          )}
+        </>
       }
       renderWidget={() => (
         <div className="h-full w-full overflow-y-auto p-3 space-y-4 relative">

@@ -35,6 +35,7 @@ import type { User } from "@real-life-stack/data-interface"
 import type { Item } from "@real-life-stack/data-interface"
 import type { ModuleViewProps } from "../registry"
 import { PageGrid } from "../../components/PageGrid"
+import { StatsBar } from "../gamification"
 import { TagInput } from "../profile/TagInput"
 import { ImageGalleryInput } from "./ImageGalleryInput"
 import {
@@ -564,10 +565,13 @@ export function MarketplaceView({ spaceId }: ModuleViewProps) {
       lockPages
       onActivePageChange={(id) => switchWorld(id as WorldId)}
       headerRight={
-        <Button onClick={() => setCreating(true)} size="sm" className="h-7">
-          <Plus className="h-3.5 w-3.5 mr-1" />
-          Neues Inserat
-        </Button>
+        <>
+          <StatsBar />
+          <Button onClick={() => setCreating(true)} size="sm" className="h-7">
+            <Plus className="h-3.5 w-3.5 mr-1" />
+            Neues Inserat
+          </Button>
+        </>
       }
     />
   )

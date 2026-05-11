@@ -62,7 +62,6 @@ import { avatarModule } from '../modules/avatar'
 import { spiegelModule } from '../modules/spiegel'
 import { wissensfeldModule } from '../modules/wissensfeld'
 import { valluetModule } from '../modules/valluet'
-import { HudBar } from '../modules/gamification/HudBar'
 import { useSpaceTheme } from '../themes/use-space-theme'
 import { SpaceSettings, type SpaceSettingsTab } from '../settings/SpaceSettings'
 import { MobileSpaceSettings } from '../settings/MobileSpaceSettings'
@@ -654,16 +653,9 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
         </div>
       </header>
 
-      {/* HUD oben rechts — aktiv in Modulen ohne eigene StatsBar (Map,
-          Kalender, Marketplace, etc.). In Dashboard und Profil ist die
-          StatsBar bereits im PageGrid-Header, dort blendet sich das
-          HUD selbst aus. */}
-      {activeGroup && (
-        <HudBar
-          spaceSlug={getSpaceMeta(activeGroup).slug ?? activeGroup.id}
-          currentModule={activeModule}
-        />
-      )}
+      {/* HUD oben rechts — komplett entfernt. Jedes Modul hat seine
+          eigene StatsBar im PageGrid-headerRight. Map als fullscreen-
+          Ausnahme bleibt ohne. */}
 
       <AppShellMain withBottomNav={false}>
         {/* Home — global, oeffnet sich bei Klick aufs Haeuschen */}
