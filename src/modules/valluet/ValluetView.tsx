@@ -21,6 +21,7 @@ import {
   Settings,
 } from 'lucide-react'
 import type { ModuleViewProps } from '../registry'
+import { StatsBar } from '../gamification'
 import { CreateVoucherDialog } from './CreateVoucherDialog'
 import { ShareVoucherDialog } from './ShareVoucherDialog'
 import { ReceiveVoucherDialog } from './ReceiveVoucherDialog'
@@ -107,27 +108,30 @@ export function ValluetView(_props: ModuleViewProps) {
               Werte schoepfen. Werte schaetzen. Eine Wertboerse.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => setManagerOpen(true)}
-              title="Wertformen verwalten"
-            >
-              <Settings className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="outline"
-              onClick={() => setReceiveOpen(true)}
-              className="gap-2"
-            >
-              <ClipboardPaste className="h-4 w-4" />
-              Empfangen
-            </Button>
-            <Button onClick={() => setCreateOpen(true)} className="gap-2">
-              <Plus className="h-4 w-4" />
-              Wert schoepfen
-            </Button>
+          <div className="flex items-center gap-3 flex-wrap">
+            <StatsBar />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setManagerOpen(true)}
+                title="Wertformen verwalten"
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setReceiveOpen(true)}
+                className="gap-2"
+              >
+                <ClipboardPaste className="h-4 w-4" />
+                Empfangen
+              </Button>
+              <Button onClick={() => setCreateOpen(true)} className="gap-2">
+                <Plus className="h-4 w-4" />
+                Wert schoepfen
+              </Button>
+            </div>
           </div>
         </div>
 

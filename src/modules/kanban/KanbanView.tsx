@@ -25,6 +25,7 @@ import type {
 } from "@real-life-stack/toolkit"
 import type { Item, Relation } from "@real-life-stack/data-interface"
 import type { ModuleViewProps } from "../registry"
+import { StatsBar } from "../gamification"
 
 // ============================================================
 // Modul-Konfig
@@ -128,6 +129,15 @@ export function KanbanView({ spaceId }: ModuleViewProps<KanbanModuleConfig>) {
 
   return (
     <div className="space-y-4">
+      <div
+        className="rounded-md p-1.5 flex items-center justify-end border"
+        style={{
+          background:
+            "linear-gradient(90deg, rgba(232,117,26,0.05) 0%, rgba(168,85,247,0.04) 100%)",
+        }}
+      >
+        <StatsBar />
+      </div>
       <KanbanToolbar
         items={tasks}
         users={members}

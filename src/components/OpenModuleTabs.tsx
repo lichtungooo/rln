@@ -53,9 +53,10 @@ export function OpenModuleTabs({
   }, [activeId])
 
   return (
-    <div className="flex h-full w-full items-center gap-1">
-      {/* Tab-Leiste — scrollbar bei Ueberlauf */}
-      <div className="flex flex-1 items-stretch gap-0.5 overflow-x-auto scrollbar-thin">
+    <div className="flex h-full w-full items-center gap-1 min-w-0">
+      {/* Tab-Leiste — Chrome-Style: Tabs schrumpfen proportional bei vielen,
+          bis nur das Icon sichtbar bleibt. Kein horizontales Scrollen. */}
+      <div className="flex flex-1 items-stretch gap-0.5 min-w-0">
         {openModules.map((m) => (
           <TabButton
             key={m.id}
@@ -119,14 +120,14 @@ const TabButton = forwardRef<HTMLButtonElement, TabButtonProps>(function TabButt
       type="button"
       onClick={onSelect}
       title={module.label}
-      className={`group relative flex h-8 min-w-[2rem] max-w-[10rem] shrink-0 items-center gap-1.5 rounded-md border px-2 text-xs font-medium transition ${
+      className={`group relative flex h-8 flex-1 min-w-[2.25rem] max-w-[10rem] items-center justify-center gap-1.5 rounded-md border px-2 text-xs font-medium transition overflow-hidden ${
         active
           ? 'border-primary/50 bg-primary/10 text-foreground'
           : 'border-transparent text-muted-foreground hover:bg-muted hover:text-foreground'
       }`}
     >
       {Icon && <Icon className="h-3.5 w-3.5 shrink-0" />}
-      <span className="hidden truncate sm:inline">{module.label}</span>
+      <span className="truncate flex-1 text-left hidden sm:inline">{module.label}</span>
       {closable && (
         <span
           role="button"
@@ -135,7 +136,7 @@ const TabButton = forwardRef<HTMLButtonElement, TabButtonProps>(function TabButt
             e.stopPropagation()
             onClose()
           }}
-          className="ml-0.5 hidden h-4 w-4 shrink-0 items-center justify-center rounded-sm opacity-0 transition group-hover:flex group-hover:opacity-100 hover:bg-foreground/10 sm:flex"
+          className="hidden h-4 w-4 shrink-0 items-center justify-center rounded-sm opacity-0 transition group-hover:flex group-hover:opacity-100 hover:bg-foreground/10 sm:flex"
           aria-label={`${module.label} schliessen`}
         >
           <X className="h-3 w-3" />
