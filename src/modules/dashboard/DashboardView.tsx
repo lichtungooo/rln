@@ -14,6 +14,7 @@ import { CalendarWidget } from "./widgets/CalendarWidget"
 import { EventDetailWidget } from "./widgets/EventDetailWidget"
 import { PlaceWidget } from "./widgets/PlaceWidget"
 import { PlaceDetailWidget } from "./widgets/PlaceDetailWidget"
+import { MapWidget } from "./widgets/MapWidget"
 import { AvatarWidget } from "../avatar"
 import { DashboardHero } from "./DashboardHero"
 
@@ -35,8 +36,9 @@ const DASHBOARD_WIDGETS: AvailableWidget[] = [
   { id: "event-detail", label: "Termin-Detail", defaultColSpan: 3, defaultRowSpan: 2 },
   { id: "log", label: "Log", defaultColSpan: 3, defaultRowSpan: 2 },
   { id: "log-detail", label: "Log-Detail", defaultColSpan: 3, defaultRowSpan: 2 },
-  { id: "place", label: "Orte", defaultColSpan: 3, defaultRowSpan: 2 },
+  { id: "place", label: "Orte (Liste)", defaultColSpan: 3, defaultRowSpan: 2 },
   { id: "place-detail", label: "Pin-Detail", defaultColSpan: 3, defaultRowSpan: 2 },
+  { id: "map", label: "Karte", defaultColSpan: 3, defaultRowSpan: 3 },
 ]
 
 const DEFAULT_PAGES: GridPage[] = [
@@ -135,6 +137,8 @@ function DashboardInner({
         return <PlaceWidget spaceSlug={spaceSlug} />
       case "place-detail":
         return <PlaceDetailWidget />
+      case "map":
+        return <MapWidget spaceSlug={spaceSlug} />
       default:
         return (
           <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground italic">
