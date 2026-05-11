@@ -39,6 +39,7 @@ import { MyEventsView } from "./views/MyEventsView"
 import { useCalendars } from "./useCalendars"
 import { TagInput } from "../profile/TagInput"
 import { EmptyDemoBanner } from "../../demo/EmptyDemoBanner"
+import { PageGrid } from "../../components/PageGrid"
 
 // ============================================================
 // Types
@@ -281,67 +282,34 @@ export function CalendarView({ spaceId, activeGroup, config, isPreview, onOpenSe
     setEditItem(item)
   }, [])
 
+  // Calendar als PageGrid mit 7 lockPages — wie Dashboard/Profil.
+  const calendarPages = [
+    { id: "day", name: "Tag", slots: [{ id: "s1", widget: "view", colSpan: 6 as const, rowSpan: 4 as const }] },
+    { id: "week", name: "Woche", slots: [{ id: "s1", widget: "view", colSpan: 6 as const, rowSpan: 4 as const }] },
+    { id: "month", name: "Monat", slots: [{ id: "s1", widget: "view", colSpan: 6 as const, rowSpan: 4 as const }] },
+    { id: "year", name: "Jahr", slots: [{ id: "s1", widget: "view", colSpan: 6 as const, rowSpan: 4 as const }] },
+    { id: "agenda", name: "Agenda", slots: [{ id: "s1", widget: "view", colSpan: 6 as const, rowSpan: 4 as const }] },
+    { id: "events", name: "Events", slots: [{ id: "s1", widget: "view", colSpan: 6 as const, rowSpan: 4 as const }] },
+    { id: "mine", name: "Meine", slots: [{ id: "s1", widget: "view", colSpan: 6 as const, rowSpan: 4 as const }] },
+  ]
+
   return (
-    <div className="space-y-4 relative">
-      {/* Toolbar — Tab-Buttons im Dashboard/Profil-Stil */}
-      <div
-        className="border-b -mx-4 px-3 sm:px-4 py-2 flex items-center gap-2 flex-wrap"
-        style={{
-          background:
-            "linear-gradient(90deg, rgba(59,130,246,0.04) 0%, rgba(168,85,247,0.04) 100%)",
-        }}
-      >
-        {/* View-Switcher */}
-        <div className="flex items-center gap-1 shrink-0 flex-wrap">
-          {(["day", "week", "month", "year", "agenda", "events", "mine"] as CalendarView[]).map((v) => {
-            const Icon =
-              v === "day" ? Clock
-              : v === "week" ? Layers
-              : v === "month" ? CalendarDays
-              : v === "year" ? Grid3x3
-              : v === "agenda" ? List
-              : v === "mine" ? UserIcon
-              : Layers
-            const isActive = activeView === v
-            const label =
-              v === "day" ? "Tag"
-              : v === "week" ? "Woche"
-              : v === "month" ? "Monat"
-              : v === "year" ? "Jahr"
-              : v === "agenda" ? "Agenda"
-              : v === "mine" ? "Meine"
-              : "Events"
-            return (
-              <button
-                key={v}
-                type="button"
-                onClick={() => setActiveView(v)}
-                className={`px-2.5 py-1.5 text-sm font-medium flex items-center gap-1.5 rounded-md transition-colors ${
-                  isActive
-                    ? "bg-foreground text-background font-semibold"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                <span className="hidden sm:inline">{label}</span>
-              </button>
-            )
-          })}
-        </div>
-
-        {/* Spacer */}
-        <div className="flex-1" />
-
-        {/* Create-Button — Suche & altes Zahnrad raus (globale Suche oben,
-            Modul-Settings ueber Space-Settings) */}
-        {cfg.showCreateButton && (
-          <Button onClick={() => setCreating(true)} size="sm">
-            <Plus className="h-4 w-4 mr-1" />
+    <PageGrid
+      storageKey={`rln-calendar-${spaceId ?? "default"}`}
+      defaultPages={calendarPages}
+      availableWidgets={[{ id: "view", label: "Kalender-Sicht", defaultColSpan: 6, defaultRowSpan: 4 }]}
+      lockPages
+      onActivePageChange={(id) => setActiveView(id as CalendarView)}
+      headerRight={
+        cfg.showCreateButton ? (
+          <Button onClick={() => setCreating(true)} size="sm" className="h-7">
+            <Plus className="h-3.5 w-3.5 mr-1" />
             {cfg.mode === "group-calendar" ? "Neuer Termin" : "Neues Event"}
           </Button>
-        )}
-      </div>
-
+        ) : undefined
+      }
+      renderWidget={() => (
+        <div className="h-full w-full overflow-y-auto p-3 space-y-4 relative">
       {/* Empty-State: keiner Termin im Space → Demo-Banner mit Lade-Knopf */}
       {!isPreview && activeGroup && (
         <EmptyDemoBanner
@@ -433,7 +401,9 @@ export function CalendarView({ spaceId, activeGroup, config, isPreview, onOpenSe
           />
         )}
       </AdaptivePanel>
-    </div>
+        </div>
+      )}
+    />
   )
 }
 

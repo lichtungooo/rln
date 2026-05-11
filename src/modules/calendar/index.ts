@@ -18,6 +18,7 @@ export const calendarModule: ModuleDefinition<CalendarModuleConfig> = {
   id: "calendar",
   label: "Kalender",
   icon: Calendar,
+  fullWidth: true,
   View: CalendarView,
   defaultConfig: calendarDefaultConfig,
   itemTypes: ["event", "appointment", "quest"],
