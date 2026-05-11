@@ -12,6 +12,8 @@ import {
 } from "@real-life-stack/toolkit"
 import type { ProfileModuleConfig, ModuleFieldConfig } from "../types"
 import { TagInput } from "./TagInput"
+import { LifeThreadCard } from "./LifeThreadCard"
+import type { LifeThreadData } from "./life-thread"
 
 export interface MacherProfileDialogProps {
   open: boolean
@@ -49,6 +51,9 @@ export function MacherProfileDialog({
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [lifeThread, setLifeThread] = useState<LifeThreadData | undefined>(
+    profile.lifeThread as LifeThreadData | undefined
+  )
 
   // Avatar in sessionStorage spiegeln, damit ein Browser-Remount nach
   // Kamera-Aufruf das Bild nicht verliert. Beim ersten Save oder Abbrechen
@@ -65,6 +70,7 @@ export function MacherProfileDialog({
   // war gerade beim Foto-Auswaehlen, Wert kommt aus sessionStorage).
   useEffect(() => {
     setValues(initValues(config, profile))
+    setLifeThread(profile.lifeThread as LifeThreadData | undefined)
     if (typeof window === "undefined" || !sessionStorage.getItem("macher-profile-pending-avatar")) {
       setAvatar(profile.avatar ?? "")
     }
@@ -100,6 +106,10 @@ export function MacherProfileDialog({
         if (typeof v === "string" && v.trim() === "") continue
         if (Array.isArray(v) && v.length === 0) continue
         updates[field.id] = typeof v === "string" ? v.trim() : v
+      }
+      // Lebens-Faden — nur speichern wenn etwas drin steht
+      if (lifeThread && (lifeThread.birthYear || Object.keys(lifeThread.phases ?? {}).length > 0)) {
+        updates.lifeThread = lifeThread
       }
       await onSave(updates)
       onOpenChange(false)
@@ -181,6 +191,9 @@ export function MacherProfileDialog({
                 onChange={(val) => setField(field.id, val)}
               />
             ))}
+
+            {/* Lebens-Faden (Phase F4) — Steiner/Lievegoed 7-Jahres-Phasen */}
+            <LifeThreadCard value={lifeThread} onChange={setLifeThread} />
 
             {error && <p className="text-xs text-destructive">{error}</p>}
           </div>

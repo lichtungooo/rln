@@ -102,6 +102,9 @@ export type LogEntryType =
   | "value_given"
   | "value_received"
   | "reflection"
+  /** Wendepunkt im Leben — selbst gesetzt, mit Phasen-Kontext.
+   *  payload kann z.B. tragen: { lifePhaseIndex, ageAtTime, description } */
+  | "life_milestone"
 
 export type LogEntryVisibility = "private" | "network" | "space" | "public"
 
