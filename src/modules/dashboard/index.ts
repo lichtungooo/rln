@@ -12,6 +12,7 @@ export const dashboardModule: ModuleDefinition = {
   id: "dashboard",
   label: "Dashboard",
   icon: LayoutDashboard,
+  fullWidth: true,
   View: DashboardView,
   itemTypes: ["user-progress", "log-entry", "quest", "event"],
   requiredCapabilities: ["ItemWriter"],

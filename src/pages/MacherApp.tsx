@@ -647,8 +647,9 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
         </div>
       </header>
 
-      {/* HUD oben rechts — Total-Level + XP-Balken, expandierbar zu 8 Bereichen */}
-      {activeGroup && (
+      {/* HUD oben rechts — momentan deaktiviert, kommt spaeter als Space-Setting
+          wieder. Code in src/modules/gamification/HudBar.tsx bleibt erhalten. */}
+      {false && activeGroup && (
         <HudBar
           spaceSlug={getSpaceMeta(activeGroup).slug ?? activeGroup.id}
           currentModule={activeModule}
