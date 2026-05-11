@@ -261,12 +261,12 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
   // Marketplace + Kalender + Wissensfeld + Valluet zum Probieren.
   // Funktions-Module die immer als Tab sichtbar sein sollen, auch wenn ein
   // Space sie nicht in group.data.modules hat.
-  const ALWAYS_VISIBLE_MODULES = ['profil', 'marketplace', 'calendar', 'wissensfeld', 'valluet']
+  const ALWAYS_VISIBLE_MODULES = ['profil', 'marketplace', 'calendar', 'wissensfeld', 'valluet', 'settings']
   // Module, die NIE als Tab erscheinen — auch wenn sie in group.data.modules
   // stehen. Sie bleiben registriert (Dashboard-Widgets brauchen sie), aber
   // tauchen nicht in der Tab-Leiste auf. Avatar/Quest/Skill-Tree sind jetzt
   // im Spiegel-Modul vereint.
-  const HIDDEN_TAB_MODULES = ['avatar', 'quest', 'skill-tree', 'settings']
+  const HIDDEN_TAB_MODULES = ['avatar', 'quest', 'skill-tree']
 
   const isOverview = activeWorkspace?.scope === 'overview'
   const activeGroup = isOverview ? null : groups.find((g) => g.id === activeWorkspace?.id) ?? null
