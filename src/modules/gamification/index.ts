@@ -86,3 +86,5 @@ export {
 } from "./universal-skills"
 
 export { ARCHETYPES, getArchetype, type Archetype, type ArchetypeId } from "./archetypes"
+
+export { StatsBar } from "./StatsBar"

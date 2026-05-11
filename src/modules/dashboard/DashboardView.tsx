@@ -2,6 +2,7 @@ import { useMemo } from "react"
 import type { ModuleViewProps } from "../registry"
 import { getSpaceMeta } from "../../spaces/space-data"
 import { PageGrid, type GridPage, type AvailableWidget } from "../../components/PageGrid"
+import { StatsBar } from "../gamification"
 import { TreeWidget } from "./widgets/TreeWidget"
 import { QuestWidget } from "./widgets/QuestWidget"
 import { LogWidget } from "./widgets/LogWidget"
@@ -98,6 +99,7 @@ export function DashboardView({ spaceId, activeGroup }: ModuleViewProps) {
       defaultPages={DEFAULT_PAGES}
       availableWidgets={DASHBOARD_WIDGETS}
       renderWidget={renderWidget}
+      headerRight={<StatsBar />}
     />
   )
 }

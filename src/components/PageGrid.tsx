@@ -58,6 +58,8 @@ export interface PageGridProps {
   availableWidgets: AvailableWidget[]
   /** Widget-Inhalt rendern */
   renderWidget: (widgetId: string) => ReactNode
+  /** Optionaler Inhalt rechts im Header (z.B. XP/Trust-Badge) */
+  headerRight?: ReactNode
 }
 
 const COL_SPANS: ColSpan[] = [1, 2, 3, 6]
@@ -89,6 +91,7 @@ export function PageGrid({
   defaultPages,
   availableWidgets,
   renderWidget,
+  headerRight,
 }: PageGridProps) {
   const [pages, setPages] = useState<GridPage[]>(() => loadPages(storageKey, defaultPages))
   const [activeIdx, setActiveIdx] = useState(0)
@@ -174,6 +177,8 @@ export function PageGrid({
         </div>
 
         <div className="flex-1" />
+
+        {headerRight}
 
         <button
           type="button"

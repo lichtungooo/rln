@@ -1,22 +1,7 @@
-import { useMemo, useState } from "react"
-import {
-  ChevronLeft,
-  ChevronRight,
-  User,
-  Trophy,
-  Network,
-  ShieldCheck,
-  Crown,
-  Sparkles,
-} from "lucide-react"
-import { useContacts } from "@real-life-stack/toolkit"
+import { useState } from "react"
+import { ChevronLeft, ChevronRight, User, Trophy, Network } from "lucide-react"
 import type { ModuleViewProps } from "../registry"
-import {
-  useUserProgress,
-  SYNERGIES,
-  progressInLevel,
-} from "../gamification"
-import { useElderStatus } from "../profile/use-elder-status"
+import { StatsBar } from "../gamification"
 import { SpiegelAvatarTab } from "./SpiegelAvatarTab"
 import { SpiegelQuestTab } from "./SpiegelQuestTab"
 import { SpiegelSkillTab } from "./SpiegelSkillTab"
@@ -111,28 +96,7 @@ function SpiegelHero({
   tab: SpiegelTab
   onTabChange: (t: SpiegelTab) => void
 }) {
-  const { data: progress } = useUserProgress()
-  const { activeContacts } = useContacts()
-  const elder = useElderStatus()
   const { seed: seedDemo, busy: seeding, alreadySeeded } = useDemoSeed()
-
-  const totalXp = useMemo(
-    () => Object.values(progress.bereichXp).reduce((a, b) => a + (b ?? 0), 0),
-    [progress.bereichXp]
-  )
-  const totalProgress = useMemo(() => progressInLevel(totalXp), [totalXp])
-
-  const activeSynergyCount = useMemo(
-    () =>
-      SYNERGIES.filter((syn) =>
-        syn.bereiche.every((b) => (progress.bereichXp[b] ?? 0) > 0)
-      ).length,
-    [progress.bereichXp]
-  )
-
-  // Trust = Anzahl vertrauter Menschen. Reine Zahl, keine Bewertung.
-  // Wenn einer 1 hat, koennte das ein guter Fake sein.
-  const trustCount = activeContacts.length
 
   return (
     <div
@@ -151,64 +115,19 @@ function SpiegelHero({
 
       <div className="flex-1" />
 
-      {/* XP-Balken kompakt */}
-      <div className="flex items-center gap-2 min-w-[140px]">
-        <div
-          className="w-7 h-7 rounded-full grid place-items-center text-[10px] font-bold text-white shadow shrink-0"
-          style={{ background: "linear-gradient(135deg, #E8751A, #FBBF24)" }}
+      <StatsBar />
+
+      {!alreadySeeded && (
+        <button
+          type="button"
+          onClick={() => seedDemo().catch((err) => alert(err.message))}
+          disabled={seeding}
+          className="text-[10px] px-2 py-1 rounded border border-muted-foreground/20 hover:border-primary hover:bg-primary/5 transition-colors disabled:opacity-50 shrink-0"
+          title="Demo-Daten anlegen — Lv ~42, Items, Quests, Log"
         >
-          {totalProgress.level}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full"
-              style={{
-                width: `${Math.min(100, totalProgress.ratio * 100)}%`,
-                background: "linear-gradient(90deg, #E8751A, #FBBF24)",
-              }}
-            />
-          </div>
-          <div className="text-[9px] text-muted-foreground font-mono leading-none mt-0.5">
-            {totalXp.toLocaleString("de-DE")} XP
-          </div>
-        </div>
-      </div>
-
-      {/* Trust = Anzahl vertrauter Menschen */}
-      <div className="flex items-center gap-1.5 shrink-0" title="Vertraute Menschen (verifiziert per Handshake)">
-        <ShieldCheck className="h-4 w-4 text-purple-600" />
-        <span className="text-sm font-bold text-purple-700">{trustCount}</span>
-        <span className="text-[10px] text-muted-foreground hidden sm:inline">
-          {trustCount === 1 ? "vertraut" : "vertraut"}
-        </span>
-      </div>
-
-      {/* Marker rechts */}
-      <div className="flex items-center gap-1 shrink-0">
-        {elder.isElder && <Crown className="h-4 w-4 text-amber-500" aria-label="Aelteste" />}
-        {activeSynergyCount > 0 && (
-          <div className="flex items-center gap-0.5" title={`${activeSynergyCount} Synergien aktiv`}>
-            <Sparkles className="h-4 w-4 text-purple-500" />
-            {activeSynergyCount > 1 && (
-              <span className="text-[10px] font-bold text-purple-500">
-                {activeSynergyCount}
-              </span>
-            )}
-          </div>
-        )}
-        {!alreadySeeded && (
-          <button
-            type="button"
-            onClick={() => seedDemo().catch((err) => alert(err.message))}
-            disabled={seeding}
-            className="ml-1 text-[10px] px-2 py-1 rounded border border-muted-foreground/20 hover:border-primary hover:bg-primary/5 transition-colors disabled:opacity-50"
-            title="Demo-Daten anlegen — Lv ~42, Items, Quests, Log"
-          >
-            {seeding ? "Lade Demo..." : "Demo"}
-          </button>
-        )}
-      </div>
+          {seeding ? "Lade Demo..." : "Demo"}
+        </button>
+      )}
     </div>
   )
 }

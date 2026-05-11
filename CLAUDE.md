@@ -255,9 +255,33 @@ Dort uebernimmt man nur den **Tab-Button-Stil** (Pille, Gradient-Hintergrund) un
 | Marketplace, Wissensfeld | Noch nicht umgestellt |
 | Map | Bleibt fullscreen (die Karte ist der ganze Inhalt) |
 
+### Klick-Routing — Kernkonzept fuer Pfeile (Timo-Klarstellung 11.05.2026)
+
+**Pfeile rechts/links sind NIE fuer Page/Tab-Wechsel, sondern IMMER fuer interne Navigation im aktiven Widget.**
+
+So funktioniert das Pattern:
+1. User klickt ein Item in einem Quell-Widget (z.B. Quest in Quest-Liste)
+2. Detail oeffnet sich in einem anderen Slot, den der User dafuer definiert hat ("welches Fenster arbeitet mit welchem zusammen")
+3. Pfeile blaettern durch die Items des Quell-Widgets
+4. Das aktive Item zeigt sich live im Detail-Slot
+5. Tabs/Pages oben werden manuell geklickt, nicht durch Pfeile gewechselt
+
+Vorbild: SpiegelSkillTab — Klick auf Skill oeffnet Detail-Panel, Pfeile rotieren durch Skills im Bereich.
+
+**Implementierung (offen, kommt naechste Iteration):**
+- Globaler "selectedItem"-State pro Widget-Typ
+- Widget-Konfig "Welcher Slot ist mein Detail-Target?"
+- Pfeile wirken auf das zuletzt geklickte Quell-Widget
+
+### Header-Stats (StatsBar)
+
+XP-Balken + Trust-Zahl + Marker (Aelteste, Synergien) sind als wiederverwendbare Komponente `src/modules/gamification/StatsBar.tsx`. Wird in Profil-Hero und Dashboard-Header (via PageGrid `headerRight` Prop) genutzt. Trust = `useContacts().activeContacts.length` — reine Zahl, keine Bewertung.
+
 ### Offene Themen
 
-- **Klick-Routing im Dashboard:** Klick im Widget oeffnet Detail in einem anderen Slot statt zum Modul zu switchen. Vorschlag: spezieller Widget-Typ "Detail" + Zahnrad-Option "Klick oeffnet hier".
+- **Klick-Routing fertig bauen** (siehe oben — kommt vor allen anderen Modul-Refactors)
+- **Doppeltes Zahnrad weg.** Aktuell hat PageGrid intern ein Zahnrad + es gibt das globale App-Zahnrad oben rechts. Timo will nur EIN Zahnrad (das globale), kontextsensitiv: Klick im Dashboard → Dashboard-Konfig. Plan: PageGrid-internes Zahnrad raus, globales App-Zahnrad ruft Modul-Konfig auf.
+- **Settings als Grid-Modul:** Allgemein / Themes / Module / ... als Tabs in einem Grid-Modul.
 - **Drag-and-Drop** fuer Slots zusaetzlich zum Zahnrad.
 - **Mobile** — vermutlich 1-spaltig, Slots stapeln untereinander.
 - **HUD** (Total-Level + XP-Balken oben rechts) wieder anschaltbar als Space-Setting.

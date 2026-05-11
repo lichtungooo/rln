@@ -30,7 +30,16 @@ data/
 licht-fuer-frieden/
 
 # Strategische Dokumente (nicht oeffentlich)
+# Strategie-Material liegt im privaten Repo macher/ (github.com/lichtungooo/macher)
 HORNBACH-*.md
 PARTNER-PITCH.md
 ONE-PAGER.md
 EMAIL-*.md
+GESAMTKONZEPT.md
+PITCH-*.md
+USER-STORIES.md
+PERSONAS.md
+DEEP-DIVE.md
+MARKTANALYSE.md
+ANTON-BRIEFING.md
+WIR-SIND-WERTVOLL-PITCH.md
