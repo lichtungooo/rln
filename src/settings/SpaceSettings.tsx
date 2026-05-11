@@ -115,14 +115,18 @@ export function SpaceSettings({
 }: SpaceSettingsProps) {
   const [activeTab, setActiveTab] = useState<SpaceSettingsTab>(initialTab)
   const [previewVisible, setPreviewVisible] = useState(true)
+  // Sub-Selection pro Tab — z.B. fuer Module-Tab welches Modul gerade
+  // selektiert ist (Detail wandert in Spalte 3)
+  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(initialModuleId)
 
   // Wenn Dialog mit initialTab/initialModuleId neu geoeffnet wird:
   // den State entsprechend setzen.
   useEffect(() => {
     if (open) {
       setActiveTab(initialTab)
+      setSelectedModuleId(initialModuleId)
     }
-  }, [open, initialTab])
+  }, [open, initialTab, initialModuleId])
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
@@ -230,9 +234,15 @@ export function SpaceSettings({
               {activeGroup && (
                 <SplitContent
                   previewVisible={previewVisible}
-                  hasPreview={tabHasPreview(activeTab)}
-                  editor={renderEditor(activeTab, spaceId, activeGroup, initialModuleId)}
-                  preview={renderPreview(activeTab, activeGroup)}
+                  hasPreview={tabHasPreview(activeTab) || (activeTab === "modules" && !!selectedModuleId)}
+                  editor={renderEditor(
+                    activeTab,
+                    spaceId,
+                    activeGroup,
+                    selectedModuleId,
+                    setSelectedModuleId,
+                  )}
+                  preview={renderPreview(activeTab, activeGroup, selectedModuleId, setSelectedModuleId)}
                 />
               )}
             </div>
@@ -321,7 +331,8 @@ function renderEditor(
   tab: SpaceSettingsTab,
   spaceId: string | null,
   activeGroup: Group,
-  initialModuleId: string | null
+  selectedModuleId: string | null,
+  onSelectModuleId: (id: string | null) => void,
 ): React.ReactNode {
   switch (tab) {
     case "general":
@@ -338,7 +349,13 @@ function renderEditor(
         </EmbeddedView>
       )
     case "modules":
-      return <ModulesTab group={activeGroup} initialOpenModuleId={initialModuleId} />
+      return (
+        <ModulesTab
+          group={activeGroup}
+          selectedModuleId={selectedModuleId}
+          onSelectModuleId={onSelectModuleId}
+        />
+      )
     case "modulschmiede":
       return (
         <EmbeddedView>
@@ -372,12 +389,28 @@ function renderEditor(
   }
 }
 
-function renderPreview(tab: SpaceSettingsTab, activeGroup: Group): React.ReactNode {
+function renderPreview(
+  tab: SpaceSettingsTab,
+  activeGroup: Group,
+  selectedModuleId: string | null,
+  onSelectModuleId: (id: string | null) => void,
+): React.ReactNode {
   switch (tab) {
     case "theme":
       return <ThemePreview groupName={activeGroup.name} />
     case "general":
       return <GeneralPreview group={activeGroup} />
+    case "modules":
+      if (selectedModuleId) {
+        return (
+          <ModuleDetailPanel
+            moduleId={selectedModuleId}
+            group={activeGroup}
+            onClose={() => onSelectModuleId(null)}
+          />
+        )
+      }
+      return null
     default:
       return null
   }
@@ -797,25 +830,17 @@ const FUNCTION_MODULE_IDS = ["dashboard", "map", "kanban", "calendar", "marketpl
 
 const MODULES_WITH_CONFIG = new Set(["map", "calendar"])
 
-function ModulesTab({ group, initialOpenModuleId }: { group: Group; initialOpenModuleId?: string | null }) {
+function ModulesTab({
+  group,
+  selectedModuleId,
+  onSelectModuleId,
+}: {
+  group: Group
+  selectedModuleId: string | null
+  onSelectModuleId: (id: string | null) => void
+}) {
   const updateGroup = useUpdateGroup()
-  const { setModuleConfig } = useModuleConfig()
   const [busy, setBusy] = useState(false)
-  const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [draft, setDraft] = useState<unknown>(null)
-
-  // Initial: wenn jemand mit initialOpenModuleId reinkommt (z.B. Inline-
-  // Zahnrad auf der Karte), das Modul direkt aufgeklappt zeigen.
-  useEffect(() => {
-    if (initialOpenModuleId && MODULES_WITH_CONFIG.has(initialOpenModuleId)) {
-      const mod = getModule(initialOpenModuleId)
-      if (mod) {
-        const current = getModuleConfig(group, initialOpenModuleId, mod.defaultConfig)
-        setSelectedId(initialOpenModuleId)
-        setDraft(current ?? mod.defaultConfig ?? {})
-      }
-    }
-  }, [initialOpenModuleId, group])
 
   const enabled = useMemo<string[]>(
     () => (group.data?.modules as string[] | undefined) ?? FUNCTION_MODULE_IDS,
@@ -845,113 +870,164 @@ function ModulesTab({ group, initialOpenModuleId }: { group: Group; initialOpenM
     }
   }
 
+  // Klick auf Modul-Namen waehlt es aus — Detail erscheint in Spalte 3.
   const openConfig = (id: string) => {
-    if (!MODULES_WITH_CONFIG.has(id)) {
-      setSelectedId(id)
+    onSelectModuleId(id)
+  }
+
+  return (<div className="space-y-3">
+    <div className="max-w-2xl">
+      <h3 className="text-base font-semibold mb-0.5">Module</h3>
+      <p className="text-xs text-muted-foreground">
+        Schalte ein, was dieser Space koennen soll. Aktive Module erscheinen sofort als Tab.
+        Klick auf Modul-Namen oeffnet die Konfiguration in der Spalte rechts.
+      </p>
+    </div>
+
+    <div className="space-y-1.5 max-w-2xl">
+      {sortedModules.map((mod) => {
+        const Icon = mod.icon
+        const isOn = enabled.includes(mod.id)
+        const hasConfig = MODULES_WITH_CONFIG.has(mod.id)
+        const isSelected = selectedModuleId === mod.id
+        return (
+          <div
+            key={mod.id}
+            className={`border rounded-md transition-colors ${
+              isSelected ? "border-primary bg-primary/5 shadow-sm" : isOn ? "bg-card" : "bg-muted/20"
+            }`}
+          >
+            <div className="flex items-center gap-2.5 px-3 py-2">
+              <Icon className={`h-4 w-4 shrink-0 ${isOn ? "text-primary" : "text-muted-foreground"}`} />
+              <button
+                type="button"
+                onClick={() => (hasConfig && isOn ? openConfig(mod.id) : null)}
+                disabled={!hasConfig || !isOn}
+                className={`flex-1 min-w-0 text-left ${
+                  hasConfig && isOn ? "cursor-pointer hover:opacity-80" : "cursor-default"
+                }`}
+              >
+                <div className="text-sm font-medium leading-tight flex items-center gap-1.5">
+                  {mod.label}
+                  {hasConfig && isOn && (
+                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                  )}
+                </div>
+              </button>
+              <label className="inline-flex items-center cursor-pointer shrink-0">
+                <input
+                  type="checkbox"
+                  checked={isOn}
+                  onChange={() => toggleModule(mod.id)}
+                  disabled={busy}
+                  className="sr-only peer"
+                />
+                <div className={`relative w-9 h-5 rounded-full transition-colors ${
+                  isOn ? "bg-primary" : "bg-muted-foreground/30"
+                }`}>
+                  <div className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                    isOn ? "translate-x-4" : "translate-x-0"
+                  }`} />
+                </div>
+              </label>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  </div>
+  )
+}
+
+// ============================================================
+// ModuleDetailPanel — Modul-Konfig in Spalte 3 von SpaceSettings
+// ============================================================
+
+function ModuleDetailPanel({
+  moduleId,
+  group,
+  onClose,
+}: {
+  moduleId: string
+  group: Group
+  onClose: () => void
+}) {
+  const { setModuleConfig } = useModuleConfig()
+  const [busy, setBusy] = useState(false)
+  const [draft, setDraft] = useState<unknown>(null)
+
+  // Beim Wechsel des moduleId: draft neu laden
+  useEffect(() => {
+    if (!MODULES_WITH_CONFIG.has(moduleId)) {
       setDraft(null)
       return
     }
-    const mod = getModule(id)
+    const mod = getModule(moduleId)
     if (!mod) return
-    const current = getModuleConfig(group, id, mod.defaultConfig)
-    setSelectedId(id)
+    const current = getModuleConfig(group, moduleId, mod.defaultConfig)
     setDraft(current ?? mod.defaultConfig ?? {})
+  }, [moduleId, group])
+
+  const mod = getModule(moduleId)
+  if (!mod) {
+    return (
+      <div className="text-xs text-muted-foreground italic p-2">
+        Modul nicht gefunden.
+      </div>
+    )
   }
 
-  const closeConfig = () => {
-    setSelectedId(null)
-    setDraft(null)
+  if (!MODULES_WITH_CONFIG.has(moduleId)) {
+    return (
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <mod.icon className="h-5 w-5 text-primary" />
+          <h3 className="text-sm font-semibold">{mod.label}</h3>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Dieses Modul hat aktuell keine Konfiguration. Aenderungen
+          (Pages, Slots) erfolgen direkt im Modul ueber Drag-and-Drop
+          und Resize.
+        </p>
+      </div>
+    )
   }
 
-  const handleSaveConfig = async () => {
-    if (!selectedId || draft === null) return
+  const handleSave = async () => {
+    if (draft === null) return
     setBusy(true)
     try {
-      await setModuleConfig(group, selectedId, draft)
-      closeConfig()
+      await setModuleConfig(group, moduleId, draft)
     } finally {
       setBusy(false)
     }
   }
 
-  // Wenn ein Modul fuer Konfiguration ausgewaehlt ist: Vollbild-Editor
-  // mit Editor links (kompakt) + Live-Vorschau rechts (gross). So bekommt
-  // die Karte / der Kalender wirklich Platz.
-  if (selectedId && draft !== null && MODULES_WITH_CONFIG.has(selectedId)) {
-    const mod = getModule(selectedId)
-    return (
-      <ModuleConfigFullscreen
-        moduleId={selectedId}
-        moduleLabel={mod?.label ?? selectedId}
-        draft={draft}
-        setDraft={setDraft}
-        onSave={handleSaveConfig}
-        onBack={closeConfig}
-        saving={busy}
-      />
-    )
-  }
-
   return (
     <div className="space-y-3">
-      <div className="max-w-2xl">
-        <h3 className="text-base font-semibold mb-0.5">Module</h3>
-        <p className="text-xs text-muted-foreground">
-          Schalte ein, was dieser Space koennen soll. Aktive Module erscheinen
-          sofort als Tab in der Navbar oben. Klick auf den Modul-Namen
-          oeffnet die Konfiguration mit Live-Vorschau.
-        </p>
+      <div className="flex items-center gap-2">
+        <mod.icon className="h-5 w-5 text-primary" />
+        <h3 className="text-sm font-semibold flex-1">{mod.label} konfigurieren</h3>
+        <Button type="button" size="sm" onClick={handleSave} disabled={busy || draft === null}>
+          {busy ? "Speichere..." : "Speichern"}
+        </Button>
       </div>
-
-      <div className="space-y-1.5 max-w-2xl">
-        {sortedModules.map((mod) => {
-          const Icon = mod.icon
-          const isOn = enabled.includes(mod.id)
-          const hasConfig = MODULES_WITH_CONFIG.has(mod.id)
-          return (
-            <div
-              key={mod.id}
-              className={`border rounded-md transition-colors ${
-                isOn ? "bg-card" : "bg-muted/20"
-              }`}
-            >
-              <div className="flex items-center gap-2.5 px-3 py-2">
-                <Icon className={`h-4 w-4 shrink-0 ${isOn ? "text-primary" : "text-muted-foreground"}`} />
-                <button
-                  type="button"
-                  onClick={() => (hasConfig && isOn ? openConfig(mod.id) : null)}
-                  disabled={!hasConfig || !isOn}
-                  className={`flex-1 min-w-0 text-left ${
-                    hasConfig && isOn ? "cursor-pointer hover:opacity-80" : "cursor-default"
-                  }`}
-                >
-                  <div className="text-sm font-medium leading-tight flex items-center gap-1.5">
-                    {mod.label}
-                    {hasConfig && isOn && (
-                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-                    )}
-                  </div>
-                </button>
-                <label className="inline-flex items-center cursor-pointer shrink-0">
-                  <input
-                    type="checkbox"
-                    checked={isOn}
-                    onChange={() => toggleModule(mod.id)}
-                    disabled={busy}
-                    className="sr-only peer"
-                  />
-                  <div className={`relative w-9 h-5 rounded-full transition-colors ${
-                    isOn ? "bg-primary" : "bg-muted-foreground/30"
-                  }`}>
-                    <div className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
-                      isOn ? "translate-x-4" : "translate-x-0"
-                    }`} />
-                  </div>
-                </label>
-              </div>
-            </div>
-          )
-        })}
+      <div className="border rounded-md overflow-hidden">
+        <div className="bg-muted/10 p-3 overflow-y-auto">
+          {draft !== null && (
+            <ModuleConfigEditor
+              moduleId={moduleId}
+              draft={draft}
+              setDraft={setDraft}
+            />
+          )}
+        </div>
+      </div>
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
+        Live-Vorschau
+      </div>
+      <div className="border rounded-md overflow-hidden h-[40vh]">
+        {draft !== null && <ModuleConfigPreview moduleId={moduleId} draft={draft} />}
       </div>
     </div>
   )
