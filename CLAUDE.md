@@ -250,8 +250,19 @@ Bei Container-Breite < 768px schaltet PageGrid auf Single-Column-Modus um:
 - Slots stapeln untereinander mit `min-height = rowSpan * 180px`
 - Page-Inhalt scrollt vertikal (einzige Ausnahme von der no-scroll-Regel)
 - Page-Tabs scrollen horizontal wenn zu viele
-- Klick-Routing + Pfeile arbeiten unveraendert
+- Klick-Routing-Pfeile wandern in die Header-Bar
+- Drag-and-Drop ist auf Mobile deaktiviert (Touch waere verwirrend)
 - ResizeObserver erkennt Resize live (Browser-Fenster verkleinern)
+
+### Drag-and-Drop (Desktop)
+
+Slots in PageGrid lassen sich per Drag-and-Drop tauschen. Jeder Slot
+zeigt beim Hover ein kleines Grip-Handle oben rechts. Drag startet,
+Drop auf anderen Slot tauscht die Positionen. Persistenz greift
+automatisch via PageGrid-localStorage.
+
+- Mobile: kein Drag — Slot-Konfig nur via Zahnrad
+- Visuelle Hinweise: gedraggter Slot opacity 40%, Drop-Target Primary-Ring
 
 ### Was DANN passiert
 
@@ -388,7 +399,7 @@ XP-Balken + Trust-Zahl + Marker (Aelteste, Synergien) sind als wiederverwendbare
 - **Klick-Routing fertig bauen** (siehe oben — kommt vor allen anderen Modul-Refactors)
 - ✅ **Doppeltes Zahnrad weg** (11.05.2026). Globales App-Zahnrad entfernt — Page-Konfig ueber PageGrid-Zahnrad, Space-Settings ueber Workspace-Switcher Edit.
 - **Settings als Grid-Modul:** Allgemein / Themes / Module / ... als Tabs in einem Grid-Modul.
-- **Drag-and-Drop** fuer Slots zusaetzlich zum Zahnrad.
+- ✅ **Drag-and-Drop** fuer Slots (Desktop, 11.05.2026)
 - **Mobile** — vermutlich 1-spaltig, Slots stapeln untereinander.
 - **HUD** (Total-Level + XP-Balken oben rechts) wieder anschaltbar als Space-Setting.
 
