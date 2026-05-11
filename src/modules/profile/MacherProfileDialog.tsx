@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react"
-import { Copy, Check, ImagePlus, X, Camera, Pencil, Lock, Globe } from "lucide-react"
+import { Copy, Check, ImagePlus, X, Camera, Pencil, Lock, Globe, Crown } from "lucide-react"
 import {
   Dialog,
   DialogContent,
@@ -19,6 +19,8 @@ import { ViaStrengthsSection } from "./ViaStrengthsSection"
 import { CirclesSection } from "./CirclesSection"
 import { ShareProfilesSection } from "./ShareProfilesSection"
 import { VisibilityPreviewSection } from "./VisibilityPreviewSection"
+import { ElderStatusSection } from "./ElderStatusSection"
+import { useElderStatus } from "./use-elder-status"
 
 export interface MacherProfileDialogProps {
   open: boolean
@@ -59,6 +61,7 @@ export function MacherProfileDialog({
   const [lifeThread, setLifeThread] = useState<LifeThreadData | undefined>(
     profile.lifeThread as LifeThreadData | undefined
   )
+  const elderStatus = useElderStatus()
 
   // Avatar in sessionStorage spiegeln, damit ein Browser-Remount nach
   // Kamera-Aufruf das Bild nicht verliert. Beim ersten Save oder Abbrechen
@@ -182,6 +185,16 @@ export function MacherProfileDialog({
                 {contactCount != null && (
                   <p className="text-xs text-muted-foreground mt-1">{contactCount} Kontakte</p>
                 )}
+                {elderStatus.isElder && (
+                  <span
+                    className="mt-1 inline-flex items-center gap-1 text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 rounded-full"
+                    style={{ background: "#FBBF24", color: "#78350F" }}
+                    title="Aelteste-Status erreicht — siehe Profil-Section unten"
+                  >
+                    <Crown className="h-3 w-3" />
+                    Aelteste
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -214,6 +227,9 @@ export function MacherProfileDialog({
 
             {/* Sicht-Vorschau (Phase F9) — was sehen meine Kreise tatsaechlich */}
             <VisibilityPreviewSection />
+
+            {/* Aelteste-Status (Phase F10) — die Krone des Reife-Fadens */}
+            <ElderStatusSection />
 
             {error && <p className="text-xs text-destructive">{error}</p>}
           </div>
