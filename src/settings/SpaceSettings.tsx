@@ -136,116 +136,69 @@ export function SpaceSettings({
         showCloseButton={false}
       >
         <div className="flex flex-col h-full">
-          {/* Header — Modul-Doktrin-Stil mit Linear-Gradient */}
+          {/* Header — Tab-Buttons OBEN (wie Profil) + Close-Button rechts */}
           <div
-            className="flex items-center gap-3 px-4 py-3 border-b shrink-0"
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 border-b shrink-0"
             style={{
               background:
                 "linear-gradient(90deg, rgba(232,117,26,0.05) 0%, rgba(168,85,247,0.04) 100%)",
             }}
           >
-            <SettingsIcon className="h-5 w-5 text-primary shrink-0" />
-            <div className="flex-1 min-w-0">
-              <h2 className="font-semibold text-sm leading-tight">
-                Einstellungen
-              </h2>
-              <p className="text-[11px] text-muted-foreground truncate">
-                {activeGroup?.name ?? "Kein Space gewaehlt"}
-              </p>
+            <SettingsIcon className="h-4 w-4 text-primary shrink-0" />
+            {/* Tab-Buttons im Modul-Doktrin-Stil — scrollen horizontal bei eng */}
+            <div className="flex items-center gap-1 flex-1 min-w-0 overflow-x-auto">
+              {TABS.map((tab) => {
+                const Icon = tab.icon
+                const isActive = activeTab === tab.id
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`px-2.5 py-1.5 text-sm font-medium flex items-center gap-1.5 rounded-md transition-colors shrink-0 ${
+                      isActive
+                        ? "bg-foreground text-background font-semibold"
+                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                    }`}
+                    title={tab.hint}
+                  >
+                    <Icon className="h-4 w-4 shrink-0" />
+                    <span className="hidden sm:inline">{tab.label}</span>
+                  </button>
+                )
+              })}
             </div>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => setPreviewVisible((v) => !v)}
-              className="h-8 w-8 hidden md:inline-flex"
-              title={previewVisible ? "Vorschau ausblenden" : "Vorschau einblenden"}
-              aria-label="Vorschau umschalten"
-            >
-              {previewVisible ? (
-                <PanelRightClose className="h-4 w-4" />
-              ) : (
-                <PanelRightOpen className="h-4 w-4" />
-              )}
-            </Button>
+            <span className="text-[11px] text-muted-foreground truncate hidden lg:inline shrink-0 max-w-[20rem]">
+              {activeGroup?.name ?? "Kein Space"}
+            </span>
             <Button
               type="button"
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="h-8 w-8"
+              className="h-8 w-8 shrink-0"
             >
               <X className="h-4 w-4" />
             </Button>
           </div>
 
-          {/* Body: Sidebar + Content — auf Mobile gestapelt (Tab-Bar oben),
-              auf Desktop nebeneinander (Sidebar links). */}
-          <div className="flex flex-col md:flex-row flex-1 min-h-0 overflow-hidden">
-            {/* Tab-Sidebar — horizontal scrollbar auf Mobile, vertikal auf Desktop. */}
-            <nav
-              className="shrink-0 border-b md:border-b-0 md:border-r md:w-44 lg:w-52 overflow-x-auto md:overflow-x-hidden md:overflow-y-auto"
-              style={{
-                background:
-                  "linear-gradient(135deg, rgba(232,117,26,0.04) 0%, rgba(168,85,247,0.04) 100%)",
-              }}
-            >
-              <ul className="flex md:block gap-1 md:gap-0 p-2 md:space-y-0.5">
-                {TABS.map((tab) => {
-                  const Icon = tab.icon
-                  const isActive = activeTab === tab.id
-                  return (
-                    <li key={tab.id} className="shrink-0 md:shrink">
-                      <button
-                        type="button"
-                        onClick={() => setActiveTab(tab.id)}
-                        className={`text-left px-3 py-2 rounded-md flex items-center gap-2 text-sm transition-colors whitespace-nowrap md:w-full md:whitespace-normal ${
-                          isActive
-                            ? "bg-foreground text-background font-semibold"
-                            : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                        }`}
-                      >
-                        <Icon className="h-4 w-4 shrink-0" />
-                        <div className="md:flex-1 md:min-w-0">
-                          <div className="leading-tight">{tab.label}</div>
-                          {tab.hint && (
-                            <div className={`hidden md:block text-[10px] truncate ${
-                              isActive ? "text-background/80" : "text-muted-foreground"
-                            }`}>
-                              {tab.hint}
-                            </div>
-                          )}
-                        </div>
-                      </button>
-                    </li>
-                  )
-                })}
-              </ul>
-            </nav>
+          {/* Body: 3-Spalten-Drilldown unter dem Tab-Header */}
+          <div className="flex-1 min-h-0 overflow-hidden">
+            {!activeGroup && (
+              <div className="p-8 text-center text-sm text-muted-foreground">
+                Bitte einen Space waehlen, um die Einstellungen zu oeffnen.
+              </div>
+            )}
 
-            {/* Content */}
-            <div className="flex-1 bg-background min-w-0">
-              {!activeGroup && (
-                <div className="p-8 text-center text-sm text-muted-foreground">
-                  Bitte einen Space waehlen, um die Einstellungen zu oeffnen.
-                </div>
-              )}
-
-              {activeGroup && (
-                <SplitContent
-                  previewVisible={previewVisible}
-                  hasPreview={tabHasPreview(activeTab) || (activeTab === "modules" && !!selectedModuleId)}
-                  editor={renderEditor(
-                    activeTab,
-                    spaceId,
-                    activeGroup,
-                    selectedModuleId,
-                    setSelectedModuleId,
-                  )}
-                  preview={renderPreview(activeTab, activeGroup, selectedModuleId, setSelectedModuleId)}
-                />
-              )}
-            </div>
+            {activeGroup && (
+              <SettingsBody
+                activeTab={activeTab}
+                spaceId={spaceId}
+                activeGroup={activeGroup}
+                selectedModuleId={selectedModuleId}
+                setSelectedModuleId={setSelectedModuleId}
+              />
+            )}
           </div>
         </div>
       </DialogContent>
@@ -254,51 +207,125 @@ export function SpaceSettings({
 }
 
 // ============================================================
-// SplitContent — 3-Spalten-Drilldown: Sidebar links (extern), Mitte (Editor),
-// Rechts (Detail/Preview). Auf grossen Bildschirmen alle drei nebeneinander,
-// auf Tablet zweispaltig (Detail unten), auf Mobile single-column.
+// SettingsBody — 3-Spalten-Drilldown unter dem Top-Tab-Header.
+// Spalte 1 (Sub-Liste): nur fuer Tabs mit Sub-Hierarchie (Module).
+// Spalte 2 (Editor): Form / Liste — der Hauptinhalt des Tabs.
+// Spalte 3 (Detail/Preview): Live-Vorschau oder Sub-Item-Detail.
+// Auf Mobile: Firefox-Drilldown (eines nach dem anderen, Wisch + Zurueck).
 // ============================================================
 
-function SplitContent({
-  previewVisible,
-  hasPreview,
-  editor,
-  preview,
+function SettingsBody({
+  activeTab,
+  spaceId,
+  activeGroup,
+  selectedModuleId,
+  setSelectedModuleId,
 }: {
-  previewVisible: boolean
-  hasPreview: boolean
-  editor: React.ReactNode
-  preview: React.ReactNode
+  activeTab: SpaceSettingsTab
+  spaceId: string | null
+  activeGroup: Group
+  selectedModuleId: string | null
+  setSelectedModuleId: (id: string | null) => void
 }) {
-  const showPreview = previewVisible && hasPreview
-  return (
-    <div className="flex h-full">
-      {/* Mitte: Editor / Liste / Form */}
-      <div className={`overflow-y-auto ${showPreview ? "flex-1 lg:w-1/2" : "flex-1 w-full"}`}>
-        <div className="p-3 sm:p-6 pb-[max(1rem,env(safe-area-inset-bottom))]">{editor}</div>
+  // Mobile-Erkennung
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)")
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener("change", handler)
+    return () => mq.removeEventListener("change", handler)
+  }, [])
+
+  // Welche Spalten hat dieser Tab?
+  const hasSubList = activeTab === "modules" // spaeter: auch members, modulschmiede
+  const hasPreview = tabHasPreview(activeTab) || (activeTab === "modules" && !!selectedModuleId)
+
+  const subList = hasSubList ? renderSubList(activeTab, activeGroup, selectedModuleId, setSelectedModuleId) : null
+  const editor = renderEditor(activeTab, spaceId, activeGroup, selectedModuleId, setSelectedModuleId)
+  const preview = renderPreview(activeTab, activeGroup, selectedModuleId, setSelectedModuleId)
+
+  // Mobile: Firefox-Drilldown — eines nach dem anderen
+  if (isMobile) {
+    return (
+      <div className="h-full overflow-y-auto p-3">
+        {/* Falls Sub-Liste vorhanden und nichts ausgewaehlt: Liste anzeigen */}
+        {hasSubList && !selectedModuleId && subList}
+        {/* Falls Sub-Liste vorhanden und Item ausgewaehlt: Detail mit Zurueck */}
+        {hasSubList && selectedModuleId && (
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={() => setSelectedModuleId(null)}
+              className="text-xs text-primary flex items-center gap-1 hover:underline"
+            >
+              ← Zurueck zur Modul-Liste
+            </button>
+            {preview}
+          </div>
+        )}
+        {/* Sonst: Editor + ggf. Preview untereinander */}
+        {!hasSubList && (
+          <div className="space-y-4">
+            {editor}
+            {hasPreview && preview && (
+              <div className="border-t pt-4">
+                <div className="text-[10px] uppercase font-semibold text-muted-foreground mb-3 tracking-wider">
+                  Vorschau
+                </div>
+                {preview}
+              </div>
+            )}
+          </div>
+        )}
       </div>
-      {/* Rechts: Detail / Preview — immer reservierter Platz auf lg+,
-          zeigt Hint wenn nichts ausgewaehlt. */}
+    )
+  }
+
+  // Desktop: 3 feste Spalten unter dem Tab-Header
+  return (
+    <div className="grid h-full grid-cols-[1fr_1.4fr_1.4fr]">
+      {/* Spalte 1: Sub-Liste (nur bei Tabs mit Hierarchie) */}
       <div
-        className="hidden lg:flex flex-1 lg:w-1/2 border-l overflow-y-auto"
+        className="border-r overflow-y-auto"
+        style={{
+          background:
+            "linear-gradient(135deg, rgba(232,117,26,0.03) 0%, rgba(168,85,247,0.03) 100%)",
+        }}
+      >
+        <div className="p-3 sm:p-4">
+          {subList ?? (
+            <p className="text-[11px] text-muted-foreground italic">
+              {TABS.find((t) => t.id === activeTab)?.hint ?? "—"}
+            </p>
+          )}
+        </div>
+      </div>
+      {/* Spalte 2: Editor / Form / Inhalt */}
+      <div className="overflow-y-auto border-r">
+        <div className="p-3 sm:p-6">{editor}</div>
+      </div>
+      {/* Spalte 3: Detail / Preview / Hint */}
+      <div
+        className="overflow-y-auto"
         style={{
           background:
             "linear-gradient(135deg, rgba(232,117,26,0.02) 0%, rgba(168,85,247,0.03) 100%)",
         }}
       >
-        <div className="w-full p-4 sm:p-6">
-          {showPreview ? (
+        <div className="p-3 sm:p-6">
+          {hasPreview && preview ? (
             <>
               <div className="text-[10px] uppercase font-semibold text-muted-foreground mb-3 tracking-wider">
-                Live-Vorschau
+                {activeTab === "modules" ? "Modul-Konfig" : "Live-Vorschau"}
               </div>
               {preview}
             </>
           ) : (
             <div className="h-full flex items-center justify-center text-center text-xs text-muted-foreground italic px-6">
               <p>
-                Detail-Ansicht. Klick auf einen Eintrag in der mittleren Spalte zeigt hier
-                die Konfiguration oder Vorschau.
+                Detail-Ansicht. Klick auf einen Eintrag links zeigt hier die
+                Konfiguration oder Vorschau.
               </p>
             </div>
           )}
@@ -306,6 +333,55 @@ function SplitContent({
       </div>
     </div>
   )
+}
+
+// renderSubList — Spalte 1: nur fuer Tabs mit Hierarchie
+function renderSubList(
+  tab: SpaceSettingsTab,
+  group: Group,
+  selectedModuleId: string | null,
+  setSelectedModuleId: (id: string | null) => void,
+): React.ReactNode {
+  if (tab === "modules") {
+    const all = getAllModules()
+    const fn = FUNCTION_MODULE_IDS.map((id) => all.find((m) => m.id === id)).filter(
+      (m): m is NonNullable<typeof m> => Boolean(m)
+    )
+    const rest = all.filter((m) => !FUNCTION_MODULE_IDS.includes(m.id))
+    const sorted = [...fn, ...rest]
+    const enabled = (group.data?.modules as string[] | undefined) ?? FUNCTION_MODULE_IDS
+    return (
+      <div className="space-y-1">
+        <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-2">
+          Module ({enabled.length} aktiv)
+        </p>
+        {sorted.map((mod) => {
+          const Icon = mod.icon
+          const isOn = enabled.includes(mod.id)
+          const isSelected = selectedModuleId === mod.id
+          return (
+            <button
+              key={mod.id}
+              type="button"
+              onClick={() => setSelectedModuleId(mod.id)}
+              className={`w-full text-left px-2 py-1.5 rounded-md flex items-center gap-2 text-sm transition-colors ${
+                isSelected
+                  ? "bg-primary/10 border border-primary/50 shadow-sm"
+                  : "border border-transparent hover:bg-muted/40"
+              } ${!isOn ? "opacity-50" : ""}`}
+            >
+              <Icon className="h-3.5 w-3.5 shrink-0" />
+              <span className="flex-1 truncate">{mod.label}</span>
+              {!isOn && (
+                <span className="text-[9px] text-muted-foreground italic">aus</span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+    )
+  }
+  return null
 }
 
 // ============================================================
@@ -350,10 +426,9 @@ function renderEditor(
       )
     case "modules":
       return (
-        <ModulesTab
+        <ModuleInfo
           group={activeGroup}
           selectedModuleId={selectedModuleId}
-          onSelectModuleId={onSelectModuleId}
         />
       )
     case "modulschmiede":
@@ -830,6 +905,111 @@ const FUNCTION_MODULE_IDS = ["dashboard", "map", "kanban", "calendar", "marketpl
 
 const MODULES_WITH_CONFIG = new Set(["map", "calendar"])
 
+// ============================================================
+// ModuleInfo — Spalte 2 im Module-Tab: zeigt Beschreibung + Toggle
+// fuer das ausgewaehlte Modul. Detail-Konfig wandert in Spalte 3.
+// ============================================================
+
+function ModuleInfo({
+  group,
+  selectedModuleId,
+}: {
+  group: Group
+  selectedModuleId: string | null
+}) {
+  const updateGroup = useUpdateGroup()
+  const [busy, setBusy] = useState(false)
+  const enabled = (group.data?.modules as string[] | undefined) ?? FUNCTION_MODULE_IDS
+
+  if (!selectedModuleId) {
+    return (
+      <div className="text-xs text-muted-foreground italic">
+        <p>Klick auf ein Modul links — hier siehst du Beschreibung + Status.</p>
+        <p className="mt-2">Detail-Konfiguration erscheint rechts in Spalte 3.</p>
+      </div>
+    )
+  }
+
+  const mod = getModule(selectedModuleId)
+  if (!mod) {
+    return (
+      <p className="text-xs text-muted-foreground italic">
+        Modul nicht gefunden: {selectedModuleId}
+      </p>
+    )
+  }
+
+  const isOn = enabled.includes(mod.id)
+  const hasConfig = MODULES_WITH_CONFIG.has(mod.id)
+
+  const toggle = async () => {
+    setBusy(true)
+    try {
+      const next = isOn ? enabled.filter((x) => x !== mod.id) : [...enabled, mod.id]
+      await updateGroup(group.id, { data: { ...(group.data ?? {}), modules: next } })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-md bg-primary/10 grid place-items-center">
+          <mod.icon className="h-5 w-5 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-semibold leading-tight">{mod.label}</h3>
+          <p className="text-[11px] text-muted-foreground">id: {mod.id}</p>
+        </div>
+      </div>
+
+      <div className="border rounded-md p-3 flex items-center gap-3 bg-muted/10">
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-medium">Modul im Space aktiv</div>
+          <p className="text-[11px] text-muted-foreground">
+            {isOn
+              ? "Erscheint als Tab in der Modul-Leiste oben."
+              : "Modul ist ausgeschaltet — kein Tab sichtbar."}
+          </p>
+        </div>
+        <label className="inline-flex items-center cursor-pointer shrink-0">
+          <input
+            type="checkbox"
+            checked={isOn}
+            onChange={toggle}
+            disabled={busy}
+            className="sr-only peer"
+          />
+          <div className={`relative w-10 h-5 rounded-full transition-colors ${
+            isOn ? "bg-primary" : "bg-muted-foreground/30"
+          }`}>
+            <div className={`absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+              isOn ? "translate-x-5" : "translate-x-0"
+            }`} />
+          </div>
+        </label>
+      </div>
+
+      <div className="text-xs text-muted-foreground">
+        {hasConfig ? (
+          <p>
+            Dieses Modul hat eine eigene Konfiguration — siehe rechts in
+            Spalte 3.
+          </p>
+        ) : (
+          <p>
+            Konfiguration erfolgt direkt im Modul (Drag-and-Drop fuer
+            Slots, Resize an der Ecke, "+" fuer neue Pages).
+          </p>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// ModulesTab — alte Liste, wird nicht mehr direkt genutzt (renderSubList
+// uebernimmt die Liste in Spalte 1). Bleibt fuer Backward-Compat erhalten.
 function ModulesTab({
   group,
   selectedModuleId,
