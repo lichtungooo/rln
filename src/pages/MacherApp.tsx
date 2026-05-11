@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo, lazy, Suspense } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { Plus } from 'lucide-react'
+import { Plus, Settings as SettingsIcon, QrCode } from 'lucide-react'
 import { LocalConnector } from '@real-life-stack/local-connector'
 import { MockConnector } from '@real-life-stack/mock-connector'
 import type { DataInterface, Group } from '@real-life-stack/data-interface'
@@ -74,7 +74,7 @@ import { MobileTabSwitcher } from '../components/MobileTabSwitcher'
 import { useEdgeSwipe } from '../components/use-edge-swipe'
 import { GlobalSearch } from '../components/GlobalSearch'
 import { FullscreenButton } from '../components/FullscreenButton'
-import { Square, Home } from 'lucide-react'
+import { Square } from 'lucide-react'
 import { HomeView } from '../components/HomeView'
 
 registerModule(mapModule)
@@ -581,17 +581,15 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
             )}
           </div>
 
-          {/* Haeuschen — neben den Spaces, oeffnet die globale Home-Sicht */}
+          {/* Handshake-QR — Identitaet verifizieren mit anderem Menschen */}
           <button
             type="button"
-            onClick={() => setHomeOpen(true)}
-            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition hover:bg-muted ${
-              homeOpen ? 'bg-primary/15 text-primary' : 'text-muted-foreground hover:text-foreground'
-            }`}
-            aria-label="Daheim"
-            title="Daheim"
+            onClick={() => setVerifyDialogOpen(true)}
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition text-muted-foreground hover:text-foreground hover:bg-muted"
+            aria-label="Handshake (QR-Code)"
+            title="Handshake — Identitaet verifizieren per QR-Code"
           >
-            <Home className="h-4 w-4" />
+            <QrCode className="h-4 w-4" />
           </button>
 
           {/* Suche — Desktop neben Workspace, vor den Tabs */}
@@ -626,14 +624,21 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
             <Square className="h-4 w-4" strokeWidth={2.5} />
           </button>
 
-          {/* Rechts: Status, Vollbild, User
-              Globales Settings-Zahnrad weg (Modul-Doktrin: nur EIN
-              Zahnrad pro Sichtfeld). Page-/Modul-Konfig lebt im Modul
-              selbst (PageGrid-Zahnrad). Space-Settings erreichbar
-              ueber den Edit-Knopf im Workspace-Switcher. */}
+          {/* Rechts: Status, Vollbild, Einstellungen (kontextsensitiv), User
+              EIN Settings-Zahnrad fuer alles — oeffnet Settings fuer den
+              aktiven Space + den aktiven Modul-Bereich. */}
           <div className="flex shrink-0 items-center gap-0.5">
             {supportsMessaging && <RelayStatusBadgeWrapper />}
             <FullscreenButton />
+            <button
+              type="button"
+              onClick={() => openSpaceSettings("modules", activeModule)}
+              title={`Einstellungen — Space + ${activeModule}`}
+              aria-label="Einstellungen"
+              className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground"
+            >
+              <SettingsIcon className="h-3.5 w-3.5" />
+            </button>
             <UserMenu
               user={userData}
               onProfile={() => setProfileDialogOpen(true)}

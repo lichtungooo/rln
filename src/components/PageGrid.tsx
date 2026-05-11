@@ -280,15 +280,10 @@ export function PageGrid({
           </div>
         )}
 
-        <button
-          type="button"
-          onClick={() => setConfigOpen(true)}
-          className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-          aria-label="Seite konfigurieren"
-          title="Widgets dieser Seite konfigurieren"
-        >
-          <Settings className="h-4 w-4" />
-        </button>
+        {/* Settings-Zahnrad raus — kommt ueber globales App-Zahnrad (kontext-
+            sensitiv). Slot-Konfig erfolgt aktuell ueber Drag-and-Drop und
+            Resize-Ecke; das PageConfigModal wird im naechsten Iteration ueber
+            den globalen Settings-Dialog angeboten. */}
       </div>
 
       {/* Wrapper: Pfeile aussen NUR wenn navApi gegeben — sie wirken auf

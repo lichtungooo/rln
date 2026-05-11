@@ -483,23 +483,8 @@ export function MapView({ spaceId, activeGroup, config, isPreview, onOpenSetting
 
   return (
     <div style={{ height: isPreview ? "100%" : "calc(100dvh - 3.5rem)", isolation: "isolate", position: "relative" }}>
-      {/* Settings-Zahnrad oben rechts (nur Admin, NICHT im Preview) */}
-      {!isPreview && isAdmin && activeGroup && (
-        <div className="absolute top-3 right-3 z-[1000]">
-          <div className="bg-background/95 backdrop-blur rounded-md shadow-md border">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => onOpenSettings?.("modules", "map")}
-              title="Karte konfigurieren"
-              aria-label="Karte konfigurieren"
-            >
-              <Settings className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      )}
+      {/* Map-Konfig kommt jetzt ueber das globale Settings-Zahnrad oben rechts
+          (Modul-Doktrin: nur EIN Zahnrad pro Sichtfeld, kontextsensitiv). */}
 
       {/* Empty-State: keine Pins → Demo-Banner mit Lade-Knopf (nur fuer Admins) */}
       {!isPreview && activeGroup && (
