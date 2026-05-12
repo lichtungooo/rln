@@ -7,11 +7,8 @@ import { MarketplaceGridView } from "./MarketplaceGridView"
  * Marktplatz-Modul.
  *
  * Schema lebt in marketplace-schema.ts (Wahrheits-Quelle, Modul-Schmiede-
- * tauglich). Render-Komponente ist eigen (MarketplaceGridView): Kleinanzeigen-
+ * tauglich). Render-Komponente ist MarketplaceGridView: Kleinanzeigen-
  * Layout mit Kategorien-Sidebar links + Inserate-Grid rechts.
- *
- * Alte MarketplaceView.tsx bleibt im Code (Backup, kann spaeter entfernt
- * werden — enthielt drei Welten als Pages mit 1-Slot-Layout).
  */
 export const marketplaceModule: ModuleDefinition = {
   id: "marketplace",

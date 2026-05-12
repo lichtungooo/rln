@@ -98,7 +98,7 @@ const WORLDS: WorldDef[] = [
   },
   {
     id: "needs",
-    label: "Suche",
+    label: "Beduerfnisse",
     hint: "Was gerade gebraucht wird",
     icon: Lightbulb,
     matches: (item) => item.data.kind === "need",
@@ -472,7 +472,7 @@ function ListingCard({ item }: { item: ListItem }) {
         )}
         {isNeed && (
           <div className="absolute top-2 left-2 px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-500 text-white shadow">
-            SUCHE
+            BEDARF
           </div>
         )}
         {!isNeed && priceType && (

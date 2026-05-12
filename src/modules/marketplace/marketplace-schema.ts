@@ -68,7 +68,7 @@ export const CATEGORY_LABEL: Record<MarketplaceCategory, string> = {
   material: "Material",
   produce: "Ernte / Rohstoff",
   knowledge: "Wissen",
-  workspace: "Werkstatt-Zeit",
+  workspace: "Werkstatt",
   service: "Dienstleistung",
   other: "Anderes",
 }
