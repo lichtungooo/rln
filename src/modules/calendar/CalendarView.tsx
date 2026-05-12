@@ -338,7 +338,7 @@ function CalendarInner({ spaceId, activeGroup, config, isPreview, onOpenSettings
 
   return (
     <PageGrid
-      storageKey={`rln-calendar-${spaceId ?? "default"}`}
+      storageKey={`rln-calendar-v2-${spaceId ?? "default"}`}
       defaultPages={calendarPages}
       availableWidgets={[
         { id: "calendar-view", label: "Kalender-Sicht", defaultColSpan: 4, defaultRowSpan: 4 },
@@ -1452,24 +1452,12 @@ function SubscribeModal({
   onClose: () => void
   feedName: string
 }) {
-  const [copied, setCopied] = useState(false)
   if (!open) return null
 
   const icsContent = generateIcs(items, feedName)
-  const dataUrl = buildIcsDataUrl(icsContent)
 
   const handleDownload = () => {
     downloadIcs(icsContent, `${feedName.toLowerCase().replace(/\s+/g, "-")}.ics`)
-  }
-
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard.writeText(dataUrl)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch {
-      // ignore
-    }
   }
 
   return (
@@ -1483,12 +1471,12 @@ function SubscribeModal({
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Download className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold">ICS-Datei herunterladen</h3>
+              <h3 className="text-sm font-semibold">Als ICS-Datei speichern</h3>
             </div>
             <p className="text-xs text-muted-foreground">
-              Einmaliger Schnappschuss. Importieren in Google Calendar,
-              Apple Calendar, Outlook — alle {items.length} Termine in einer
-              Datei.
+              Schnappschuss aller {items.length} Termine in einer Datei.
+              Importieren in Google Calendar, Apple Calendar, Outlook,
+              Thunderbird — funktioniert ueberall.
             </p>
             <Button type="button" size="sm" onClick={handleDownload}>
               <Download className="h-3.5 w-3.5 mr-1" />
@@ -1496,48 +1484,14 @@ function SubscribeModal({
             </Button>
           </div>
 
-          <div className="space-y-2 pt-4 border-t">
-            <div className="flex items-center gap-2">
-              <LinkIcon className="h-4 w-4 text-muted-foreground" />
-              <h3 className="text-sm font-semibold">Subscribe-URL kopieren</h3>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Data-URL als ICS-Snapshot. In Google Calendar /Apple Calendar
-              unter "Kalender ueber URL abonnieren" einfuegen.
-            </p>
-            <div className="flex items-center gap-2">
-              <Input
-                value={dataUrl}
-                readOnly
-                onClick={(e) => (e.target as HTMLInputElement).select()}
-                className="font-mono text-[10px] flex-1"
-              />
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={handleCopy}
-                className="shrink-0"
-              >
-                {copied ? (
-                  <>
-                    <Check className="h-3.5 w-3.5 mr-1" />
-                    Kopiert
-                  </>
-                ) : (
-                  <>
-                    <LinkIcon className="h-3.5 w-3.5 mr-1" />
-                    Kopieren
-                  </>
-                )}
-              </Button>
-            </div>
-          </div>
-
-          <div className="text-[10px] text-muted-foreground italic border-l-2 border-primary/30 pl-3 py-1">
-            Live-Abonnement (mit automatischer Aktualisierung) folgt sobald
-            der eigene Relay-Server steht. Die Snapshot-URL ist statisch —
-            beim erneuten Oeffnen des Modals wird sie aktualisiert.
+          <div className="text-[11px] text-muted-foreground leading-relaxed border-l-2 border-primary/30 pl-3 py-1">
+            <strong className="text-foreground">Echte Subscribe-URL</strong> (mit
+            automatischer Aktualisierung in deinem Kalender) folgt sobald der
+            eigene Relay-Server steht. Sie wird so aussehen wie
+            <span className="font-mono"> https://relay.rln.org/calendar/&lt;slug&gt;.ics</span> —
+            in Google/Apple Calendar einfuegen und der Kalender bleibt live
+            verbunden. Bis dahin: ICS-Snapshot herunterladen und einmal
+            importieren.
           </div>
         </div>
 

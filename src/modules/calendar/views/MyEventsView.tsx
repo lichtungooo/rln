@@ -1,10 +1,9 @@
 import { useState, useMemo } from "react"
-import { Download, Calendar, Eye, User as UserIcon } from "lucide-react"
-import { Button, useCurrentUser } from "@real-life-stack/toolkit"
+import { Calendar, Eye, User as UserIcon } from "lucide-react"
+import { useCurrentUser } from "@real-life-stack/toolkit"
 import type { Item } from "@real-life-stack/data-interface"
 import type { TimeFormat } from "../CalendarView"
 import { useMyParticipations } from "../useParticipation"
-import { generateIcs, downloadIcs } from "../ics"
 import type { RecurrenceRule } from "../recurrence"
 import { expandRecurrence, summarizeRecurrence } from "../recurrence"
 
@@ -42,39 +41,9 @@ export function MyEventsView({ items, colors, timeFormat, onItemClick }: MyEvent
 
   const activeItems = grouped[tab === "own" ? "own" : tab === "accepted" ? "accepted" : "observing"]
 
-  const handleDownload = () => {
-    const ics = generateIcs(activeItems, `Macher-Map: ${tabLabel(tab)}`)
-    downloadIcs(ics, `macher-map-${tab}.ics`)
-  }
-
-  const handleDownloadAll = () => {
-    const all = [...grouped.own, ...grouped.accepted, ...grouped.observing]
-    // Dedupe by id
-    const unique = Array.from(new Map(all.map((it) => [it.id, it])).values())
-    const ics = generateIcs(unique, "Macher-Map: Meine Termine")
-    downloadIcs(ics, "macher-map-meine-termine.ics")
-  }
-
   return (
     <div className="space-y-3">
-      {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
-        <div>
-          <h2 className="text-lg font-semibold flex items-center gap-2">
-            <UserIcon className="h-4 w-4" />
-            Meine Termine
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            Eigene, angenommene und beobachtete Events. Als ICS-Feed exportieren fuer dein Handy.
-          </p>
-        </div>
-        <Button variant="outline" size="sm" onClick={handleDownloadAll}>
-          <Download className="h-3.5 w-3.5 mr-1" />
-          Alle exportieren (.ics)
-        </Button>
-      </div>
-
-      {/* Tabs */}
+      {/* Tabs — Header weg, Export raus (lebt im Abonnieren-Modal oben) */}
       <div className="flex gap-1 border-b">
         {(["own", "accepted", "observing"] as MyTab[]).map((t) => {
           const Icon = t === "own" ? Calendar : t === "accepted" ? UserIcon : Eye
@@ -96,15 +65,6 @@ export function MyEventsView({ items, colors, timeFormat, onItemClick }: MyEvent
             </button>
           )
         })}
-
-        <div className="flex-1" />
-
-        {activeItems.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={handleDownload}>
-            <Download className="h-3 w-3 mr-1" />
-            <span className="text-xs">Tab als .ics</span>
-          </Button>
-        )}
       </div>
 
       {/* Liste */}
