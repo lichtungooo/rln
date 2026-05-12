@@ -983,21 +983,255 @@ function AuthGate({ connector, children }: { connector: DataInterface; children:
 
 // --- Connector Factory ---
 
+// Demo-Daten: 3 Hauptnetzwerke + 9 Unterspaces, zeigen die Hierarchie-
+// und Theming-Faehigkeiten. Jeder Hauptspace traegt eigenes Theme,
+// eigene Modul-Auswahl, eigene Hashtags. Subnetzwerke ererben (visuell)
+// und setzen eigene Akzente per description + hashtags.
+
+const MACHER_MODULES = ['dashboard', 'map', 'kanban', 'calendar', 'marketplace', 'wissensfeld', 'quest', 'skill-tree', 'avatar']
+const SCHULE_MODULES = ['dashboard', 'map', 'calendar', 'wissensfeld', 'quest', 'skill-tree', 'avatar']
+const ADVENTURE_MODULES = ['dashboard', 'map', 'calendar', 'marketplace', 'quest', 'avatar']
+
 const macherMapDemoData = {
   items: [] as any[],
   groups: [
-    { id: 'macher', name: 'Macher', createdBy: 'macher-1', createdAt: '2026-04-28T00:00:00.000Z', data: { scope: 'group', description: 'Werkstaetten, Abenteuer und Macher in deiner Naehe', slug: 'macher', modules: ['dashboard', 'map', 'kanban', 'calendar', 'marketplace', 'wissensfeld', 'quest', 'skill-tree', 'avatar'], access: 'open', roles: ['admin', 'member'], memberCount: 1 } },
+    // ============================================================
+    // Macher — Handwerk, DIY, Werkstaetten
+    // ============================================================
+    {
+      id: 'macher',
+      name: 'Macher',
+      createdBy: 'macher-1',
+      createdAt: '2026-04-28T00:00:00.000Z',
+      data: {
+        scope: 'group',
+        description: 'Werkstaetten, Abenteuer und Macher in deiner Naehe',
+        slug: 'macher',
+        theme: 'macher-orange',
+        modules: MACHER_MODULES,
+        hashtags: ['handwerk', 'diy', 'macher', 'werkstatt'],
+        access: 'open',
+        roles: ['admin', 'member'],
+        memberCount: 1,
+      },
+    },
+    {
+      id: 'macher-seifenkisten-lohr',
+      name: 'Seifenkistenfreunde Lohr',
+      createdBy: 'macher-1',
+      createdAt: '2026-05-12T00:00:00.000Z',
+      data: {
+        scope: 'group',
+        description: 'Seifenkisten-Bauen in Lohr am Main, jeden Samstag offen.',
+        slug: 'seifenkisten-lohr',
+        parentSpaceId: 'macher',
+        modules: MACHER_MODULES,
+        hashtags: ['seifenkisten', 'lohr', 'unterfranken'],
+        access: 'open',
+        roles: ['admin', 'member'],
+        memberCount: 1,
+      },
+    },
+    {
+      id: 'macher-holzwuermer-nordhessen',
+      name: 'Holzwuermer Nordhessen',
+      createdBy: 'macher-1',
+      createdAt: '2026-05-12T00:00:00.000Z',
+      data: {
+        scope: 'group',
+        description: 'Holz-Werkstaetten und Schreiner-Treffen im Norden Hessens.',
+        slug: 'holzwuermer-nordhessen',
+        parentSpaceId: 'macher',
+        modules: MACHER_MODULES,
+        hashtags: ['holz', 'schreinerei', 'nordhessen'],
+        access: 'open',
+        roles: ['admin', 'member'],
+        memberCount: 1,
+      },
+    },
+    {
+      id: 'macher-berlin-schweisst',
+      name: 'Berlin schweisst zusammen',
+      createdBy: 'macher-1',
+      createdAt: '2026-05-12T00:00:00.000Z',
+      data: {
+        scope: 'group',
+        description: 'Metall-Werkstaetten und Schweisser-Kreis in Berlin.',
+        slug: 'berlin-schweisst',
+        parentSpaceId: 'macher',
+        modules: MACHER_MODULES,
+        hashtags: ['metall', 'schweissen', 'berlin'],
+        access: 'open',
+        roles: ['admin', 'member'],
+        memberCount: 1,
+      },
+    },
+
+    // ============================================================
+    // Schule — Bildung, freie Schulen, Pioniere
+    // ============================================================
+    {
+      id: 'schule',
+      name: 'Schule',
+      createdBy: 'macher-1',
+      createdAt: '2026-05-12T00:00:00.000Z',
+      data: {
+        scope: 'group',
+        description: 'Bildungsnetzwerk fuer Schulen, Lehrer und Lernende, die das echte Leben in die Klasse holen.',
+        slug: 'schule',
+        theme: 'marine',
+        modules: SCHULE_MODULES,
+        hashtags: ['bildung', 'schule', 'lernen', 'pioniere'],
+        access: 'open',
+        roles: ['admin', 'member'],
+        memberCount: 1,
+      },
+    },
+    {
+      id: 'schule-gudensberg',
+      name: 'Gesamtschule Gudensberg',
+      createdBy: 'macher-1',
+      createdAt: '2026-05-12T00:00:00.000Z',
+      data: {
+        scope: 'group',
+        description: 'Pilot-Schule fuer Wir-sind-wertvoll, rund 400 Schueler mit Tablets.',
+        slug: 'schule-gudensberg',
+        parentSpaceId: 'schule',
+        modules: SCHULE_MODULES,
+        hashtags: ['gudensberg', 'gesamtschule', 'hessen'],
+        access: 'open',
+        roles: ['admin', 'member'],
+        memberCount: 1,
+      },
+    },
+    {
+      id: 'schule-waldorf-kassel',
+      name: 'Freie Waldorfschule Kassel',
+      createdBy: 'macher-1',
+      createdAt: '2026-05-12T00:00:00.000Z',
+      data: {
+        scope: 'group',
+        description: 'Waldorfpaedagogik in Kassel — Lernen mit Herz, Hand und Kopf.',
+        slug: 'waldorf-kassel',
+        parentSpaceId: 'schule',
+        modules: SCHULE_MODULES,
+        hashtags: ['waldorf', 'kassel', 'steiner'],
+        access: 'open',
+        roles: ['admin', 'member'],
+        memberCount: 1,
+      },
+    },
+    {
+      id: 'schule-kapriole-freiburg',
+      name: 'Kapriole Freiburg',
+      createdBy: 'macher-1',
+      createdAt: '2026-05-12T00:00:00.000Z',
+      data: {
+        scope: 'group',
+        description: 'Freie demokratische Schule in Freiburg — Kinder gestalten ihren Lernweg selbst.',
+        slug: 'kapriole-freiburg',
+        parentSpaceId: 'schule',
+        modules: SCHULE_MODULES,
+        hashtags: ['kapriole', 'freiburg', 'demokratische-schule'],
+        access: 'open',
+        roles: ['admin', 'member'],
+        memberCount: 1,
+      },
+    },
+
+    // ============================================================
+    // Adventure — Reise, Auslandserfahrungen, Backpacking
+    // ============================================================
+    {
+      id: 'adventure',
+      name: 'Adventure',
+      createdBy: 'macher-1',
+      createdAt: '2026-05-12T00:00:00.000Z',
+      data: {
+        scope: 'group',
+        description: 'Reise- und Abenteuer-Netzwerk fuer Menschen, die die Welt entdecken.',
+        slug: 'adventure',
+        theme: 'wald',
+        modules: ADVENTURE_MODULES,
+        hashtags: ['reise', 'abenteuer', 'backpacking', 'weltreise'],
+        access: 'open',
+        roles: ['admin', 'member'],
+        memberCount: 1,
+      },
+    },
+    {
+      id: 'adventure-thailand',
+      name: 'Abenteuer Thailand',
+      createdBy: 'macher-1',
+      createdAt: '2026-05-12T00:00:00.000Z',
+      data: {
+        scope: 'group',
+        description: 'Backpacker, Digital Nomads und Langzeit-Reisende in Thailand.',
+        slug: 'abenteuer-thailand',
+        parentSpaceId: 'adventure',
+        modules: ADVENTURE_MODULES,
+        hashtags: ['thailand', 'backpacking', 'asien'],
+        access: 'open',
+        roles: ['admin', 'member'],
+        memberCount: 1,
+      },
+    },
+    {
+      id: 'adventure-spanien',
+      name: 'Spanien in Action',
+      createdBy: 'macher-1',
+      createdAt: '2026-05-12T00:00:00.000Z',
+      data: {
+        scope: 'group',
+        description: 'Wanderungen, Bergsteigen und Camino-Erfahrungen in Spanien.',
+        slug: 'spanien-in-action',
+        parentSpaceId: 'adventure',
+        modules: ADVENTURE_MODULES,
+        hashtags: ['spanien', 'camino', 'wandern'],
+        access: 'open',
+        roles: ['admin', 'member'],
+        memberCount: 1,
+      },
+    },
+    {
+      id: 'adventure-down-under',
+      name: 'Down Under Bros',
+      createdBy: 'macher-1',
+      createdAt: '2026-05-12T00:00:00.000Z',
+      data: {
+        scope: 'group',
+        description: 'Working Holiday, Road Trips und Surf-Spots in Australien und Neuseeland.',
+        slug: 'down-under-bros',
+        parentSpaceId: 'adventure',
+        modules: ADVENTURE_MODULES,
+        hashtags: ['australien', 'neuseeland', 'working-holiday', 'surfen'],
+        access: 'open',
+        roles: ['admin', 'member'],
+        memberCount: 1,
+      },
+    },
   ],
   users: [
     { id: 'macher-1', displayName: 'Macher', avatarUrl: undefined },
   ],
   groupMembers: {
     'macher': ['macher-1'],
+    'macher-seifenkisten-lohr': ['macher-1'],
+    'macher-holzwuermer-nordhessen': ['macher-1'],
+    'macher-berlin-schweisst': ['macher-1'],
+    'schule': ['macher-1'],
+    'schule-gudensberg': ['macher-1'],
+    'schule-waldorf-kassel': ['macher-1'],
+    'schule-kapriole-freiburg': ['macher-1'],
+    'adventure': ['macher-1'],
+    'adventure-thailand': ['macher-1'],
+    'adventure-spanien': ['macher-1'],
+    'adventure-down-under': ['macher-1'],
   } as Record<string, string[]>,
   groupItems: {} as Record<string, string[]>,
 }
 
-const MACHER_DATA_VERSION = 8
+const MACHER_DATA_VERSION = 9
 
 async function resetLocalData() {
   const dbs = await indexedDB.databases()
