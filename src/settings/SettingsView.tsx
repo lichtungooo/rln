@@ -71,6 +71,9 @@ import {
 import { getSpaceMeta } from "../spaces/space-data"
 import { GeneralTab, AdvancedTab } from "./SpaceSettings"
 import { MembersView } from "../modules/members/MembersView"
+import { MapSettingsPanel } from "../modules/map/MapSettingsPanel"
+import { DEFAULT_PIN_STYLES, type MapModuleConfig } from "../modules/map/MapView"
+import { useModuleConfig } from "../modules/use-module-config"
 
 // ============================================================
 // Tab-Definitionen + Default-Pages
@@ -982,48 +985,86 @@ function ModuleConfigWidget({ group }: { group: Group }) {
         <span className="text-sm font-semibold truncate flex-1">
           {selectedMod ? selectedMod.label : "Konfig"}
         </span>
+        {selectedMod && (
+          <span
+            className={`text-[9px] uppercase font-semibold px-1.5 py-0.5 rounded ${
+              isOn
+                ? "text-emerald-700 bg-emerald-200/60"
+                : "text-muted-foreground bg-muted/40"
+            }`}
+          >
+            {isOn ? "aktiv" : "aus"}
+          </span>
+        )}
       </div>
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+      <div className="flex-1 overflow-y-auto p-4">
         {!selectedMod && (
           <div className="text-xs text-muted-foreground italic text-center py-6">
             Modul links waehlen, um Details zu sehen.
           </div>
         )}
-        {selectedMod && (
-          <>
-            <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-md bg-primary/10 grid place-items-center shrink-0">
-                <selectedMod.icon className="h-5 w-5 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-semibold leading-tight">
-                  {selectedMod.label}
-                </h3>
-                <p className="text-[10px] text-muted-foreground font-mono">
-                  id: {selectedMod.id}
-                </p>
-              </div>
-              <span
-                className={`text-[9px] uppercase font-semibold px-1.5 py-0.5 rounded ${
-                  isOn
-                    ? "text-emerald-700 bg-emerald-200/60"
-                    : "text-muted-foreground bg-muted/40"
-                }`}
-              >
-                {isOn ? "aktiv" : "aus"}
-              </span>
-            </div>
-
-            <div className="text-xs text-muted-foreground leading-relaxed border-l-2 border-primary/30 pl-3 py-1">
-              Aktivierung steuerst du links per Toggle. Die feinere
-              Modul-Konfiguration (Karten-Pins, Kalender-Farben, Marktplatz-Schema,
-              ...) wird in einem naechsten Push pro Modul ausgebaut.
-            </div>
-          </>
+        {selectedMod?.id === "map" && <MapConfigSection group={group} />}
+        {selectedMod && selectedMod.id !== "map" && (
+          <ModuleConfigStub mod={selectedMod} />
         )}
       </div>
     </div>
   )
+}
+
+function ModuleConfigStub({
+  mod,
+}: {
+  mod: NonNullable<ReturnType<typeof getAllModules>[number]>
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-md bg-primary/10 grid place-items-center shrink-0">
+          <mod.icon className="h-5 w-5 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-semibold leading-tight">{mod.label}</h3>
+          <p className="text-[10px] text-muted-foreground font-mono">id: {mod.id}</p>
+        </div>
+      </div>
+
+      <div className="text-xs text-muted-foreground leading-relaxed border-l-2 border-primary/30 pl-3 py-1">
+        Aktivierung steuerst du links per Toggle. Die feinere
+        Modul-Konfiguration fuer {mod.label} folgt in einem naechsten Push.
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// Karten-Konfig — Pins, Layer, Action-Button, Filter, Suche
+// ============================================================
+
+function MapConfigSection({ group }: { group: Group }) {
+  const { setModuleConfig } = useModuleConfig()
+  const config: MapModuleConfig = useMemo(() => {
+    const moduleConfigs = group.data?.moduleConfig as Record<string, unknown> | undefined
+    return (moduleConfigs?.map as MapModuleConfig | undefined) ?? {}
+  }, [group])
+
+  const pinTypeOptions = useMemo(
+    () =>
+      Object.entries(DEFAULT_PIN_STYLES).map(([id, def]) => ({
+        id,
+        label: def.label,
+        defaultColor: def.color,
+      })),
+    []
+  )
+
+  const handleChange = (next: MapModuleConfig) => {
+    setModuleConfig(group, "map", next).catch((err) => {
+      console.error("[MapConfig] save failed", err)
+    })
+  }
+
+  return <MapSettingsPanel config={config} onChange={handleChange} pinTypeOptions={pinTypeOptions} />
 }
 
 function ModulePreviewWidget({ group: _group }: { group: Group }) {
