@@ -346,11 +346,11 @@ function SettingsContent({
         case "theme-detail":
           return <ThemeDetailWidget />
         case "module-list":
-          return <ComingSoonWidget label="Modul-Liste" hint="Aktive Module mit Ein-/Aus-Schalter — kommt in Push 6." />
+          return <ModuleListWidget group={activeGroup} />
         case "module-config":
-          return <ComingSoonWidget label="Modul-Konfig" hint="Sub-Konfig pro Modul — kommt in Push 6." />
+          return <ModuleConfigWidget group={activeGroup} />
         case "module-preview":
-          return <ComingSoonWidget label="Modul-Vorschau" hint="Live-Preview pro Modul — kommt in Push 6." />
+          return <ModulePreviewWidget group={activeGroup} />
         case "admin-roles":
           return <ComingSoonWidget label="Rollen" hint="Eigner, Admin, Mitglied, Gast — kommt in Push 7." />
         case "admin-detail":
@@ -800,6 +800,209 @@ function IdentityDetail({ subItemId }: { subItemId: keyof ThemeVars }) {
       <div className="text-[11px] text-muted-foreground leading-relaxed border-l-2 border-primary/30 pl-3 py-1">
         Die Farbe wird live auf der ganzen App angewendet. Speichern oben
         uebernimmt sie fuer alle Mitglieder.
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// Module-Tab — Liste · Konfig · Preview
+// ============================================================
+
+function ModuleListWidget({ group }: { group: Group }) {
+  const allModules = useMemo(() => getAllModules(), [])
+  const updateGroup = useUpdateGroup()
+  const isAdmin = useIsSpaceAdmin(group.id)
+  const enabled = (group.data?.modules as string[] | undefined) ?? []
+  const [busyId, setBusyId] = useState<string | null>(null)
+
+  const channel = useChannel("module")
+  useChannelSync(
+    "module",
+    useMemo(() => allModules.map((m) => ({ id: m.id })), [allModules])
+  )
+
+  const toggle = async (modId: string) => {
+    if (!isAdmin) return
+    setBusyId(modId)
+    try {
+      const isOn = enabled.includes(modId)
+      const next = isOn ? enabled.filter((x) => x !== modId) : [...enabled, modId]
+      await updateGroup(group.id, {
+        data: { ...(group.data ?? {}), modules: next },
+      })
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  return (
+    <div className="h-full w-full bg-card border rounded-xl overflow-hidden flex flex-col">
+      <div className="px-3 py-2 border-b bg-muted/20 flex items-center gap-2 shrink-0">
+        <Puzzle className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className="text-sm font-semibold truncate flex-1">Module</span>
+        <span className="text-[10px] text-muted-foreground tabular-nums">
+          {enabled.length} / {allModules.length}
+        </span>
+      </div>
+      <ul className="flex-1 overflow-y-auto divide-y">
+        {allModules.map((m) => {
+          const isOn = enabled.includes(m.id)
+          const isActive = channel.selectedId === m.id
+          const isBusy = busyId === m.id
+          const Icon = m.icon ?? Puzzle
+          return (
+            <li key={m.id}>
+              <div
+                className={`w-full flex items-center gap-2 px-3 py-2.5 hover:bg-muted/50 transition-colors ${
+                  isActive ? "bg-muted/70" : ""
+                }`}
+              >
+                <button
+                  type="button"
+                  onClick={() => channel.select(m.id)}
+                  className="flex items-center gap-2 flex-1 min-w-0 text-left"
+                >
+                  <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <div className="flex-1 min-w-0">
+                    <div className="text-sm font-medium truncate">{m.label}</div>
+                    <div className="text-[10px] text-muted-foreground truncate">
+                      {isOn ? "aktiv" : "aus"}
+                    </div>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => toggle(m.id)}
+                  disabled={!isAdmin || isBusy}
+                  className="shrink-0 disabled:opacity-40"
+                  aria-label={`${m.label} ${isOn ? "deaktivieren" : "aktivieren"}`}
+                  title={isAdmin ? undefined : "Nur Admins"}
+                >
+                  <div
+                    className={`relative w-8 h-4 rounded-full transition-colors ${
+                      isOn ? "bg-primary" : "bg-muted-foreground/30"
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform ${
+                        isOn ? "translate-x-4" : "translate-x-0"
+                      }`}
+                    />
+                  </div>
+                </button>
+              </div>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
+function ModuleConfigWidget({ group }: { group: Group }) {
+  const channel = useChannel("module")
+  const allModules = useMemo(() => getAllModules(), [])
+  const selectedMod = useMemo(
+    () => (channel.selectedId ? allModules.find((m) => m.id === channel.selectedId) : null),
+    [channel.selectedId, allModules]
+  )
+  const enabled = (group.data?.modules as string[] | undefined) ?? []
+  const isOn = selectedMod ? enabled.includes(selectedMod.id) : false
+
+  return (
+    <div className="h-full w-full bg-card border rounded-xl overflow-hidden flex flex-col">
+      <div className="px-3 py-2 border-b bg-muted/20 flex items-center gap-2 shrink-0">
+        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className="text-sm font-semibold truncate flex-1">
+          {selectedMod ? selectedMod.label : "Konfig"}
+        </span>
+      </div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {!selectedMod && (
+          <div className="text-xs text-muted-foreground italic text-center py-6">
+            Modul links waehlen, um Details zu sehen.
+          </div>
+        )}
+        {selectedMod && (
+          <>
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-md bg-primary/10 grid place-items-center shrink-0">
+                <selectedMod.icon className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-semibold leading-tight">
+                  {selectedMod.label}
+                </h3>
+                <p className="text-[10px] text-muted-foreground font-mono">
+                  id: {selectedMod.id}
+                </p>
+              </div>
+              <span
+                className={`text-[9px] uppercase font-semibold px-1.5 py-0.5 rounded ${
+                  isOn
+                    ? "text-emerald-700 bg-emerald-200/60"
+                    : "text-muted-foreground bg-muted/40"
+                }`}
+              >
+                {isOn ? "aktiv" : "aus"}
+              </span>
+            </div>
+
+            <div className="text-xs text-muted-foreground leading-relaxed border-l-2 border-primary/30 pl-3 py-1">
+              Aktivierung steuerst du links per Toggle. Die feinere
+              Modul-Konfiguration (Karten-Pins, Kalender-Farben, Marktplatz-Schema,
+              ...) wird in einem naechsten Push pro Modul ausgebaut.
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ModulePreviewWidget({ group: _group }: { group: Group }) {
+  const channel = useChannel("module")
+  const allModules = useMemo(() => getAllModules(), [])
+  const selectedMod = useMemo(
+    () => (channel.selectedId ? allModules.find((m) => m.id === channel.selectedId) : null),
+    [channel.selectedId, allModules]
+  )
+
+  return (
+    <div className="h-full w-full bg-card border rounded-xl overflow-hidden flex flex-col">
+      <div className="px-3 py-2 border-b bg-muted/20 flex items-center gap-2 shrink-0">
+        <Sparkles className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className="text-sm font-semibold truncate flex-1">Vorschau</span>
+      </div>
+      <div className="flex-1 overflow-y-auto p-4">
+        {!selectedMod && (
+          <div className="text-xs text-muted-foreground italic text-center py-6">
+            Modul links waehlen, um die Vorschau zu sehen.
+          </div>
+        )}
+        {selectedMod && (
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 rounded-lg bg-primary/10 grid place-items-center shrink-0">
+                <selectedMod.icon className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-semibold leading-tight">
+                  {selectedMod.label}
+                </h3>
+                <p className="text-[10px] text-muted-foreground italic">
+                  Live-Vorschau folgt
+                </p>
+              </div>
+            </div>
+            <div className="text-xs text-muted-foreground leading-relaxed">
+              Die Live-Vorschau zeigt in einem naechsten Push, wie sich das
+              Modul mit der aktuellen Theme- und Modul-Konfig anfuehlt — ohne
+              die Modul-Route zu oeffnen.
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
