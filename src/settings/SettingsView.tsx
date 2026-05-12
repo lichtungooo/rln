@@ -342,6 +342,26 @@ function SettingsContent({
   onTabChange: (tab: string) => void
   onClose: () => void
 }) {
+  // Wenn der globale Settings-Knopf mit ?moduleId=<id> aufgerufen wird,
+  // selektiere das Modul direkt im Module-Channel — User landet sofort
+  // im richtigen Konfig-Slot.
+  const [params] = useSearchParams()
+  const initialModuleId = params.get("moduleId")
+  useEffect(() => {
+    if (initialModuleId && activeTab === "modules") {
+      // Kleiner Tick warten — Module-Channel registriert sich erst nach
+      // dem ersten Render im Tab.
+      const timer = setTimeout(() => {
+        window.dispatchEvent(
+          new CustomEvent("rln-settings-select-module", {
+            detail: { moduleId: initialModuleId },
+          })
+        )
+      }, 50)
+      return () => clearTimeout(timer)
+    }
+  }, [initialModuleId, activeTab])
+
   const renderWidget = useCallback(
     (widgetId: string): ReactNode => {
       switch (widgetId) {
@@ -868,8 +888,28 @@ function IdentityDetail({ subItemId }: { subItemId: keyof ThemeVars }) {
 // Module-Tab — Liste · Konfig · Preview
 // ============================================================
 
+// Module die im Settings Module-Tab erscheinen sollen.
+// Raus: avatar/quest/skill-tree (im Spiegel vereint), theme/members/modulschmiede
+// (eigene Konfig-Tabs oder parken), settings (selbst), Aliase wie "profile".
+const CONFIGURABLE_MODULE_IDS = [
+  "dashboard",
+  "profil",
+  "map",
+  "kanban",
+  "calendar",
+  "marketplace",
+  "wissensfeld",
+  "valluet",
+]
+
 function ModuleListWidget({ group }: { group: Group }) {
-  const allModules = useMemo(() => getAllModules(), [])
+  const allModules = useMemo(
+    () =>
+      getAllModules().filter((m) =>
+        CONFIGURABLE_MODULE_IDS.includes(m.id)
+      ),
+    []
+  )
   const updateGroup = useUpdateGroup()
   const isAdmin = useIsSpaceAdmin(group.id)
   const enabled = (group.data?.modules as string[] | undefined) ?? []

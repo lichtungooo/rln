@@ -11,7 +11,7 @@ import { SpiegelQuestTab } from "./SpiegelQuestTab"
 import { SpiegelSkillTab } from "./SpiegelSkillTab"
 import { SpiegelSkillDetailWidget } from "./SpiegelSkillDetailWidget"
 import { BereichDetailWidget } from "../dashboard/widgets/BereichDetailWidget"
-import { useDemoSeed } from "./use-demo-seed"
+// Demo-Seed-Hook entfernt 2026-05-12 — Demo-Daten leben in Settings/Erweitert
 
 /**
  * SpiegelView (Profil-Modul) — drei Linsen + konfigurierbares Grid.
@@ -87,7 +87,6 @@ function SpiegelInner(props: ModuleViewProps<SpiegelModuleConfig>) {
   const { spaceId } = props
   const spaceKey = spaceId ?? "default"
   const nav = useNavigation()
-  const { seed, busy, alreadySeeded } = useDemoSeed()
 
   const renderWidget = (widgetId: string) => {
     switch (widgetId) {
@@ -139,22 +138,7 @@ function SpiegelInner(props: ModuleViewProps<SpiegelModuleConfig>) {
       renderWidget={renderWidget}
       lockPages
       navApi={navApi}
-      headerRight={
-        <>
-          <StatsBar />
-          {!alreadySeeded && (
-            <button
-              type="button"
-              onClick={() => seed().catch((err) => alert(err.message))}
-              disabled={busy}
-              className="text-[10px] px-2 py-1 rounded border border-muted-foreground/20 hover:border-primary hover:bg-primary/5 transition-colors disabled:opacity-50 shrink-0"
-              title="Demo-Daten anlegen — Lv ~42, Items, Quests, Log"
-            >
-              {busy ? "Lade Demo..." : "Demo"}
-            </button>
-          )}
-        </>
-      }
+      headerRight={<StatsBar />}
     />
   )
 }
