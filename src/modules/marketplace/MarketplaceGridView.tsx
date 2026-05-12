@@ -58,6 +58,7 @@ import {
   type MarketplaceCategory,
 } from "./marketplace-schema"
 import { ImageGalleryInput } from "./ImageGalleryInput"
+import { LocationPicker, type PickedLocation } from "../../components/LocationPicker"
 
 /**
  * MarketplaceGridView — Marktplatz im Kleinanzeigen-Layout.
@@ -772,7 +773,7 @@ function ItemCreateModal({
   const [priceAmount, setPriceAmount] = useState<string>("")
   const [priceText, setPriceText] = useState<string>("")
   const [hashtagsInput, setHashtagsInput] = useState<string>("")
-  const [address, setAddress] = useState<string>("")
+  const [location, setLocation] = useState<PickedLocation | null>(null)
   const [images, setImages] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -786,7 +787,7 @@ function ItemCreateModal({
     setPriceAmount("")
     setPriceText("")
     setHashtagsInput("")
-    setAddress("")
+    setLocation(null)
     setImages([])
     setError(null)
   }
@@ -821,7 +822,9 @@ function ItemCreateModal({
         priceText: priceText.trim() || undefined,
         hashtags: hashtags.length > 0 ? hashtags : undefined,
         images: images.length > 0 ? images : undefined,
-        location: address.trim() ? { lat: 0, lng: 0, address: address.trim() } : undefined,
+        location: location
+          ? { lat: location.lat, lng: location.lng, address: location.address }
+          : undefined,
       }
 
       await createItem({
@@ -957,12 +960,8 @@ function ItemCreateModal({
           </div>
 
           <div>
-            <Label className="text-xs">Standort (Adresse)</Label>
-            <Input
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="z.B. Kassel, Friedrich-Ebert-Str. 12"
-            />
+            <Label className="text-xs">Standort</Label>
+            <LocationPicker value={location} onChange={setLocation} height={220} />
           </div>
 
           {error && (
