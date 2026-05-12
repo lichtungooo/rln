@@ -14,8 +14,7 @@ import {
   Home,
   Palette,
   Puzzle,
-  Users,
-  Sparkles,
+  ShieldCheck,
   Wrench,
   ArrowLeft,
   X,
@@ -39,7 +38,6 @@ import type { Group } from "@real-life-stack/data-interface"
 import { TagInput } from "../modules/profile/TagInput"
 import { ThemeView } from "../modules/theme/ThemeView"
 import { MembersView } from "../modules/members/MembersView"
-import { DemoSection } from "../demo/DemoSection"
 import { getAllModules } from "../modules/registry"
 import {
   generateSlug,
@@ -69,8 +67,7 @@ type MobilePage =
   | "general"
   | "theme"
   | "modules"
-  | "members"
-  | "demo"
+  | "admin"
   | "advanced"
 
 interface MenuEntry {
@@ -84,8 +81,7 @@ const ENTRIES: MenuEntry[] = [
   { id: "general", label: "Allgemein", hint: "Name, Logo, Beschreibung", icon: Home },
   { id: "theme", label: "Theme", hint: "Farbwelt + Stimmung", icon: Palette },
   { id: "modules", label: "Module", hint: "Was das Netzwerk kann", icon: Puzzle },
-  { id: "members", label: "Mitglieder", hint: "Rollen", icon: Users },
-  { id: "demo", label: "Demo-Daten", hint: "Showroom-Inhalte", icon: Sparkles },
+  { id: "admin", label: "Admin", hint: "Rollen + Rechte", icon: ShieldCheck },
   { id: "advanced", label: "Erweitert", hint: "Reset, Export", icon: Wrench },
 ]
 
@@ -175,10 +171,8 @@ export function MobileSpaceSettings({
             <ThemeSubPage group={activeGroup} spaceId={spaceId} />
           ) : page === "modules" ? (
             <ModulesSubPage group={activeGroup} />
-          ) : page === "members" ? (
+          ) : page === "admin" ? (
             <MembersSubPage group={activeGroup} spaceId={spaceId} />
-          ) : page === "demo" ? (
-            <DemoSubPage group={activeGroup} spaceId={spaceId} />
           ) : page === "advanced" ? (
             <AdvancedSubPage />
           ) : null}
@@ -555,30 +549,13 @@ function ModulesSubPage({ group }: { group: Group }) {
 }
 
 // ============================================================
-// Mitglieder
+// Admin (Rollen + Rechte)
 // ============================================================
 
 function MembersSubPage({ group, spaceId }: { group: Group; spaceId: string | null }) {
   return (
     <div className="px-4 py-4">
       <MembersView
-        spaceId={spaceId}
-        activeGroup={group}
-        allGroups={[]}
-        config={undefined}
-      />
-    </div>
-  )
-}
-
-// ============================================================
-// Demo-Daten
-// ============================================================
-
-function DemoSubPage({ group, spaceId }: { group: Group; spaceId: string | null }) {
-  return (
-    <div className="px-4 py-4">
-      <DemoSection
         spaceId={spaceId}
         activeGroup={group}
         allGroups={[]}

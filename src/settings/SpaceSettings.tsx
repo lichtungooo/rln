@@ -5,8 +5,7 @@ import {
   Palette,
   Puzzle,
   Hammer,
-  Users,
-  Sparkles,
+  ShieldCheck,
   Wrench,
   X,
   Camera,
@@ -35,7 +34,6 @@ import { PageGrid } from "../components/PageGrid"
 import { ThemeView } from "../modules/theme/ThemeView"
 import { MembersView } from "../modules/members/MembersView"
 import { ModulschmiedeView } from "../modules/modulschmiede/ModulschmiedeView"
-import { DemoSection } from "../demo/DemoSection"
 import { TagInput } from "../modules/profile/TagInput"
 import { ImageUploadField } from "../modules/calendar/ImageUploadField"
 import { getAllModules, getModule, getModuleConfig } from "../modules/registry"
@@ -74,8 +72,7 @@ export type SpaceSettingsTab =
   | "theme"
   | "modules"
   | "modulschmiede"
-  | "members"
-  | "demo"
+  | "admin"
   | "advanced"
 
 export interface SpaceSettingsProps {
@@ -152,9 +149,8 @@ const TABS: TabDef[] = [
   { id: "general", label: "Allgemein", icon: Home, hint: "Name, Beschreibung" },
   { id: "theme", label: "Theme", icon: Palette, hint: "Farbwelt + Stimmung" },
   { id: "modules", label: "Module", icon: Puzzle, hint: "Was kann das Netzwerk" },
-  { id: "modulschmiede", label: "Modulschmiede", icon: Hammer, hint: "Eigene Module bauen" },
-  { id: "members", label: "Mitglieder", icon: Users, hint: "Rollen, Admins" },
-  { id: "demo", label: "Demo-Daten", icon: Sparkles, hint: "Showroom-Inhalte" },
+  { id: "modulschmiede", label: "Modulschmiede", icon: Hammer, hint: "Kommt — eigene Module bauen" },
+  { id: "admin", label: "Admin", icon: ShieldCheck, hint: "Rollen + Rechte" },
   { id: "advanced", label: "Erweitert", icon: Wrench, hint: "Reset, Export" },
 ]
 
@@ -497,7 +493,7 @@ function renderEditor(
           />
         </EmbeddedView>
       )
-    case "members":
+    case "admin":
       return (
         <EmbeddedView>
           <MembersView
@@ -507,12 +503,6 @@ function renderEditor(
             config={undefined}
           />
         </EmbeddedView>
-      )
-    case "demo":
-      return (
-        <div className="max-w-md mx-auto">
-          <DemoSection />
-        </div>
       )
     case "advanced":
       return <AdvancedTab group={activeGroup} />

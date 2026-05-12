@@ -189,9 +189,9 @@ export function LogDetailWidget() {
                 {v === "private"
                   ? "privat"
                   : v === "network"
-                  ? "Netzwerk"
+                  ? "Trust"
                   : v === "space"
-                  ? "Space"
+                  ? "Netzwerk"
                   : "oeffentlich"}
               </button>
             ))}
