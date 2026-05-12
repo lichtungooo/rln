@@ -650,35 +650,10 @@ function PageGridLayout({
               handleDrop(slot.id)
             }}
           >
-            {/* Drag-Handle — oben rechts, halbtransparent, wird sichtbar beim Hover */}
-            <div
-              draggable
-              onDragStart={(e) => {
-                e.dataTransfer.effectAllowed = "move"
-                e.dataTransfer.setData("text/slot-id", slot.id)
-                setDraggingId(slot.id)
-              }}
-              onDragEnd={() => {
-                setDraggingId(null)
-                setDropTargetId(null)
-              }}
-              className="absolute top-1 right-1 z-10 p-1 rounded bg-background/60 backdrop-blur-sm text-muted-foreground opacity-0 hover:opacity-100 group-hover:opacity-100 cursor-grab active:cursor-grabbing transition-opacity"
-              title="Slot verschieben (Drag-and-Drop)"
-              aria-label="Verschieben"
-            >
-              <GripVertical className="h-3.5 w-3.5" />
-            </div>
-
-            {/* Resize-Handle — unten rechts, Drag aendert colSpan/rowSpan */}
-            <div
-              onMouseDown={(e) => startResize(slot.id, e)}
-              className="absolute bottom-0 right-0 z-10 w-4 h-4 cursor-nwse-resize opacity-0 hover:opacity-100 group-hover:opacity-100 transition-opacity flex items-end justify-end p-0.5"
-              title="Slot-Groesse aendern (Drag)"
-              aria-label="Groesse aendern"
-            >
-              <div className="w-2 h-2 border-r-2 border-b-2 border-muted-foreground/60" />
-            </div>
-
+            {/* Drag-Handle + Resize-Handle entfernt 2026-05-12 —
+                Slot-Layout-Konfig wandert zentral in Settings → Module →
+                Konfig. Per-Slot-Inline-UI war fummelig + verwirrend (Timo
+                2026-05-12 Screenshot-Review). */}
             <div className="h-full w-full">
               {renderWidget(slot.widget)}
             </div>

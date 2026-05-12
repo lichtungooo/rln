@@ -250,20 +250,14 @@ export function SpiegelSkillTab({ activeGroup }: SpiegelSkillTabProps) {
     ? (skillsByBereich[TREE_BEREICHE[skillNavPanel.state.bereichIdx].id]?.length ?? 0) > 1
     : carouselActive || isMobile
 
+  // Demo-Seed-Knopf entfernt 2026-05-12 — Demo-Daten leben zentral in
+  // Settings/Erweitert, nicht inline im Skill-Tab.
+  void seed
+  void seeding
+  void seedStatus
+
   return (
     <div className="flex flex-col h-full" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
-      {seedStatus.skillsTodo > 0 && (
-        <div className="mb-2 flex justify-end">
-          <button
-            type="button"
-            onClick={seed}
-            disabled={seeding}
-            className="text-[10px] px-2 py-1 rounded border border-muted-foreground/20 hover:border-primary hover:bg-primary/5 transition-colors"
-          >
-            {seeding ? "..." : `+${seedStatus.skillsTodo} ${seedStatus.manifestName}`}
-          </button>
-        </div>
-      )}
 
       {/* Two-Panel-Layout — gleiche Groesse, keine Pfeile (leben im Parent) */}
       <div
