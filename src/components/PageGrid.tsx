@@ -93,6 +93,14 @@ export interface PageGridProps {
    * Wenn nicht gesetzt: uncontrolled (interner State + localStorage).
    */
   activePageId?: string
+  /**
+   * Mobile-Verhalten bei mehreren Slots:
+   *   - false (Default): single-column-Stack, Slots untereinander, scrollbar
+   *   - true (Drilldown): ein Slot zur Zeit sichtbar, Swipe ←→ wechselt,
+   *     Tastatur ←→ wechselt. Slot-Indikator "1 / 3" oben.
+   * Klick-Routing-Doktrin siehe `feedback_klick_routing_doktrin.md`.
+   */
+  mobileDrilldown?: boolean
 }
 
 const COL_SPANS: ColSpan[] = [1, 2, 3, 6]
@@ -129,6 +137,7 @@ export function PageGrid({
   lockPages = false,
   onActivePageChange,
   activePageId,
+  mobileDrilldown = false,
 }: PageGridProps) {
   const [pages, setPages] = useState<GridPage[]>(() => loadPages(storageKey, defaultPages))
   const [activeIdx, setActiveIdx] = useState(() => {
@@ -338,6 +347,7 @@ export function PageGrid({
             page={activePage}
             renderWidget={renderWidget}
             isMobile={isMobile}
+            mobileDrilldown={mobileDrilldown}
             onReorderSlots={(slots) => updatePage({ ...activePage, slots })}
           />
         </div>
@@ -380,13 +390,60 @@ function PageGridLayout({
   page,
   renderWidget,
   isMobile,
+  mobileDrilldown,
   onReorderSlots,
 }: {
   page: GridPage
   renderWidget: (widgetId: string) => ReactNode
   isMobile: boolean
+  mobileDrilldown: boolean
   onReorderSlots: (slots: PageSlot[]) => void
 }) {
+  // Mobile-Drilldown: welcher Slot aktuell sichtbar (0-basiert).
+  // Pro Page-Wechsel auf 0 zurueck.
+  const [activeSlotIdx, setActiveSlotIdx] = useState(0)
+  useEffect(() => {
+    setActiveSlotIdx(0)
+  }, [page.id])
+
+  // Touch-Swipe-Handler (Mobile + drilldown only)
+  const touchStartXRef = useRef<number | null>(null)
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0].clientX
+  }
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const start = touchStartXRef.current
+    touchStartXRef.current = null
+    if (start === null) return
+    const delta = e.changedTouches[0].clientX - start
+    const THRESHOLD = 50
+    if (Math.abs(delta) < THRESHOLD) return
+    setActiveSlotIdx((i) => {
+      const max = page.slots.length - 1
+      if (delta > 0) return Math.max(0, i - 1)
+      return Math.min(max, i + 1)
+    })
+  }
+
+  // Tastatur-Handler — aktiv wenn drilldown auf Mobile, sonst Standard
+  useEffect(() => {
+    if (!isMobile || !mobileDrilldown) return
+    const onKey = (e: KeyboardEvent) => {
+      // Nur reagieren wenn Fokus nicht in einem Input/Textarea ist
+      const target = e.target as HTMLElement | null
+      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return
+      if (e.key === "ArrowLeft") {
+        setActiveSlotIdx((i) => Math.max(0, i - 1))
+        e.preventDefault()
+      } else if (e.key === "ArrowRight") {
+        const max = page.slots.length - 1
+        setActiveSlotIdx((i) => Math.min(max, i + 1))
+        e.preventDefault()
+      }
+    }
+    window.addEventListener("keydown", onKey)
+    return () => window.removeEventListener("keydown", onKey)
+  }, [isMobile, mobileDrilldown, page.slots.length])
   // Drag-and-Drop State — nur Desktop
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const [dropTargetId, setDropTargetId] = useState<string | null>(null)
@@ -485,7 +542,60 @@ function PageGridLayout({
     )
   }
 
-  // Mobile: single-column, kein Drag-and-Drop (Touch waere verwirrend).
+  // Mobile (Drilldown): ein Slot zur Zeit + Swipe + Tastatur ←→
+  if (isMobile && mobileDrilldown && page.slots.length > 0) {
+    const idx = Math.min(activeSlotIdx, page.slots.length - 1)
+    const activeSlot = page.slots[idx]
+    const total = page.slots.length
+    return (
+      <div
+        className="h-full w-full flex flex-col"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
+        {total > 1 && (
+          <div className="flex items-center justify-between px-3 py-1.5 border-b text-xs text-muted-foreground bg-muted/30 shrink-0">
+            <button
+              type="button"
+              onClick={() => setActiveSlotIdx((i) => Math.max(0, i - 1))}
+              disabled={idx === 0}
+              className="p-0.5 rounded text-muted-foreground hover:text-foreground disabled:opacity-20"
+              aria-label="Vorige Spalte"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </button>
+            <div className="flex items-center gap-1.5">
+              {page.slots.map((_, i) => (
+                <span
+                  key={i}
+                  className={`h-1.5 rounded-full transition-all ${
+                    i === idx ? "w-4 bg-foreground" : "w-1.5 bg-muted-foreground/30"
+                  }`}
+                />
+              ))}
+              <span className="ml-1.5 text-[10px] tabular-nums">
+                {idx + 1} / {total}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveSlotIdx((i) => Math.min(total - 1, i + 1))}
+              disabled={idx === total - 1}
+              className="p-0.5 rounded text-muted-foreground hover:text-foreground disabled:opacity-20"
+              aria-label="Naechste Spalte"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          {renderWidget(activeSlot.widget)}
+        </div>
+      </div>
+    )
+  }
+
+  // Mobile (Default-Stack): single-column, Slots untereinander, scrollbar.
   if (isMobile) {
     return (
       <div className="h-full w-full overflow-y-auto">
