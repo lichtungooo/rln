@@ -13,7 +13,6 @@ import type { MapModuleConfig, MapActionEntry } from "./MapView"
 import { TILE_PROVIDERS, DEFAULT_PIN_STYLES, resolvePinStyle } from "./MapView"
 import { PinStyleEditor } from "./PinStyleEditor"
 import { renderPinHtml, type PinStyle } from "./pin-styles"
-import { DemoSection } from "../../demo/DemoSection"
 
 /**
  * MapSettingsPanel — Editor-UI fuer die Karten-Konfig.
@@ -117,16 +116,10 @@ function PinsTab({
 
   return (
     <div className="space-y-3">
-      <DemoSection />
-
       <div>
         <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">
           Pin-Typen
         </h4>
-        <p className="text-[11px] text-muted-foreground/70 mb-2">
-          Aktiviere Item-Typen die als Pins erscheinen. Klick auf "Stil" um Form/Farbe/Glow
-          pro Typ anzupassen.
-        </p>
         <div className="space-y-2">
           {pinTypeOptions.map((opt) => {
             const enabled = (config.pinTypes ?? []).includes(opt.id)
@@ -190,18 +183,6 @@ function PinsTab({
               </div>
             )
           })}
-        </div>
-      </div>
-
-      <div className="border border-dashed border-border rounded-md p-3 text-[11px] text-muted-foreground/70 space-y-1.5">
-        <div>
-          💡 <strong>Bild als Pin:</strong> Im Stil-Editor pro Typ kannst du ein eigenes Bild
-          hochladen (z.B. Werkstatt-Logo). Das Bild wird in die Pin-Form geclippt.
-        </div>
-        <div>
-          👤 <strong>Macher als Pin:</strong> Aktiviere "Macher" oben — dann erscheinen alle
-          Profile mit Standort als Pins. Profile mit <code>data.location.lat/lng</code> in
-          ihrer Extension werden gerendert.
         </div>
       </div>
     </div>

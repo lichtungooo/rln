@@ -17,36 +17,25 @@ import { getSpacePathSegment } from "../../spaces/space-data"
 // Default-Pin-Konfiguration pro Item-Typ
 // ============================================================
 
+// Schlanke Default-Pin-Liste — 5 Typen, die als Pins erscheinen koennen.
+// Eigene (Custom) Pin-Typen kommen ueber group.data.moduleConfig.map.customPinTypes
+// dazu (Push 15+).
 export const DEFAULT_PIN_STYLES: Record<string, { color: string; shape: PinStyle["shape"]; label: string }> = {
   place: { color: "#E8751A", shape: "drop", label: "Werkstaetten" },
   event: { color: "#3b82f6", shape: "drop", label: "Events" },
-  // Marktplatz: ein Pin-Familie (Kreis), aber unterschiedliche Farben nach
-  // kind/priceType. Das Sub-Mapping passiert in effectivePinKey().
   offer: { color: "#10b981", shape: "circle", label: "Marktplatz" },
-  "offer:sell": { color: "#10b981", shape: "circle", label: "Verkaufen" },
-  "offer:gift": { color: "#A855F7", shape: "circle", label: "Verschenken" },
-  "offer:lend": { color: "#F59E0B", shape: "circle", label: "Verleihen" },
-  "offer:exchange": { color: "#3B82F6", shape: "circle", label: "Tauschen" },
-  "offer:need": { color: "#EF4444", shape: "circle", label: "Suche" },
-  // need bleibt als Legacy-Eintrag fuer Konfigs aus der Vor-M1-Zeit
-  need: { color: "#EF4444", shape: "circle", label: "Suche" },
   quest: { color: "#a855f7", shape: "hexagon", label: "Quests" },
   profile: { color: "#ec4899", shape: "circle", label: "Macher" },
 }
 
 /**
- * Marktplatz-Items haben einen sub-type — z.B. "offer:lend" fuer Verleih.
- * Andere Item-Typen behalten ihren Type unveraendert.
+ * Item → Pin-Key. Aktuell 1:1 — item.type ist der Key. Frueher gab es
+ * Marktplatz-Sub-Typen (offer:sell, offer:lend, ...) — entfernt 2026-05-12
+ * zugunsten einer schlanken Pin-Liste in der Karten-Konfig.
  */
 export function effectivePinKey(item: { type: string; data: Record<string, unknown> }): string {
-  if (item.type !== "offer") return item.type
-  const kind = item.data.kind
-  if (kind === "need") return "offer:need"
-  const priceType = item.data.priceType
-  if (priceType === "sell" || priceType === "gift" || priceType === "lend" || priceType === "exchange") {
-    return `offer:${priceType}`
-  }
-  return "offer"
+  void item.data
+  return item.type
 }
 
 // ============================================================
