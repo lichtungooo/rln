@@ -69,6 +69,7 @@ import { MobileSpaceSettings } from '../settings/MobileSpaceSettings'
 import { MacherWorkspaceSwitcher } from '../spaces/MacherWorkspaceSwitcher'
 import { findGroupBySlugOrId, getSpacePathSegment, getSpaceMeta, generateSlug, isSlugFree } from '../spaces/space-data'
 import { SpaceHierarchyBar } from '../spaces/SpaceHierarchyBar'
+import { NetworksOverview } from '../components/NetworksOverview'
 import { OpenModuleTabs } from '../components/OpenModuleTabs'
 import { MobileTabSwitcher } from '../components/MobileTabSwitcher'
 import { useEdgeSwipe } from '../components/use-edge-swipe'
@@ -706,7 +707,16 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
         {/* SpaceHierarchyBar entfernt 2026-05-12 — Hierarchie ueber den
             Workspace-Switcher (oben links) sichtbar, doppelter Eintrag in
             der Modul-Toolbar war ueberfluessig. */}
-        {modulesToRender.length === 0 ? (
+        {isOverview ? (
+          <NetworksOverview
+            groups={groups}
+            currentUserId={currentUser?.id ?? null}
+            onSelectNetwork={(id) => {
+              const target = workspaces.find((w) => w.id === id)
+              if (target) handleWorkspaceChange(target)
+            }}
+          />
+        ) : modulesToRender.length === 0 ? (
           <div className="container mx-auto px-4 pt-12 max-w-md text-center">
             <p className="text-lg font-medium text-foreground">Modul nicht gefunden</p>
             <p className="text-sm text-muted-foreground mt-2">Das Modul "{activeModule}" ist nicht registriert.</p>
