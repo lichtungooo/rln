@@ -66,6 +66,7 @@ import {
   type ThemeOverrides,
   type ThemeVars,
   type DarkModeChoice,
+  type BackgroundPattern,
 } from "../themes/themes"
 import { getSpaceMeta } from "../spaces/space-data"
 import { GeneralTab, AdvancedTab } from "./SpaceSettings"
@@ -478,12 +479,16 @@ const BASE_AREAS: ThemeAreaDef[] = [
   { id: "presets", label: "Welten", hint: "5 vorgefertigte Themes", icon: Sparkles, ready: true },
   { id: "identity", label: "Identitaet", hint: "Primary, Accent, Background, Foreground", icon: Palette, ready: true },
   { id: "topbar", label: "Topbar", hint: "Hintergrund der Toolbar", icon: PanelTop, ready: true },
-  { id: "background", label: "Hintergrund", hint: "Tint, Pattern", icon: ImageIcon, ready: false },
+  { id: "background", label: "Hintergrund", hint: "Subtle Pattern auf der Seite", icon: ImageIcon, ready: true },
   { id: "dark", label: "Dark Mode", hint: "Auto / Hell / Dunkel", icon: Moon, ready: true },
 ]
 
 const DARK_SUB_ITEMS: ThemeSubItem[] = [
   { id: "darkMode", label: "Modus", description: "Auto, Hell oder Dunkel" },
+]
+
+const BACKGROUND_SUB_ITEMS: ThemeSubItem[] = [
+  { id: "backgroundPattern", label: "Muster", description: "Aus, Punkte oder Linien" },
 ]
 
 // Topbar-Sub-Items — eine fuer den Hintergrund (Farbe oder Gradient)
@@ -605,6 +610,9 @@ function ThemeSubItemsWidget() {
     if (areaId === "dark") {
       return DARK_SUB_ITEMS
     }
+    if (areaId === "background") {
+      return BACKGROUND_SUB_ITEMS
+    }
     return []
   }, [areaId])
 
@@ -720,11 +728,15 @@ function ThemeDetailWidget() {
         )}
         {areaId === "topbar" && subItemId === "topbarBackground" && <TopbarDetail />}
         {areaId === "dark" && subItemId === "darkMode" && <DarkModeDetail />}
+        {areaId === "background" && subItemId === "backgroundPattern" && (
+          <BackgroundPatternDetail />
+        )}
         {areaId &&
           areaId !== "presets" &&
           areaId !== "identity" &&
           areaId !== "topbar" &&
-          areaId !== "dark" && (
+          areaId !== "dark" &&
+          areaId !== "background" && (
             <ComingSoonInline
               label={BASE_AREAS.find((a) => a.id === areaId)?.label ?? "Bereich"}
             />
@@ -1098,6 +1110,86 @@ function DarkModeDetail() {
         Dark Mode aktiviert die `dark`-Klasse auf <code>&lt;html&gt;</code> —
         alle Komponenten mit Tailwind-Dark-Variants ziehen mit. Speichern oben
         uebernimmt fuer alle Mitglieder.
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// Hintergrund-Muster — Aus / Punkte / Linien
+// ============================================================
+
+const PATTERN_OPTIONS: { id: BackgroundPattern; label: string; description: string }[] = [
+  { id: "none", label: "Aus", description: "Reiner Hintergrund ohne Muster" },
+  { id: "dots", label: "Punkte", description: "Subtle Punkte-Raster" },
+  { id: "grid", label: "Linien", description: "Subtle Gitter-Linien" },
+]
+
+function PatternPreview({ pattern }: { pattern: BackgroundPattern }) {
+  const url: Record<BackgroundPattern, string> = {
+    none: "none",
+    dots:
+      "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><circle cx='2' cy='2' r='1' fill='%23000' fill-opacity='0.20'/></svg>\")",
+    grid:
+      "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20'><path d='M20 0H0V20' fill='none' stroke='%23000' stroke-opacity='0.20'/></svg>\")",
+  }
+  return (
+    <div
+      className="h-16 w-full rounded border bg-card"
+      style={{ backgroundImage: url[pattern] }}
+    />
+  )
+}
+
+function BackgroundPatternDetail() {
+  const { draft, setOverride, removeOverride } = useThemeDraft()
+  const current = draft.overrides.backgroundPattern ?? "none"
+
+  return (
+    <div className="space-y-4 max-w-md">
+      <div>
+        <h2 className="text-base font-semibold">Hintergrund-Muster</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Subtle Textur auf dem Seiten-Hintergrund.
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        {PATTERN_OPTIONS.map((opt) => {
+          const isActive = current === opt.id
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => {
+                if (opt.id === "none") {
+                  removeOverride("backgroundPattern")
+                } else {
+                  setOverride("backgroundPattern", opt.id)
+                }
+              }}
+              className={`w-full p-3 rounded-lg border-2 text-left transition-all hover:bg-muted/30 ${
+                isActive ? "border-primary bg-primary/5" : "border-border"
+              }`}
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-semibold">{opt.label}</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    {opt.description}
+                  </div>
+                </div>
+                {isActive && <Check className="h-4 w-4 text-primary shrink-0" />}
+              </div>
+              <PatternPreview pattern={opt.id} />
+            </button>
+          )
+        })}
+      </div>
+
+      <div className="text-[11px] text-muted-foreground leading-relaxed border-l-2 border-primary/30 pl-3 py-1">
+        Muster liegen als SVG-Pattern hinter dem Inhalt. Sehr dezent — sie geben
+        Tiefe, ohne abzulenken. Speichern oben uebernimmt fuer alle Mitglieder.
       </div>
     </div>
   )

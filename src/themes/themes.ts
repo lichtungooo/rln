@@ -181,10 +181,21 @@ export function getTheme(id: string | null | undefined): ThemeDefinition {
  * haben aber KEINEN Preset-Anker (sind immer optional).
  */
 export type DarkModeChoice = "auto" | "light" | "dark"
+export type BackgroundPattern = "none" | "dots" | "grid"
 
 export interface ThemeExtras {
   topbarBackground?: string
   darkMode?: DarkModeChoice
+  backgroundPattern?: BackgroundPattern
+}
+
+/** SVG-Pattern als data-URI fuer Body-Background. */
+const PATTERN_URLS: Record<BackgroundPattern, string> = {
+  none: "none",
+  dots:
+    "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><circle cx='2' cy='2' r='1' fill='%23000' fill-opacity='0.06'/></svg>\")",
+  grid:
+    "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><path d='M40 0H0V40' fill='none' stroke='%23000' stroke-opacity='0.06'/></svg>\")",
 }
 
 /**
@@ -276,6 +287,7 @@ export function applyThemeToRoot(
   if (isDefault && !hasOverrides) {
     CSS_VAR_MAP.forEach(([, cssVar]) => root.style.removeProperty(cssVar))
     EXTRA_VAR_MAP.forEach(([, cssVar]) => root.style.removeProperty(cssVar))
+    root.style.removeProperty("--page-pattern")
     applyDarkMode(undefined)
     delete root.dataset.theme
     return
@@ -294,6 +306,13 @@ export function applyThemeToRoot(
       root.style.removeProperty(cssVar)
     }
   })
+  // Pattern → CSS-Variable mit data-URI
+  const pattern = overrides?.backgroundPattern
+  if (pattern && pattern !== "none") {
+    root.style.setProperty("--page-pattern", PATTERN_URLS[pattern])
+  } else {
+    root.style.removeProperty("--page-pattern")
+  }
   applyDarkMode(overrides?.darkMode)
   root.dataset.theme = themeId ?? DEFAULT_THEME_ID
 }
