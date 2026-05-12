@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react"
-import { Plus, ChevronLeft, ChevronRight, CalendarDays, List, Layers, MapPin, Tag, Ticket, Clock, Grid3x3, User as UserIcon } from "lucide-react"
+import { Plus, ChevronLeft, ChevronRight, CalendarDays, List, Layers, MapPin, Tag, Ticket, Clock, Grid3x3, User as UserIcon, X } from "lucide-react"
 import {
   useItems,
   useCreateItem,
@@ -47,7 +47,7 @@ import { StatsBar } from "../gamification"
 // ============================================================
 
 export type CalendarMode = "event-calendar" | "group-calendar" | "mixed"
-export type CalendarView = "day" | "week" | "month" | "year" | "agenda" | "events" | "mine"
+export type CalendarView = "day" | "week" | "month" | "year" | "agenda" | "mine"
 export type FirstDayOfWeek = "monday" | "sunday"
 export type TimeFormat = "24h" | "12h"
 
@@ -147,6 +147,7 @@ export function CalendarView({ spaceId, activeGroup, config, isPreview, onOpenSe
   const [currentYear, setCurrentYear] = useState(() => new Date().getFullYear())
   const [creating, setCreating] = useState(false)
   const [editItem, setEditItem] = useState<Item | null>(null)
+  const [detailItem, setDetailItem] = useState<Item | null>(null)
   const [filter, setFilter] = useState<CalendarFilterState>(emptyFilter)
   const { data: currentUser } = useCurrentUser()
   const { mutate: createItem } = useCreateItem()
@@ -276,21 +277,24 @@ export function CalendarView({ spaceId, activeGroup, config, isPreview, onOpenSe
   // Marketplace-Bookings sind im Kalender nur sichtbar, nicht editierbar.
   // Sie werden im Marktplatz-Modul verwaltet — hier waere die Bearbeitung
   // verwirrend (Status/itemId nicht in den Calendar-Feldern abbildbar).
+  // Klick auf Event → Detail-Vorschau-Modal (nicht direkt Edit).
+  // Bearbeiten passiert ueber den "Bearbeiten"-Knopf im Detail-Modal
+  // — und nur fuer Owner (Klick-Routing-Doktrin, Vorschau vor Edit).
   const handleItemClick = useCallback((item: Item) => {
     if ((item.data as Record<string, unknown>)._isMarketplaceBooking) {
       return
     }
-    setEditItem(item)
+    setDetailItem(item)
   }, [])
 
-  // Calendar als PageGrid mit 7 lockPages — wie Dashboard/Profil.
+  // Calendar als PageGrid mit 6 lockPages — Events-Tab entfernt 2026-05-12
+  // (alle Quests/Events leben in Agenda, kein eigener Tab noetig).
   const calendarPages = [
     { id: "day", name: "Tag", slots: [{ id: "s1", widget: "view", colSpan: 6 as const, rowSpan: 4 as const }] },
     { id: "week", name: "Woche", slots: [{ id: "s1", widget: "view", colSpan: 6 as const, rowSpan: 4 as const }] },
     { id: "month", name: "Monat", slots: [{ id: "s1", widget: "view", colSpan: 6 as const, rowSpan: 4 as const }] },
     { id: "year", name: "Jahr", slots: [{ id: "s1", widget: "view", colSpan: 6 as const, rowSpan: 4 as const }] },
     { id: "agenda", name: "Agenda", slots: [{ id: "s1", widget: "view", colSpan: 6 as const, rowSpan: 4 as const }] },
-    { id: "events", name: "Events", slots: [{ id: "s1", widget: "view", colSpan: 6 as const, rowSpan: 4 as const }] },
     { id: "mine", name: "Meine", slots: [{ id: "s1", widget: "view", colSpan: 6 as const, rowSpan: 4 as const }] },
   ]
 
@@ -365,9 +369,6 @@ export function CalendarView({ spaceId, activeGroup, config, isPreview, onOpenSe
       {activeView === "agenda" && (
         <AgendaView items={allItems} colors={cfg.colors ?? {}} timeFormat={cfg.timeFormat} onItemClick={handleItemClick} />
       )}
-      {activeView === "events" && (
-        <EventListView items={allItems} colors={cfg.colors ?? {}} onItemClick={handleItemClick} />
-      )}
       {activeView === "mine" && (
         <MyEventsView
           items={allItems}
@@ -387,24 +388,36 @@ export function CalendarView({ spaceId, activeGroup, config, isPreview, onOpenSe
         availableHashtags={availableHashtags}
       />
 
-      {/* Edit-Panel */}
-      <AdaptivePanel
-        open={editItem !== null}
-        onClose={() => setEditItem(null)}
-        allowedModes={["sidebar", "drawer", "modal"]}
-        sidebarWidth="420px"
-      >
-        {editItem && (
-          <EventEditForm
-            item={editItem}
-            onSubmit={handleUpdate}
-            onDelete={handleDelete}
-            onCancel={() => setEditItem(null)}
-            currentUserId={currentUser?.id}
-            availableHashtags={availableHashtags}
-          />
-        )}
-      </AdaptivePanel>
+      {/* Detail-Vorschau-Modal — Klick auf Event oeffnet Vorschau.
+          Bearbeiten nur fuer Owner via "Bearbeiten"-Knopf im Modal. */}
+      <EventDetailModal
+        item={detailItem}
+        onClose={() => setDetailItem(null)}
+        onEdit={() => {
+          if (detailItem) {
+            setEditItem(detailItem)
+            setDetailItem(null)
+          }
+        }}
+        currentUserId={currentUser?.id}
+        colors={cfg.colors ?? {}}
+      />
+
+      {/* Edit-Modal — nur fuer Owner, separat vom Detail-Modal */}
+      <Dialog open={editItem !== null} onOpenChange={(o) => { if (!o) setEditItem(null) }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          {editItem && (
+            <EventEditForm
+              item={editItem}
+              onSubmit={handleUpdate}
+              onDelete={handleDelete}
+              onCancel={() => setEditItem(null)}
+              currentUserId={currentUser?.id}
+              availableHashtags={availableHashtags}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
         </div>
       )}
     />
@@ -1228,4 +1241,136 @@ function formatDateTime(d: Date, format: TimeFormat): string {
     ? d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit", hour12: false })
     : d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true })
   return `${datePart} ${timePart}`
+}
+
+// ============================================================
+// EventDetailModal — Vorschau bei Klick auf Event
+// ============================================================
+
+function EventDetailModal({
+  item,
+  onClose,
+  onEdit,
+  currentUserId,
+  colors,
+}: {
+  item: Item | null
+  onClose: () => void
+  onEdit: () => void
+  currentUserId: string | undefined
+  colors: Record<string, string>
+}) {
+  if (!item) return null
+
+  const data = item.data as Record<string, unknown>
+  const isOwner = currentUserId === item.createdBy
+  const startStr = typeof data.start === "string" ? data.start : null
+  const endStr = typeof data.end === "string" ? data.end : null
+  const start = startStr ? new Date(startStr) : null
+  const end = endStr ? new Date(endStr) : null
+  const isAllDay = !!data.allDay
+  const coverImage = typeof data.coverImage === "string" ? data.coverImage : undefined
+  const markdownBody = typeof data.markdownBody === "string" ? data.markdownBody : undefined
+  const title = typeof data.title === "string" ? data.title : "(ohne Titel)"
+  const location = (data.location as { lat?: number; lng?: number; address?: string } | undefined) ?? null
+  const hashtags = Array.isArray(data.hashtags) ? (data.hashtags as string[]) : []
+  const typeColor = colors[item.type] ?? "#A855F7"
+
+  const formatDate = (d: Date) =>
+    d.toLocaleDateString("de-DE", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+      weekday: "short",
+    })
+  const formatTime = (d: Date) =>
+    d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })
+
+  return (
+    <Dialog open={true} onOpenChange={(o) => { if (!o) onClose() }}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden p-0">
+        <DialogTitle className="sr-only">{title}</DialogTitle>
+        <div className="flex flex-col max-h-[85vh]">
+          {coverImage && (
+            <div className="h-48 w-full overflow-hidden border-b shrink-0">
+              <img src={coverImage} alt="" className="w-full h-full object-cover" />
+            </div>
+          )}
+
+          <div className="flex-1 overflow-y-auto p-4 space-y-3">
+            <header className="flex items-start gap-2">
+              <div
+                className="w-1 h-6 rounded-full shrink-0 mt-1"
+                style={{ background: typeColor }}
+              />
+              <h2 className="text-xl font-semibold flex-1 leading-tight">{title}</h2>
+              <button
+                type="button"
+                onClick={onClose}
+                className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                aria-label="Schliessen"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </header>
+
+            {start && (
+              <div className="text-sm text-muted-foreground flex items-center gap-1.5">
+                <CalendarDays className="h-3.5 w-3.5" />
+                <span>{formatDate(start)}</span>
+                {!isAllDay && (
+                  <>
+                    <span>·</span>
+                    <Clock className="h-3.5 w-3.5" />
+                    <span>{formatTime(start)}</span>
+                    {end && <span>– {formatTime(end)}</span>}
+                  </>
+                )}
+                {isAllDay && <span className="ml-1 text-[10px] uppercase tracking-wide bg-muted/60 px-1.5 py-0.5 rounded">ganztaegig</span>}
+              </div>
+            )}
+
+            {location?.address && (
+              <div className="text-sm flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                <span>{location.address}</span>
+              </div>
+            )}
+
+            {markdownBody && (
+              <div className="text-sm">
+                <MarkdownView markdown={markdownBody} className="prose-macher" />
+              </div>
+            )}
+
+            {hashtags.length > 0 && (
+              <div className="flex flex-wrap gap-1 pt-1">
+                {hashtags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <ParticipationControls eventId={item.id} isOwnEvent={isOwner} />
+          </div>
+
+          <div className="px-4 py-3 border-t shrink-0 flex items-center justify-between bg-muted/10">
+            <span className="text-[10px] text-muted-foreground italic">
+              Vorschau — Aktionen oben (Teilnehmen, Beobachten)
+            </span>
+            {isOwner && (
+              <Button type="button" size="sm" onClick={onEdit}>
+                Bearbeiten
+              </Button>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
 }
