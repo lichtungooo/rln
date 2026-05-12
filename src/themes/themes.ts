@@ -174,3 +174,67 @@ export function getTheme(id: string | null | undefined): ThemeDefinition {
   if (!id) return THEMES[0]
   return THEMES.find((t) => t.id === id) ?? THEMES[0]
 }
+
+/**
+ * Theme-Overrides — per Netzwerk gesetzte Einzelfarben, die ueber dem
+ * Preset liegen. Persistiert in `group.data.themeOverrides`.
+ */
+export type ThemeOverrides = Partial<ThemeVars>
+
+/**
+ * Effektive Theme-Vars = Preset-Vars + Overrides (Overrides gewinnen).
+ */
+export function mergeThemeVars(
+  baseId: string | null | undefined,
+  overrides: ThemeOverrides | undefined,
+): ThemeVars {
+  const base = getTheme(baseId).vars
+  if (!overrides) return base
+  return { ...base, ...overrides }
+}
+
+/** Liste aller Theme-CSS-Variablen — fuer Apply und Reset zentral. */
+const CSS_VAR_MAP: ReadonlyArray<[keyof ThemeVars, string]> = [
+  ["primary", "--primary"],
+  ["primaryForeground", "--primary-foreground"],
+  ["secondary", "--secondary"],
+  ["secondaryForeground", "--secondary-foreground"],
+  ["accent", "--accent"],
+  ["accentForeground", "--accent-foreground"],
+  ["background", "--background"],
+  ["foreground", "--foreground"],
+  ["card", "--card"],
+  ["cardForeground", "--card-foreground"],
+  ["muted", "--muted"],
+  ["mutedForeground", "--muted-foreground"],
+  ["border", "--border"],
+  ["ring", "--ring"],
+]
+
+/**
+ * Theme aufs `document.documentElement` schreiben.
+ *
+ * Bei Default-Theme ohne Overrides: alle Variablen entfernen
+ * (Toolkit-globals.css uebernimmt). Sonst: gemergte Werte setzen.
+ */
+export function applyThemeToRoot(
+  themeId: string | null | undefined,
+  overrides?: ThemeOverrides,
+): void {
+  const root = document.documentElement
+  const hasOverrides = overrides && Object.keys(overrides).length > 0
+  const isDefault = !themeId || themeId === DEFAULT_THEME_ID
+
+  if (isDefault && !hasOverrides) {
+    CSS_VAR_MAP.forEach(([, cssVar]) => root.style.removeProperty(cssVar))
+    delete root.dataset.theme
+    return
+  }
+
+  const vars = mergeThemeVars(themeId, overrides)
+  CSS_VAR_MAP.forEach(([key, cssVar]) => {
+    root.style.setProperty(cssVar, vars[key])
+  })
+  root.dataset.theme = themeId ?? DEFAULT_THEME_ID
+}
+
