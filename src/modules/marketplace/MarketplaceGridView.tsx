@@ -59,6 +59,7 @@ import {
 } from "./marketplace-schema"
 import { ImageGalleryInput } from "./ImageGalleryInput"
 import { LocationPicker, type PickedLocation } from "../../components/LocationPicker"
+import { LendCalendar } from "./LendCalendar"
 
 /**
  * MarketplaceGridView — Marktplatz im Kleinanzeigen-Layout.
@@ -151,6 +152,7 @@ interface ListItem {
   id: string
   data: MarketplaceData
   createdAt: string
+  createdBy: string
 }
 
 // ============================================================
@@ -188,6 +190,7 @@ function MarketplaceContent({ spaceId }: { spaceId: string | null }) {
         id: item.id,
         data: item.data as MarketplaceData,
         createdAt: item.createdAt,
+        createdBy: item.createdBy,
       }))
       .sort((a, b) => (b.createdAt > a.createdAt ? 1 : -1))
   }, [items])
@@ -234,7 +237,7 @@ function MarketplaceContent({ spaceId }: { spaceId: string | null }) {
         lockPages
         mobileDrilldown
       />
-      <ItemDetailModal items={listItems} />
+      <ItemDetailModal items={listItems} spaceId={spaceId} />
       <ItemCreateModal open={createOpen} onClose={() => setCreateOpen(false)} />
     </>
   )
@@ -620,7 +623,7 @@ function ListingCard({ item }: { item: ListItem }) {
 // Inserat-Detail Modal
 // ============================================================
 
-function ItemDetailModal({ items }: { items: ListItem[] }) {
+function ItemDetailModal({ items, spaceId }: { items: ListItem[]; spaceId: string | null }) {
   const channel = useChannel("marketplace-item")
   const item = items.find((i) => i.id === channel.selectedId) ?? null
 
@@ -629,6 +632,7 @@ function ItemDetailModal({ items }: { items: ListItem[] }) {
   const data = item.data
   const isNeed = data.kind === "need"
   const priceType = data.priceType
+  const isLend = !isNeed && priceType === "lend"
   const CatIcon = data.category ? CATEGORY_ICON_MAP[data.category] : Sparkles
   const close = () => channel.select(null)
 
@@ -742,6 +746,20 @@ function ItemDetailModal({ items }: { items: ListItem[] }) {
                   <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                   {data.location.address}
                 </div>
+              </div>
+            )}
+
+            {/* Verleih-Kalender bei priceType=lend */}
+            {isLend && (
+              <div className="pt-2 border-t">
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-2">
+                  Verfuegbarkeit + Buchung
+                </div>
+                <LendCalendar
+                  itemId={item.id}
+                  ownerId={item.createdBy}
+                  spaceId={spaceId}
+                />
               </div>
             )}
           </div>
