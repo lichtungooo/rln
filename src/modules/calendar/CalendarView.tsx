@@ -346,28 +346,7 @@ function CalendarInner({ spaceId, activeGroup, config, isPreview, onOpenSettings
       ]}
       lockPages
       onActivePageChange={(id) => setActiveView(id as CalendarView)}
-      headerRight={
-        <>
-          <StatsBar />
-          <Button
-            type="button"
-            onClick={() => setSubscribeOpen(true)}
-            size="sm"
-            variant="ghost"
-            className="h-7"
-            title="Kalender abonnieren oder als ICS exportieren"
-          >
-            <LinkIcon className="h-3.5 w-3.5 mr-1" />
-            Abonnieren
-          </Button>
-          {cfg.showCreateButton && (
-            <Button onClick={() => setCreating(true)} size="sm" className="h-7">
-              <Plus className="h-3.5 w-3.5 mr-1" />
-              {cfg.mode === "group-calendar" ? "Neuer Termin" : "Neues Event"}
-            </Button>
-          )}
-        </>
-      }
+      headerRight={<StatsBar />}
       renderWidget={(widgetId) => {
         if (widgetId === "event-detail") {
           return (
@@ -379,9 +358,33 @@ function CalendarInner({ spaceId, activeGroup, config, isPreview, onOpenSettings
             />
           )
         }
-        // Default: calendar-view
+        // Default: calendar-view — Toolbar oben (Abonnieren + Neuer Eintrag)
+        // statt im PageGrid-Header. Scrollverhalten je nach activeView.
+        const isAgenda = activeView === "agenda" || activeView === "mine"
         return (
-          <div className="h-full w-full overflow-y-auto p-3 space-y-4 relative bg-card border rounded-xl">
+          <div className={`h-full w-full bg-card border rounded-xl flex flex-col`}>
+            {/* Toolbar im Slot — Abonnieren + Neuer Eintrag */}
+            <div className="flex items-center justify-end gap-2 px-3 py-2 border-b shrink-0">
+              <Button
+                type="button"
+                onClick={() => setSubscribeOpen(true)}
+                size="sm"
+                variant="ghost"
+                className="h-7"
+                title="Kalender abonnieren oder als ICS exportieren"
+              >
+                <LinkIcon className="h-3.5 w-3.5 mr-1" />
+                Abonnieren
+              </Button>
+              {cfg.showCreateButton && (
+                <Button onClick={() => setCreating(true)} size="sm" className="h-7">
+                  <Plus className="h-3.5 w-3.5 mr-1" />
+                  Neuer Eintrag
+                </Button>
+              )}
+            </div>
+
+            <div className={`flex-1 min-h-0 p-3 space-y-4 relative ${isAgenda ? "overflow-y-auto" : "overflow-hidden"}`}>
       {/* Empty-State: keiner Termin im Space → Demo-Banner mit Lade-Knopf */}
       {!isPreview && activeGroup && (
         <EmptyDemoBanner
@@ -478,7 +481,8 @@ function CalendarInner({ spaceId, activeGroup, config, isPreview, onOpenSettings
         onClose={() => setSubscribeOpen(false)}
         feedName={`Real Life Network — ${activeGroup?.name ?? "Kalender"}`}
       />
-        </div>
+            </div>
+          </div>
         )
       }}
     />
