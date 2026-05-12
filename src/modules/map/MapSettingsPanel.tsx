@@ -93,10 +93,7 @@ export function MapSettingsPanel({
       </TabsContent>
 
       <TabsContent value="filter" className="space-y-4 mt-4">
-        <ComingSoon
-          title="Filter"
-          description="Filter-Buttons fuer User: schnell Pin-Typen ein-/ausblenden, ohne in den Settings."
-        />
+        <FilterTab config={config} onChange={onChange} />
       </TabsContent>
 
       <TabsContent value="search" className="space-y-4 mt-4">
@@ -325,33 +322,70 @@ function LayerTab({
   config: MapModuleConfig
   onChange: (next: MapModuleConfig) => void
 }) {
+  const usingCustom =
+    !!config.tileUrl &&
+    !Object.values(TILE_PROVIDERS).some((p) => p.url === config.tileUrl)
+
+  const [customUrl, setCustomUrl] = useState(usingCustom ? config.tileUrl! : "")
+
   return (
-    <div>
-      <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">
-        Karten-Stil (Tile-Provider)
-      </h4>
-      <div className="space-y-1">
-        {(Object.entries(TILE_PROVIDERS) as Array<
-          [keyof typeof TILE_PROVIDERS, { url: string; label: string }]
-        >).map(([id, prov]) => (
-          <label
-            key={id}
-            className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-muted/50"
-          >
+    <div className="space-y-4">
+      <div>
+        <h4 className="text-xs font-semibold uppercase text-muted-foreground mb-2">
+          Karten-Stil
+        </h4>
+        <div className="space-y-1">
+          {(Object.entries(TILE_PROVIDERS) as Array<
+            [keyof typeof TILE_PROVIDERS, { url: string; label: string }]
+          >).map(([id, prov]) => {
+            const isActive = !usingCustom && config.tileProvider === id
+            return (
+              <label
+                key={id}
+                className="flex items-center gap-2 p-2 border rounded-md cursor-pointer hover:bg-muted/50"
+              >
+                <input
+                  type="radio"
+                  name="tile-provider"
+                  checked={isActive}
+                  onChange={() => onChange({ ...config, tileProvider: id, tileUrl: prov.url })}
+                />
+                <span className="text-sm flex-1">{prov.label}</span>
+                <span className="text-[9px] text-muted-foreground font-mono truncate max-w-[140px]">
+                  {prov.url.replace("https://", "").split("/")[0]}
+                </span>
+              </label>
+            )
+          })}
+          <label className="flex items-start gap-2 p-2 border rounded-md cursor-pointer hover:bg-muted/50">
             <input
               type="radio"
               name="tile-provider"
-              checked={config.tileProvider === id}
-              onChange={() => onChange({ ...config, tileProvider: id, tileUrl: prov.url })}
+              checked={usingCustom}
+              onChange={() => {
+                if (customUrl)
+                  onChange({ ...config, tileProvider: undefined, tileUrl: customUrl })
+              }}
+              className="mt-0.5"
             />
-            <span className="text-sm">{prov.label}</span>
+            <div className="flex-1 min-w-0 space-y-1">
+              <span className="text-sm">Eigene Kachel-URL</span>
+              <Input
+                value={customUrl}
+                onChange={(e) => {
+                  setCustomUrl(e.target.value)
+                  if (usingCustom)
+                    onChange({ ...config, tileProvider: undefined, tileUrl: e.target.value })
+                }}
+                placeholder="https://tile.example.com/{z}/{x}/{y}.png"
+                className="h-7 text-xs font-mono"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Mapbox, Stadia, eigener Tile-Server — Format mit {"{z}/{x}/{y}.png"}
+              </p>
+            </div>
           </label>
-        ))}
-      </div>
-
-      <div className="mt-4 border border-dashed border-border rounded-md p-3 text-[11px] text-muted-foreground/70">
-        🔜 Spaeter: zusaetzliche Overlay-Layer (Cluster, Heatmap, Routen),
-        Custom-Tile-URL fuer Spezialkarten.
+        </div>
       </div>
     </div>
   )
@@ -637,6 +671,82 @@ function SearchTab({
           <li>Mehrere Tokens kombinieren — alle muessen passen.</li>
         </ul>
       </div>
+    </div>
+  )
+}
+
+// ============================================================
+// Tab: Filter
+// ============================================================
+
+function FilterTab({
+  config,
+  onChange,
+}: {
+  config: MapModuleConfig
+  onChange: (next: MapModuleConfig) => void
+}) {
+  const filter = config.filter ?? { enabled: false }
+
+  const setFilter = (patch: Partial<NonNullable<MapModuleConfig["filter"]>>) => {
+    onChange({ ...config, filter: { ...filter, ...patch } })
+  }
+
+  const activeTypes = config.pinTypes ?? []
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <h4 className="text-xs font-semibold uppercase text-muted-foreground">
+          Filter-Chips auf der Karte
+        </h4>
+        <p className="text-[11px] text-muted-foreground/70 mt-1">
+          Kleine Chip-Leiste oben auf der Karte. User toggelt Pin-Typen schnell
+          ein/aus, ohne in die Einstellungen zu gehen. Pro Mensch / pro Geraet
+          gespeichert (kein gemeinsamer Zustand).
+        </p>
+      </div>
+
+      <label className="flex items-center gap-2 p-2 border rounded-md cursor-pointer">
+        <input
+          type="checkbox"
+          checked={filter.enabled ?? false}
+          onChange={(e) => setFilter({ enabled: e.target.checked })}
+        />
+        <span className="text-sm">Filter-Chips anzeigen</span>
+      </label>
+
+      {filter.enabled && activeTypes.length > 0 && (
+        <div className="pl-2 border-l-2 ml-2 space-y-2">
+          <Label className="text-[10px] uppercase text-muted-foreground/70">
+            Welche Chips erscheinen
+          </Label>
+          <div className="flex flex-wrap gap-1.5">
+            {activeTypes.map((typeId) => {
+              const def = DEFAULT_PIN_STYLES[typeId]
+              const custom = config.customPinTypes?.find((c) => c.id === typeId)
+              const label = def?.label ?? custom?.label ?? typeId
+              return (
+                <span
+                  key={typeId}
+                  className="text-[11px] px-2 py-0.5 rounded-full border bg-muted/30"
+                >
+                  {label}
+                </span>
+              )
+            })}
+          </div>
+          <p className="text-[10px] text-muted-foreground">
+            Alle aktivierten Pin-Typen aus dem Pins-Tab erscheinen als Chip.
+          </p>
+        </div>
+      )}
+
+      {filter.enabled && activeTypes.length === 0 && (
+        <div className="text-[11px] text-muted-foreground/70 border border-dashed rounded-md p-3 text-center">
+          Keine Pin-Typen aktiviert. Schalte zuerst Pin-Typen im Pins-Tab ein.
+        </div>
+      )}
     </div>
   )
 }

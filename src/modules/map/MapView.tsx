@@ -78,6 +78,10 @@ export interface MapModuleConfig {
     enabled: boolean
     placeholder?: string
   }
+  /** Filter-Chips auf der Karte — User kann Pin-Typen schnell ein-/ausblenden. */
+  filter?: {
+    enabled: boolean
+  }
 }
 
 export interface MapActionEntry {
@@ -552,8 +556,10 @@ export function MapView({ spaceId, activeGroup, config, isPreview, onOpenSetting
           </Marker>
         ))}
 
-        {/* Eigene Zoom-Controls + Filter — mittig links statt oben rechts */}
+        {/* Eigene Zoom-Controls + Filter — mittig links statt oben rechts.
+            Filter-Button erscheint nur wenn config.filter.enabled (Default: an). */}
         <MapSideControls
+          showFilter={cfg.filter?.enabled ?? true}
           hiddenLayers={hiddenLayers}
           onToggleLayer={(id) => {
             setHiddenLayers((prev) => {
@@ -940,11 +946,13 @@ const LAYER_OPTIONS: Array<{ id: string; label: string }> = [
 ]
 
 function MapSideControls({
+  showFilter,
   hiddenLayers,
   onToggleLayer,
   filterMenuOpen,
   setFilterMenuOpen,
 }: {
+  showFilter: boolean
   hiddenLayers: Set<string>
   onToggleLayer: (id: string) => void
   filterMenuOpen: boolean
@@ -959,7 +967,8 @@ function MapSideControls({
       onDoubleClick={(e) => e.stopPropagation()}
       onWheel={(e) => e.stopPropagation()}
     >
-      {/* Filter-Button */}
+      {/* Filter-Button — nur wenn in der Karten-Konfig aktiviert */}
+      {showFilter && (
       <div className="relative">
         <button
           type="button"
@@ -1020,6 +1029,7 @@ function MapSideControls({
           </div>
         )}
       </div>
+      )}
 
       {/* Zoom-Controls */}
       <div className="overflow-hidden rounded-md border border-border/60 bg-background/95 shadow-md backdrop-blur">
