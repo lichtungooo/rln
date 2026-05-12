@@ -65,6 +65,7 @@ import {
   applyThemeToRoot,
   type ThemeOverrides,
   type ThemeVars,
+  type DarkModeChoice,
 } from "../themes/themes"
 import { getSpaceMeta } from "../spaces/space-data"
 import { GeneralTab, AdvancedTab } from "./SpaceSettings"
@@ -478,7 +479,11 @@ const BASE_AREAS: ThemeAreaDef[] = [
   { id: "identity", label: "Identitaet", hint: "Primary, Accent, Background, Foreground", icon: Palette, ready: true },
   { id: "topbar", label: "Topbar", hint: "Hintergrund der Toolbar", icon: PanelTop, ready: true },
   { id: "background", label: "Hintergrund", hint: "Tint, Pattern", icon: ImageIcon, ready: false },
-  { id: "dark", label: "Dark Mode", hint: "Auto / Hell / Dunkel", icon: Moon, ready: false },
+  { id: "dark", label: "Dark Mode", hint: "Auto / Hell / Dunkel", icon: Moon, ready: true },
+]
+
+const DARK_SUB_ITEMS: ThemeSubItem[] = [
+  { id: "darkMode", label: "Modus", description: "Auto, Hell oder Dunkel" },
 ]
 
 // Topbar-Sub-Items — eine fuer den Hintergrund (Farbe oder Gradient)
@@ -597,6 +602,9 @@ function ThemeSubItemsWidget() {
     if (areaId === "topbar") {
       return TOPBAR_SUB_ITEMS
     }
+    if (areaId === "dark") {
+      return DARK_SUB_ITEMS
+    }
     return []
   }, [areaId])
 
@@ -711,10 +719,12 @@ function ThemeDetailWidget() {
           <IdentityDetail subItemId={subItemId as keyof ThemeVars} />
         )}
         {areaId === "topbar" && subItemId === "topbarBackground" && <TopbarDetail />}
+        {areaId === "dark" && subItemId === "darkMode" && <DarkModeDetail />}
         {areaId &&
           areaId !== "presets" &&
           areaId !== "identity" &&
-          areaId !== "topbar" && (
+          areaId !== "topbar" &&
+          areaId !== "dark" && (
             <ComingSoonInline
               label={BASE_AREAS.find((a) => a.id === areaId)?.label ?? "Bereich"}
             />
@@ -1018,6 +1028,76 @@ function ModulePreviewWidget({ group: _group }: { group: Group }) {
             </div>
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// Dark-Mode-Detail — Auto / Hell / Dunkel
+// ============================================================
+
+const DARK_OPTIONS: { id: DarkModeChoice; label: string; description: string; icon: LucideIcon }[] = [
+  { id: "auto", label: "Auto", description: "Folgt dem System (prefers-color-scheme)", icon: Sparkles },
+  { id: "light", label: "Hell", description: "Immer hell, unabhaengig vom System", icon: Sparkles },
+  { id: "dark", label: "Dunkel", description: "Immer dunkel, unabhaengig vom System", icon: Moon },
+]
+
+function DarkModeDetail() {
+  const { draft, setOverride, removeOverride } = useThemeDraft()
+  const current = draft.overrides.darkMode
+
+  return (
+    <div className="space-y-4 max-w-md">
+      <div>
+        <h2 className="text-base font-semibold">Dark Mode</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Wann zeigt sich die App in dunklen Farben.
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        {DARK_OPTIONS.map((opt) => {
+          const Icon = opt.icon
+          const isActive = current === opt.id
+          return (
+            <button
+              key={opt.id}
+              type="button"
+              onClick={() => setOverride("darkMode", opt.id)}
+              className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-all hover:bg-muted/30 ${
+                isActive ? "border-primary bg-primary/5" : "border-border"
+              }`}
+            >
+              <Icon className="h-5 w-5 shrink-0 text-muted-foreground" />
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-semibold">{opt.label}</div>
+                <div className="text-[11px] text-muted-foreground">
+                  {opt.description}
+                </div>
+              </div>
+              {isActive && <Check className="h-4 w-4 text-primary shrink-0" />}
+            </button>
+          )
+        })}
+      </div>
+
+      {current && (
+        <button
+          type="button"
+          onClick={() => removeOverride("darkMode")}
+          className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground px-3 py-2 rounded border"
+          title="Kein Override — Toolkit-Default"
+        >
+          <RotateCcw className="h-3 w-3" />
+          Zuruecksetzen
+        </button>
+      )}
+
+      <div className="text-[11px] text-muted-foreground leading-relaxed border-l-2 border-primary/30 pl-3 py-1">
+        Dark Mode aktiviert die `dark`-Klasse auf <code>&lt;html&gt;</code> —
+        alle Komponenten mit Tailwind-Dark-Variants ziehen mit. Speichern oben
+        uebernimmt fuer alle Mitglieder.
       </div>
     </div>
   )

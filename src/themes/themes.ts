@@ -179,13 +179,12 @@ export function getTheme(id: string | null | undefined): ThemeDefinition {
  * Theme-Extras — Variablen jenseits der Tailwind-Identitaet.
  * Werden zusammen mit den Preset-Vars aufs documentElement geschrieben,
  * haben aber KEINEN Preset-Anker (sind immer optional).
- *
- * Aktuell:
- *   topbarBackground — Toolbar-Hintergrund (Farbe oder Gradient als CSS-Wert)
- *   pageBackgroundTint, darkMode etc. folgen.
  */
+export type DarkModeChoice = "auto" | "light" | "dark"
+
 export interface ThemeExtras {
   topbarBackground?: string
+  darkMode?: DarkModeChoice
 }
 
 /**
@@ -226,10 +225,39 @@ const CSS_VAR_MAP: ReadonlyArray<[keyof ThemeVars, string]> = [
   ["ring", "--ring"],
 ]
 
-/** Mapping fuer Theme-Extras → CSS-Variable-Name. */
+/** Mapping fuer einfache String-Theme-Extras → CSS-Variable-Name.
+ *  darkMode wird separat behandelt (class-Strategy statt CSS-Var). */
 const EXTRA_VAR_MAP: ReadonlyArray<[keyof ThemeExtras, string]> = [
   ["topbarBackground", "--topbar-background"],
 ]
+
+/**
+ * Dark-Mode-Class aufs <html> setzen — Tailwind-Konvention (`dark:` Varianten).
+ *   - "dark"  → class hinzu
+ *   - "light" → class weg
+ *   - "auto"  → folgt prefers-color-scheme
+ */
+function applyDarkMode(choice: DarkModeChoice | undefined): void {
+  const root = document.documentElement
+  const wantDark =
+    choice === "dark"
+      ? true
+      : choice === "light"
+        ? false
+        : choice === "auto"
+          ? window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false
+          : null
+  if (wantDark === null) {
+    // Kein Override gesetzt — Default-Verhalten der Toolkit-Globals
+    root.classList.remove("dark")
+    delete root.dataset.darkMode
+    return
+  }
+  if (wantDark) root.classList.add("dark")
+  else root.classList.remove("dark")
+  if (choice) root.dataset.darkMode = choice
+  else delete root.dataset.darkMode
+}
 
 /**
  * Theme aufs `document.documentElement` schreiben.
@@ -248,6 +276,7 @@ export function applyThemeToRoot(
   if (isDefault && !hasOverrides) {
     CSS_VAR_MAP.forEach(([, cssVar]) => root.style.removeProperty(cssVar))
     EXTRA_VAR_MAP.forEach(([, cssVar]) => root.style.removeProperty(cssVar))
+    applyDarkMode(undefined)
     delete root.dataset.theme
     return
   }
@@ -265,6 +294,7 @@ export function applyThemeToRoot(
       root.style.removeProperty(cssVar)
     }
   })
+  applyDarkMode(overrides?.darkMode)
   root.dataset.theme = themeId ?? DEFAULT_THEME_ID
 }
 
