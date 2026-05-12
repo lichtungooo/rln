@@ -68,6 +68,7 @@ import {
 } from "../themes/themes"
 import { getSpaceMeta } from "../spaces/space-data"
 import { GeneralTab, AdvancedTab } from "./SpaceSettings"
+import { MembersView } from "../modules/members/MembersView"
 
 // ============================================================
 // Tab-Definitionen + Default-Pages
@@ -352,9 +353,9 @@ function SettingsContent({
         case "module-preview":
           return <ModulePreviewWidget group={activeGroup} />
         case "admin-roles":
-          return <ComingSoonWidget label="Rollen" hint="Eigner, Admin, Mitglied, Gast — kommt in Push 7." />
+          return <AdminRolesWidget />
         case "admin-detail":
-          return <ComingSoonWidget label="Rolle bearbeiten" hint="Rechte pro Rolle + Mitglieder zuweisen — kommt in Push 7." />
+          return <AdminDetailWidget spaceId={spaceId} group={activeGroup} />
         case "advanced-actions":
           return <AdvancedActionsWidget group={activeGroup} />
         default:
@@ -1003,6 +1004,152 @@ function ModulePreviewWidget({ group: _group }: { group: Group }) {
             </div>
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// Admin-Tab — Rollen-Uebersicht + Mitglieder mit Rollen-Auswahl
+// ============================================================
+
+interface RoleDef {
+  id: "owner" | "admin" | "member" | "guest"
+  label: string
+  hint: string
+  rights: string[]
+}
+
+const ROLES: RoleDef[] = [
+  {
+    id: "owner",
+    label: "Eigner",
+    hint: "Erste Person im Netzwerk",
+    rights: [
+      "Alles. Theme, Module, Admin",
+      "Eigner-Wechsel + Netzwerk loeschen",
+      "Kann nicht entzogen werden",
+    ],
+  },
+  {
+    id: "admin",
+    label: "Admin",
+    hint: "Verwalter neben dem Eigner",
+    rights: [
+      "Theme + Module aendern",
+      "Mitglieder-Rollen schalten",
+      "Subnetzwerke anlegen",
+    ],
+  },
+  {
+    id: "member",
+    label: "Mitglied",
+    hint: "Aktive Teilnehmer",
+    rights: [
+      "Inhalte beitragen — Pins, Termine, Quests",
+      "Eigenes Profil pflegen",
+      "Andere sehen + begegnen",
+    ],
+  },
+  {
+    id: "guest",
+    label: "Gast",
+    hint: "Nur Lesen",
+    rights: ["Inhalte ansehen", "Kein Beitrag", "Kein Profil sichtbar"],
+  },
+]
+
+function AdminRolesWidget() {
+  const channel = useChannel("admin-role")
+  useChannelSync(
+    "admin-role",
+    useMemo(() => ROLES.map((r) => ({ id: r.id })), [])
+  )
+
+  return (
+    <div className="h-full w-full bg-card border rounded-xl overflow-hidden flex flex-col">
+      <div className="px-3 py-2 border-b bg-muted/20 flex items-center gap-2 shrink-0">
+        <ShieldCheck className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className="text-sm font-semibold truncate flex-1">Rollen</span>
+      </div>
+      <ul className="flex-1 overflow-y-auto divide-y">
+        {ROLES.map((role) => {
+          const isActive = channel.selectedId === role.id
+          return (
+            <li key={role.id}>
+              <button
+                type="button"
+                onClick={() => channel.select(role.id)}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 text-left hover:bg-muted/50 transition-colors ${
+                  isActive ? "bg-muted/70" : ""
+                }`}
+              >
+                <ShieldCheck className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium truncate">{role.label}</div>
+                  <div className="text-[10px] text-muted-foreground truncate">
+                    {role.hint}
+                  </div>
+                </div>
+                <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground/60" />
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+    </div>
+  )
+}
+
+function AdminDetailWidget({
+  spaceId,
+  group,
+}: {
+  spaceId: string | null
+  group: Group
+}) {
+  const channel = useChannel("admin-role")
+  const selectedRole = useMemo(
+    () => ROLES.find((r) => r.id === channel.selectedId) ?? null,
+    [channel.selectedId]
+  )
+
+  return (
+    <div className="h-full w-full bg-card border rounded-xl overflow-hidden flex flex-col">
+      <div className="px-3 py-2 border-b bg-muted/20 flex items-center gap-2 shrink-0">
+        <ShieldCheck className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className="text-sm font-semibold truncate flex-1">
+          {selectedRole ? `Rolle: ${selectedRole.label}` : "Mitglieder + Rollen"}
+        </span>
+      </div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        {selectedRole && (
+          <div className="space-y-2 border-l-2 border-primary/30 pl-3 py-1">
+            <p className="text-xs text-muted-foreground italic">
+              {selectedRole.hint}
+            </p>
+            <ul className="space-y-1">
+              {selectedRole.rights.map((r) => (
+                <li key={r} className="text-xs flex items-center gap-2">
+                  <Check className="h-3 w-3 shrink-0 text-primary" />
+                  <span>{r}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        <div>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-3">
+            Mitglieder im Netzwerk
+          </h3>
+          <MembersView
+            spaceId={spaceId}
+            activeGroup={group}
+            allGroups={[]}
+            config={undefined}
+          />
+        </div>
       </div>
     </div>
   )
