@@ -218,7 +218,7 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
   const [spaceSettingsTab, setSpaceSettingsTab] = useState<SpaceSettingsTab>('general')
   const [spaceSettingsModuleId, setSpaceSettingsModuleId] = useState<string | null>(null)
 
-  const OVERVIEW_WORKSPACE: Workspace = { id: '__overview__', name: 'Alle Werkstaetten', scope: 'overview' }
+  const OVERVIEW_WORKSPACE: Workspace = { id: '__overview__', name: 'Alle Netzwerke', scope: 'overview' }
   const workspaces: Workspace[] = useMemo(
     () => [
       OVERVIEW_WORKSPACE,
@@ -703,16 +703,9 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
           className={homeOpen ? '' : 'h-full'}
           style={homeOpen ? { display: 'none' } : undefined}
         >
-        {activeGroup && (
-          <SpaceHierarchyBar
-            group={activeGroup}
-            allGroups={groups}
-            onNavigate={(id) => {
-              const target = workspaces.find((w) => w.id === id)
-              if (target) handleWorkspaceChange(target)
-            }}
-          />
-        )}
+        {/* SpaceHierarchyBar entfernt 2026-05-12 — Hierarchie ueber den
+            Workspace-Switcher (oben links) sichtbar, doppelter Eintrag in
+            der Modul-Toolbar war ueberfluessig. */}
         {modulesToRender.length === 0 ? (
           <div className="container mx-auto px-4 pt-12 max-w-md text-center">
             <p className="text-lg font-medium text-foreground">Modul nicht gefunden</p>

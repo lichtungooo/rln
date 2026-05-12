@@ -494,12 +494,8 @@ export function MapView({ spaceId, activeGroup, config, isPreview, onOpenSetting
         />
       )}
 
-      {/* Kompakt-Kalender: schwebender Auszug der naechsten Termine */}
-      {!isPreview && !creatingType && (
-        <MapCalendarWidget
-          onEventSelect={(ev) => setFlyTarget({ ...ev })}
-        />
-      )}
+      {/* Kompakt-Kalender entfernt 2026-05-12 — gehoert nicht auf die Karte,
+          Termine leben im Kalender-Modul. */}
 
       <MapContainer
         center={center}
