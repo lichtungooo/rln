@@ -124,9 +124,9 @@ export function MacherWorkspaceSwitcher({
       </DropdownMenuTrigger>
 
       <DropdownMenuContent align="start" className="w-72 max-h-[80vh] p-0 flex flex-col">
-        {/* Header fix — Alle Netzwerke (Overview) */}
-        {overviewWorkspace && (
-          <div className="border-b shrink-0">
+        {/* Header fix — Alle Netzwerke (Overview) + Label "Meine Netzwerke" */}
+        <div className="border-b shrink-0 bg-popover">
+          {overviewWorkspace && (
             <DropdownMenuItem
               onClick={() => onWorkspaceChange(overviewWorkspace)}
               className="flex items-center gap-2 px-2 py-2 rounded-none"
@@ -137,16 +137,18 @@ export function MacherWorkspaceSwitcher({
               <span className="flex-1 font-medium">{overviewWorkspace.name}</span>
               <span className="text-[10px] text-muted-foreground">Uebersicht</span>
             </DropdownMenuItem>
-          </div>
-        )}
+          )}
+          {sortedEntries.length > 0 && (
+            <DropdownMenuLabel className="text-[10px] uppercase tracking-wide text-muted-foreground border-t">
+              Meine Netzwerke
+            </DropdownMenuLabel>
+          )}
+        </div>
 
-        {/* Mitte scroll — Meine Netzwerke (hierarchisch) */}
+        {/* Mitte scroll — Netzwerk-Liste (hierarchisch) */}
         <div className="flex-1 overflow-y-auto min-h-0">
           {sortedEntries.length > 0 && (
             <>
-              <DropdownMenuLabel className="sticky top-0 bg-background border-b">
-                Meine Netzwerke
-              </DropdownMenuLabel>
               {sortedEntries.map(({ workspace, depth }) => {
                 const group = groups.find((g) => g.id === workspace.id)
                 const childCount = group ? findChildSpaces(groups, workspace.id).length : 0

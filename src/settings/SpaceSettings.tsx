@@ -677,9 +677,18 @@ export function GeneralTab({ group }: { group: Group }) {
   const [parentSpaceId, setParentSpaceId] = useState<string>(meta.parentSpaceId ?? "")
   const initialImage = (group.data?.image as string | undefined) ?? (group.data?.avatar as string | undefined)
   const [image, setImage] = useState<string | undefined>(initialImage)
+  const initialDefaultModule = (group.data?.defaultModule as string | undefined) ?? ""
+  const [defaultModule, setDefaultModule] = useState<string>(initialDefaultModule)
   const [saving, setSaving] = useState(false)
   const [savedAt, setSavedAt] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  const availableModules = useMemo(() => {
+    const mods = (group.data?.modules as string[] | undefined) ?? []
+    return mods
+      .map((id) => ({ id, mod: getModule(id) }))
+      .filter((x): x is { id: string; mod: NonNullable<typeof x.mod> } => !!x.mod)
+  }, [group])
 
   // Slug-Validierung
   const slugError = useMemo(() => {
@@ -722,6 +731,7 @@ export function GeneralTab({ group }: { group: Group }) {
       nextData.hashtags = hashtags.length > 0 ? hashtags : undefined
       nextData.parentSpaceId = parentSpaceId || undefined
       nextData.image = image || undefined
+      nextData.defaultModule = defaultModule || undefined
       // Beim Setzen von image auch das Legacy-avatar-Feld synchron halten
       if (image) nextData.avatar = image
       else delete nextData.avatar
@@ -747,6 +757,7 @@ export function GeneralTab({ group }: { group: Group }) {
     slug.trim() !== (meta.slug ?? "") ||
     parentSpaceId !== (meta.parentSpaceId ?? "") ||
     image !== initialImage ||
+    defaultModule !== initialDefaultModule ||
     JSON.stringify(hashtags) !== JSON.stringify(meta.hashtags ?? [])
 
   return (
@@ -832,6 +843,25 @@ export function GeneralTab({ group }: { group: Group }) {
             suggestions={hashtagSuggestions}
             quickSuggestions={8}
           />
+        </div>
+
+        <div>
+          <Label className="text-xs">Start-Modul</Label>
+          <select
+            value={defaultModule}
+            onChange={(e) => setDefaultModule(e.target.value)}
+            className="w-full h-9 px-3 rounded-md border bg-background text-sm"
+          >
+            <option value="">Auto — Karte, falls verfuegbar</option>
+            {availableModules.map(({ id, mod }) => (
+              <option key={id} value={id}>
+                {mod.label}
+              </option>
+            ))}
+          </select>
+          <p className="text-[10px] text-muted-foreground mt-1">
+            Welches Modul oeffnet sich, wenn jemand das Netzwerk waehlt.
+          </p>
         </div>
       </div>
 

@@ -473,9 +473,15 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
     setHomeOpen(false)
     const group = groups.find((g) => g.id === workspace.id)
     const mods = (group?.data?.modules as string[] | undefined) ?? ['map', 'kanban', 'marketplace']
-    const mod = mods.includes(activeModule) ? activeModule : (mods[0] ?? 'map')
-    navigate(buildSpacePath(workspace.id, mod))
-  }, [groups, activeModule, navigate, buildSpacePath])
+    // Start-Modul pro Netzwerk konfigurierbar — Default ist die Karte (Treffpunkt).
+    const configured = group?.data?.defaultModule as string | undefined
+    const startMod = configured && mods.includes(configured)
+      ? configured
+      : mods.includes('map')
+        ? 'map'
+        : (mods[0] ?? 'map')
+    navigate(buildSpacePath(workspace.id, startMod))
+  }, [groups, navigate, buildSpacePath])
 
   const handleModuleChange = (moduleId: string) => {
     setHomeOpen(false)
