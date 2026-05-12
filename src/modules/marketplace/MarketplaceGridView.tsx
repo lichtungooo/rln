@@ -30,6 +30,12 @@ import {
   useChannelSync,
 } from "../../components/SelectionContext"
 import {
+  RadiusFilter,
+  DEFAULT_RADIUS_VALUE,
+  isInRadius,
+  type RadiusValue,
+} from "../../components/RadiusFilter"
+import {
   marketplaceSchema,
   PRICE_TYPE_LABEL,
   PRICE_TYPE_COLOR,
@@ -354,6 +360,7 @@ function ListingsGrid({ items }: { items: ListItem[] }) {
   const channel = useChannel("marketplace-filter")
   const filterId = channel.selectedId ?? "world:all"
   const [query, setQuery] = useState("")
+  const [radius, setRadius] = useState<RadiusValue>(DEFAULT_RADIUS_VALUE)
 
   const filtered = useMemo(() => {
     let result = items
@@ -387,12 +394,16 @@ function ListingsGrid({ items }: { items: ListItem[] }) {
         )
       })
     }
+    // Umkreis-Filter
+    if (radius.enabled && radius.center) {
+      result = result.filter((i) => isInRadius(i.data.location, radius))
+    }
     return result
-  }, [items, filterId, query])
+  }, [items, filterId, query, radius])
 
   return (
     <div className="h-full w-full bg-card border rounded-xl overflow-hidden flex flex-col">
-      {/* Header: Suche + Aktionen */}
+      {/* Header: Suche + Umkreis */}
       <div className="px-3 py-2 border-b shrink-0 space-y-2">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
@@ -409,10 +420,7 @@ function ListingsGrid({ items }: { items: ListItem[] }) {
             {filtered.length} / {items.length}
           </span>
         </div>
-        <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-          <MapPin className="h-3 w-3" />
-          <span>Umkreis-Filter folgt — bald hier Pin + Schieberegler</span>
-        </div>
+        <RadiusFilter value={radius} onChange={setRadius} compact />
       </div>
 
       {/* Cards */}
