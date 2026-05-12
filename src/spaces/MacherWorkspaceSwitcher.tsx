@@ -16,13 +16,13 @@ import type { Group } from "@real-life-stack/data-interface"
 import { findChildSpaces, findRootSpaces, getSpaceMeta } from "./space-data"
 
 /**
- * MacherWorkspaceSwitcher — eigener Switcher mit Sub-Space-Hierarchie.
+ * MacherWorkspaceSwitcher — eigener Switcher mit Subnetzwerk-Hierarchie.
  *
  * Anders als der Toolkit-Default zeigt dieser:
  *   - Overview (alle Werkstaetten) oben
- *   - Root-Spaces in alphabetischer Reihenfolge
- *   - Direkt darunter ihre Sub-Spaces eingerueckt
- *   - Optional: Spaces-Browser-Eintrag fuer Discovery
+ *   - Root-Netzwerke in alphabetischer Reihenfolge
+ *   - Direkt darunter ihre Subnetzwerke eingerueckt
+ *   - Optional: Netzwerke-Browser-Eintrag fuer Discovery
  */
 
 export interface MacherWorkspaceSwitcherProps {
@@ -145,7 +145,7 @@ export function MacherWorkspaceSwitcher({
         {/* Spaces (hierarchisch) */}
         {sortedEntries.length > 0 && (
           <>
-            <DropdownMenuLabel>Meine Spaces</DropdownMenuLabel>
+            <DropdownMenuLabel>Meine Netzwerke</DropdownMenuLabel>
             {sortedEntries.map(({ workspace, depth }) => {
               const group = groups.find((g) => g.id === workspace.id)
               const childCount = group ? findChildSpaces(groups, workspace.id).length : 0
@@ -176,7 +176,7 @@ export function MacherWorkspaceSwitcher({
                       <div className="text-[9px] text-muted-foreground truncate">
                         {childCount > 0 && (
                           <span>
-                            {childCount} Sub-Space{childCount === 1 ? "" : "s"}
+                            {childCount} Subnetzwerk{childCount === 1 ? "" : "e"}
                           </span>
                         )}
                         {childCount > 0 && meta?.hashtags && meta.hashtags.length > 0 && " · "}
@@ -210,14 +210,14 @@ export function MacherWorkspaceSwitcher({
         {onOpenSpacesBrowser && (
           <DropdownMenuItem onClick={onOpenSpacesBrowser} className="flex items-center gap-2">
             <Compass className="h-4 w-4" />
-            <span>Spaces entdecken</span>
+            <span>Netzwerke entdecken</span>
           </DropdownMenuItem>
         )}
 
         {onCreateWorkspace && (
           <DropdownMenuItem onClick={onCreateWorkspace} className="flex items-center gap-2">
             <Plus className="h-4 w-4" />
-            <span>Neuen Space anlegen</span>
+            <span>Neues Netzwerk anlegen</span>
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>

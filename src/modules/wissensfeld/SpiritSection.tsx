@@ -229,7 +229,7 @@ export function SpiritSection(props: SpiritSectionProps) {
           <CardContent className="p-10 text-center text-muted-foreground">
             <Sparkles className="h-10 w-10 mx-auto mb-3 text-muted-foreground/30" />
             <p className="text-sm italic">
-              Der Space ist neu. Sobald die ersten Fragen gestellt werden, traegt
+              Das Netzwerk ist neu. Sobald die ersten Fragen gestellt werden, traegt
               dieser Spiegel den Spirit.
             </p>
           </CardContent>
@@ -291,7 +291,7 @@ export function SpiritSection(props: SpiritSectionProps) {
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Heart className="h-4 w-4 text-rose-500" />
-                  Was den Space traegt
+                  Was das Netzwerk traegt
                 </CardTitle>
                 <p className="text-xs text-muted-foreground italic">
                   Antworten mit der staerksten Resonanz — was die Gemeinschaft

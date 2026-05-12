@@ -9,9 +9,9 @@ const MacherApp = lazy(() => import('./pages/MacherApp'))
 /**
  * URL-Struktur:
  *   /                      → Landing (Default oder RLN-Landing)
- *   /<slug>                → Space (Default-Modul)
- *   /<slug>/<modul>        → Space + Modul
- *   /<slug>/<modul>/<id>   → Space + Modul + Item
+ *   /<slug>                → Netzwerk (Default-Modul)
+ *   /<slug>/<modul>        → Netzwerk + Modul
+ *   /<slug>/<modul>/<id>   → Netzwerk + Modul + Item
  *   /datenschutz           → PrivacyPage
  *   /impressum             → ImpressumPage
  *
@@ -36,7 +36,7 @@ export default function App() {
           <Route path="/app" element={<Navigate to="/" replace />} />
           <Route path="/app/*" element={<LegacyAppRedirect />} />
 
-          {/* Slug-basierte Space-Routes */}
+          {/* Slug-basierte Netzwerk-Routes */}
           <Route path="/:slug" element={<SpaceRoute />} />
           <Route path="/:slug/:module" element={<SpaceRoute />} />
           <Route path="/:slug/:module/:itemId" element={<SpaceRoute />} />

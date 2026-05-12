@@ -641,7 +641,7 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
                   navigate(`/${slug}/settings?tab=modules&moduleId=${activeModule}`)
                 }
               }}
-              title={`Einstellungen — Space + ${activeModule}`}
+              title={`Einstellungen — Netzwerk + ${activeModule}`}
               aria-label="Einstellungen"
               className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground"
             >

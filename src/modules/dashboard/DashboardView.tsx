@@ -79,7 +79,7 @@ export function DashboardView({ spaceId, activeGroup }: ModuleViewProps) {
     return (
       <div className="h-full w-full flex items-center justify-center p-8">
         <p className="text-sm text-muted-foreground">
-          Bitte einen Space waehlen, um das Dashboard zu sehen.
+          Bitte ein Netzwerk waehlen, um das Dashboard zu sehen.
         </p>
       </div>
     )

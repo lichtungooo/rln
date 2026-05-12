@@ -264,7 +264,7 @@ export function AvatarView({ spaceId }: ModuleViewProps) {
       {/* Hinweis */}
       <div className="text-[11px] text-muted-foreground/80 italic max-w-2xl border-l-2 border-primary/30 pl-3 py-1 leading-relaxed">
         Items sind soulbound — sie gehoeren dir, niemand kann sie tauschen oder
-        nehmen. Sie reisen mit dir ueber alle Spaces, der Titel bleibt pro Space.
+        nehmen. Sie reisen mit dir ueber alle Netzwerke, der Titel bleibt pro Netzwerk.
       </div>
     </div>
   )

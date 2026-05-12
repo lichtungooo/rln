@@ -69,7 +69,7 @@ export function SpiegelView(props: ModuleViewProps<SpiegelModuleConfig>) {
     return (
       <div className="h-full w-full flex items-center justify-center p-8">
         <p className="text-sm text-muted-foreground">
-          Bitte einen Space waehlen, um das Profil zu sehen.
+          Bitte ein Netzwerk waehlen, um das Profil zu sehen.
         </p>
       </div>
     )

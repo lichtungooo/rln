@@ -51,7 +51,7 @@ export function MembersView({ spaceId, activeGroup }: ModuleViewProps) {
   if (!activeGroup) {
     return (
       <div className="p-6 text-center text-sm text-muted-foreground">
-        Bitte einen Space waehlen, um Mitglieder zu sehen.
+        Bitte ein Netzwerk waehlen, um Mitglieder zu sehen.
       </div>
     )
   }
@@ -182,7 +182,7 @@ export function MembersView({ spaceId, activeGroup }: ModuleViewProps) {
       </Card>
 
       <div className="text-[11px] text-muted-foreground/70 px-2">
-        💡 Owner ist immer das erste Mitglied im Space — die Rolle kann nicht
+        💡 Owner ist immer das erste Mitglied im Netzwerk — die Rolle kann nicht
         geaendert werden. Admins koennen Module konfigurieren, andere Mitglieder
         promoten und Demo-Daten laden.
       </div>

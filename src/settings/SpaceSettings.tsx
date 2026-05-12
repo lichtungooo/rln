@@ -151,7 +151,7 @@ interface TabDef {
 const TABS: TabDef[] = [
   { id: "general", label: "Allgemein", icon: Home, hint: "Name, Beschreibung" },
   { id: "theme", label: "Theme", icon: Palette, hint: "Farbwelt + Stimmung" },
-  { id: "modules", label: "Module", icon: Puzzle, hint: "Was kann der Space" },
+  { id: "modules", label: "Module", icon: Puzzle, hint: "Was kann das Netzwerk" },
   { id: "modulschmiede", label: "Modulschmiede", icon: Hammer, hint: "Eigene Module bauen" },
   { id: "members", label: "Mitglieder", icon: Users, hint: "Rollen, Admins" },
   { id: "demo", label: "Demo-Daten", icon: Sparkles, hint: "Showroom-Inhalte" },
@@ -209,7 +209,7 @@ export function SpaceSettings({
         <>
           <SettingsIcon className="h-4 w-4 text-primary" />
           <span className="text-[11px] text-muted-foreground truncate hidden lg:inline max-w-[16rem]">
-            {activeGroup?.name ?? "Kein Space"}
+            {activeGroup?.name ?? "Kein Netzwerk"}
           </span>
           {!embedded && (
             <Button
@@ -228,7 +228,7 @@ export function SpaceSettings({
         <div className="h-full w-full">
           {!activeGroup ? (
             <div className="p-8 text-center text-sm text-muted-foreground">
-              Bitte einen Space waehlen, um die Einstellungen zu oeffnen.
+              Bitte ein Netzwerk waehlen, um die Einstellungen zu oeffnen.
             </div>
           ) : (
             <SettingsBody
@@ -559,7 +559,7 @@ function ThemePreview({ groupName }: { groupName: string }) {
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-xs text-muted-foreground leading-relaxed">
-            So sehen Karten und Buttons in deinem Space aus. Klick auf ein
+            So sehen Karten und Buttons in deinem Netzwerk aus. Klick auf ein
             Theme links — die Vorschau wechselt sofort mit.
           </p>
           <div className="flex gap-2 flex-wrap">
@@ -625,7 +625,7 @@ function GeneralPreview({ group }: { group: Group }) {
         <CardHeader className="pb-2">
           {parent && (
             <div className="text-[10px] text-muted-foreground mb-1">
-              Sub-Space von <span className="text-foreground font-medium">{parent.name}</span>
+              Subnetzwerk von <span className="text-foreground font-medium">{parent.name}</span>
             </div>
           )}
           <CardTitle className="text-base">{group.name || "(ohne Namen)"}</CardTitle>
@@ -649,8 +649,8 @@ function GeneralPreview({ group }: { group: Group }) {
             </div>
           )}
           <p className="text-[11px] text-muted-foreground">
-            So erscheint dein Space im Workspace-Switcher, in Einladungen
-            und im Spaces-Browser.
+            So erscheint dein Netzwerk im Workspace-Switcher, in Einladungen
+            und im Netzwerk-Browser.
           </p>
         </CardContent>
       </Card>
@@ -663,7 +663,7 @@ function GeneralPreview({ group }: { group: Group }) {
         <div className="flex-1 min-w-0">
           <div className="text-xs font-medium truncate">{group.name || "(ohne Namen)"}</div>
           <div className="text-[10px] text-muted-foreground">
-            {parent ? `↳ unter ${parent.name}` : "Root-Space"}
+            {parent ? `↳ unter ${parent.name}` : "Root-Netzwerk"}
           </div>
         </div>
       </div>
@@ -698,7 +698,7 @@ function GeneralTab({ group }: { group: Group }) {
       return "Slug nur Kleinbuchstaben, Zahlen, Bindestriche."
     }
     if (!isSlugFree(allGroups, slug, group.id)) {
-      return "Dieser Slug wird schon von einem anderen Space genutzt."
+      return "Dieser Slug wird schon von einem anderen Netzwerk genutzt."
     }
     return null
   }, [slug, allGroups, group.id])
@@ -764,7 +764,7 @@ function GeneralTab({ group }: { group: Group }) {
       <div>
         <h3 className="text-base font-semibold mb-0.5">Allgemein</h3>
         <p className="text-xs text-muted-foreground">
-          Name, Logo, Beschreibung, URL-Slug, Eltern-Space, Hashtags.
+          Name, Logo, Beschreibung, URL-Slug, Eltern-Netzwerk, Hashtags.
         </p>
       </div>
 
@@ -818,13 +818,13 @@ function GeneralTab({ group }: { group: Group }) {
         </div>
 
         <div>
-          <Label className="text-xs">Eltern-Space</Label>
+          <Label className="text-xs">Eltern-Netzwerk</Label>
           <select
             value={parentSpaceId}
             onChange={(e) => setParentSpaceId(e.target.value)}
             className="w-full h-9 px-3 rounded-md border bg-background text-sm"
           >
-            <option value="">— Root-Space —</option>
+            <option value="">— Root-Netzwerk —</option>
             {parentOptions.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name}
@@ -1021,7 +1021,7 @@ function ModuleInfo({
 
       <div className="border rounded-md p-3 flex items-center gap-3 bg-muted/10">
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-medium">Modul im Space aktiv</div>
+          <div className="text-sm font-medium">Modul im Netzwerk aktiv</div>
           <p className="text-[11px] text-muted-foreground">
             {isOn
               ? "Erscheint als Tab in der Modul-Leiste oben."
@@ -1114,7 +1114,7 @@ function ModulesTab({
     <div className="max-w-2xl">
       <h3 className="text-base font-semibold mb-0.5">Module</h3>
       <p className="text-xs text-muted-foreground">
-        Schalte ein, was dieser Space koennen soll. Aktive Module erscheinen sofort als Tab.
+        Schalte ein, was dieses Netzwerk koennen soll. Aktive Module erscheinen sofort als Tab.
         Klick auf Modul-Namen oeffnet die Konfiguration in der Spalte rechts.
       </p>
     </div>
@@ -1467,7 +1467,7 @@ function AdvancedTab({ group }: { group: Group }) {
       {/* Export */}
       <div className="border rounded-md p-3 bg-card space-y-2">
         <div>
-          <h4 className="text-sm font-semibold">Space exportieren</h4>
+          <h4 className="text-sm font-semibold">Netzwerk exportieren</h4>
           <p className="text-[11px] text-muted-foreground mt-0.5">
             Laedt die Group-Daten als JSON herunter — Name, Beschreibung,
             Mitglieder, Modul-Konfig, Theme. Items selbst sind getrennt im

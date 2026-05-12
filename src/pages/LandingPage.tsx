@@ -22,7 +22,7 @@ import {
  *   2. Hero (Claim + Sub + 2 CTAs)
  *   3. Was ist RLN (drei Saeulen)
  *   4. Module-Uebersicht (9 Module)
- *   5. Spaces-Showcase (Macher, Lichtung)
+ *   5. Netzwerke-Showcase (Macher, Lichtung)
  *   6. CTA-Block
  *   7. Footer
  */
@@ -40,7 +40,7 @@ const MODULES = [
   { icon: Users, label: 'Profile', desc: 'Kuratierter Raum, Sichtbarkeit pro Inhalt waehlbar' },
   { icon: Compass, label: 'Dashboard', desc: 'Privater Spiegel mit Widgets und Puls' },
   { icon: Map, label: 'Karte', desc: 'Orte, Menschen, Events — raeumlicher Anker' },
-  { icon: Calendar, label: 'Kalender', desc: 'Persoenlich, Space, Quest — eine Zeit, drei Sichten' },
+  { icon: Calendar, label: 'Kalender', desc: 'Persoenlich, Netzwerk, Quest — eine Zeit, drei Sichten' },
   { icon: TreePine, label: 'Gamification', desc: 'Faehigkeitenbaum, Avatar, Quests — wachsen, was waechst' },
   { icon: ScrollText, label: 'Log', desc: 'Spiegel der Reise, chronologisch und gefiltert' },
   { icon: MessageSquare, label: 'Notifications', desc: 'Stimmen zwischen Menschen, mehrkanalig' },
@@ -82,7 +82,7 @@ export default function LandingPage() {
             <div className="flex items-center gap-4 sm:gap-6">
               <a href="#was-ist" className="hidden md:block text-sm font-medium text-ink-soft hover:text-gold transition-colors">Vision</a>
               <a href="#module" className="hidden md:block text-sm font-medium text-ink-soft hover:text-gold transition-colors">Module</a>
-              <a href="#spaces" className="hidden md:block text-sm font-medium text-ink-soft hover:text-gold transition-colors">Spaces</a>
+              <a href="#netzwerke" className="hidden md:block text-sm font-medium text-ink-soft hover:text-gold transition-colors">Netzwerke</a>
               <a href="https://github.com/lichtungooo/rln" target="_blank" rel="noopener noreferrer" className="hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm font-medium border border-ink-faint rounded-lg hover:border-gold hover:text-gold transition-colors">
                 <GitHubIcon size={16} />
                 <span>GitHub</span>
@@ -110,7 +110,7 @@ export default function LandingPage() {
               <p className="text-xl text-ink-soft leading-relaxed max-w-2xl mx-auto mb-10">
                 Das Real Life Network ist der digitale Werkzeugkasten, der Menschen
                 in die Realitaet fuehrt. Identitaet beim Menschen, Vertrauen aus
-                Begegnung, Spaces fuer eigene Welten.
+                Begegnung, Netzwerke fuer eigene Welten.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
@@ -121,7 +121,7 @@ export default function LandingPage() {
                   onMouseEnter={e => e.currentTarget.style.background = '#C4620A'}
                   onMouseLeave={e => e.currentTarget.style.background = '#E8751A'}
                 >
-                  Macher-Space erleben →
+                  Macher-Netzwerk erleben →
                 </a>
                 <a href="#was-ist" className="px-6 py-3 border border-ink-faint font-medium rounded-lg hover:border-gold hover:text-gold transition-colors">
                   Was ist das
@@ -132,7 +132,7 @@ export default function LandingPage() {
                 {[
                   { icon: Shield, label: 'Identitaet beim Menschen' },
                   { icon: Heart, label: 'Begegnung im echten Leben' },
-                  { icon: Compass, label: 'Spaces fuer eigene Welten' },
+                  { icon: Compass, label: 'Netzwerke fuer eigene Welten' },
                 ].map((item) => (
                   <div key={item.label} className="flex flex-col items-center gap-2 text-ink-soft">
                     <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'rgba(232,117,26,0.1)' }}>
@@ -173,7 +173,7 @@ export default function LandingPage() {
                 },
                 {
                   icon: Compass,
-                  title: 'Spaces fuer eigene Welten',
+                  title: 'Netzwerke fuer eigene Welten',
                   text: 'Jede Gemeinschaft baut ihren eigenen Raum. Eigene Sprache, eigene Wertformen, gemeinsamer Werkzeugkasten.',
                 },
               ].map((p) => (
@@ -202,7 +202,7 @@ export default function LandingPage() {
                 Der Werkzeugkasten
               </h2>
               <p className="text-lg text-ink-soft">
-                Jeder Space waehlt seine Module. Manche brauchen nur Karte und
+                Jedes Netzwerk waehlt seine Module. Manche brauchen nur Karte und
                 Kalender, andere die volle Welt.
               </p>
             </div>
@@ -223,15 +223,15 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* Spaces */}
-        <section id="spaces" className="py-24 bg-warm-section">
+        {/* Netzwerke */}
+        <section id="netzwerke" className="py-24 bg-warm-section">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="max-w-3xl mx-auto text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                Lebende Spaces
+                Lebende Netzwerke
               </h2>
               <p className="text-lg text-ink-soft">
-                Jeder Space ist sein eigenes Universum auf demselben Werkzeug-Boden.
+                Jedes Netzwerk ist sein eigenes Universum auf demselben Werkzeug-Boden.
                 Schau rein und erlebe es.
               </p>
             </div>
@@ -270,7 +270,7 @@ export default function LandingPage() {
                 <Hammer className="h-6 w-6 text-ink-soft group-hover:text-gold transition-colors" />
                 <div>
                   <div className="font-semibold text-lg group-hover:text-gold transition-colors">
-                    Eigenen Space gruenden
+                    Eigenes Netzwerk gruenden
                   </div>
                   <div className="text-sm text-ink-soft">
                     Mit der Forge in Stunden statt Wochen — nicht in Jahren.
@@ -289,7 +289,7 @@ export default function LandingPage() {
               Werkzeuge die zurueck ins Leben tragen
             </h2>
             <p className="text-lg text-white/70 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Echte Menschen, echte Orte, echte Werte. Bau mit, bring deinen Space ein,
+              Echte Menschen, echte Orte, echte Werte. Bau mit, bring dein Netzwerk ein,
               gestalte das Netz deiner Begegnungen — und nimm es mit dir, wohin du gehst.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -300,7 +300,7 @@ export default function LandingPage() {
                 onMouseEnter={e => e.currentTarget.style.background = '#C4620A'}
                 onMouseLeave={e => e.currentTarget.style.background = '#E8751A'}
               >
-                Macher-Space oeffnen →
+                Macher-Netzwerk oeffnen →
               </a>
               <a
                 href="https://github.com/lichtungooo/rln"

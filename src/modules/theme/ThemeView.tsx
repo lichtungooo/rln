@@ -95,7 +95,7 @@ export function ThemeView({ spaceId, activeGroup }: ModuleViewProps) {
   if (!activeGroup) {
     return (
       <div className="p-6 text-center text-sm text-muted-foreground">
-        Bitte einen Space waehlen, um das Theme anzupassen.
+        Bitte ein Netzwerk waehlen, um das Theme anzupassen.
       </div>
     )
   }
@@ -109,7 +109,7 @@ export function ThemeView({ spaceId, activeGroup }: ModuleViewProps) {
             Theme von {activeGroup.name}
           </CardTitle>
           <p className="text-xs text-muted-foreground mt-1">
-            Jeder Space traegt sein eigenes Universum. Klick ein Theme an, um es
+            Jedes Netzwerk traegt sein eigenes Universum. Klick ein Theme an, um es
             live zu testen — Knoepfe, Cards, Hintergrund passen sich sofort an.
             {isAdmin
               ? " Mit 'Speichern' wird es fuer alle Mitglieder uebernommen."

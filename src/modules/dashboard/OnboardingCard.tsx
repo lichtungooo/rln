@@ -142,7 +142,7 @@ export function OnboardingCard({ spaceSlug }: { spaceSlug: string | null }) {
             </div>
             <p className="text-xs text-muted-foreground">
               Laed Werkstaetten, Quests, Macher-Profile und eine Quest-Reihe in
-              den Space — dann klick durch und sieh wie alles ineinander greift.
+              das Netzwerk — dann klick durch und sieh wie alles ineinander greift.
             </p>
           </button>
 

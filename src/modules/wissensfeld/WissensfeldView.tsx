@@ -284,7 +284,7 @@ export function WissensfeldView({ activeGroup, spaceId }: ModuleViewProps) {
 
       {activeTab === "spirit" && (
         <SpiritSection
-          spaceName={activeGroup?.name ?? "diesem Space"}
+          spaceName={activeGroup?.name ?? "diesem Netzwerk"}
           fragen={fragen}
           antwortenByFrage={antwortenByFrage}
           erkenntnisse={erkenntnisse}

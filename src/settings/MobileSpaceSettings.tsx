@@ -83,7 +83,7 @@ interface MenuEntry {
 const ENTRIES: MenuEntry[] = [
   { id: "general", label: "Allgemein", hint: "Name, Logo, Beschreibung", icon: Home },
   { id: "theme", label: "Theme", hint: "Farbwelt + Stimmung", icon: Palette },
-  { id: "modules", label: "Module", hint: "Was der Space kann", icon: Puzzle },
+  { id: "modules", label: "Module", hint: "Was das Netzwerk kann", icon: Puzzle },
   { id: "members", label: "Mitglieder", hint: "Rollen", icon: Users },
   { id: "demo", label: "Demo-Daten", hint: "Showroom-Inhalte", icon: Sparkles },
   { id: "advanced", label: "Erweitert", hint: "Reset, Export", icon: Wrench },
@@ -128,7 +128,7 @@ export function MobileSpaceSettings({
         onInteractOutside={(e) => e.preventDefault()}
         showCloseButton={false}
       >
-        <DialogTitle className="sr-only">Space-Einstellungen</DialogTitle>
+        <DialogTitle className="sr-only">Netzwerk-Einstellungen</DialogTitle>
 
         {/* Header */}
         <header className="flex h-12 shrink-0 items-center gap-1 border-b bg-background px-2">
@@ -165,7 +165,7 @@ export function MobileSpaceSettings({
         <div className="flex-1 overflow-y-auto">
           {!activeGroup ? (
             <div className="flex h-full items-center justify-center p-8 text-center text-sm text-muted-foreground">
-              Bitte einen Space waehlen.
+              Bitte ein Netzwerk waehlen.
             </div>
           ) : page === null ? (
             <MenuList onSelect={(id) => setPage(id)} />
@@ -338,13 +338,13 @@ function GeneralSubPage({ group, onClose }: { group: Group; onClose: () => void 
         </div>
 
         <div>
-          <Label className="text-xs">Eltern-Space</Label>
+          <Label className="text-xs">Eltern-Netzwerk</Label>
           <select
             value={parentSpaceId}
             onChange={(e) => setParentSpaceId(e.target.value)}
             className="w-full h-9 px-3 rounded-md border bg-background text-sm"
           >
-            <option value="">— Root-Space —</option>
+            <option value="">— Root-Netzwerk —</option>
             {parentOptions.map((p) => (
               <option key={p.id} value={p.id}>{p.name}</option>
             ))}
@@ -516,7 +516,7 @@ function ModulesSubPage({ group }: { group: Group }) {
   return (
     <div>
       <p className="px-4 py-3 text-xs text-muted-foreground border-b">
-        Welche Module sind im Space sichtbar.
+        Welche Module sind im Netzwerk sichtbar.
       </p>
       <ul className="divide-y">
         {sortedModules.map((mod) => {

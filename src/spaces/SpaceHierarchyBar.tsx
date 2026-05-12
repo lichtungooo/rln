@@ -5,20 +5,20 @@ import { findChildSpaces, getSpaceMeta } from "./space-data"
 
 /**
  * SpaceHierarchyBar — kompakte Anzeige der Hierarchie-Position des
- * aktuellen Space.
+ * aktuellen Netzwerks.
  *
- * - Bei Sub-Space: "↑ unter Macher"-Knopf, der zurueck zum Parent fuehrt
- * - Bei Root mit Sub-Spaces: kleine Pillen mit den Sub-Spaces zum
+ * - Bei Subnetzwerk: "↑ unter Macher"-Knopf, der zurueck zum Parent fuehrt
+ * - Bei Root mit Subnetzwerken: kleine Pillen mit den Subnetzwerken zum
  *   schnellen Wechsel
  * - Sonst: nichts
  *
  * Liegt am oberen Rand der Modul-Views (Karte, Kalender, ...) und
- * macht die Position im Spaces-Baum sichtbar.
+ * macht die Position im Netzwerk-Baum sichtbar.
  */
 export interface SpaceHierarchyBarProps {
   group: Group
   allGroups: Group[]
-  /** Wechselt zu einem Space (Parent oder Sub-Space). */
+  /** Wechselt zu einem Netzwerk (Parent oder Subnetzwerk). */
   onNavigate: (groupId: string) => void
 }
 
@@ -50,7 +50,7 @@ export function SpaceHierarchyBar({ group, allGroups, onNavigate }: SpaceHierarc
         <>
           <Layers className="h-3 w-3 text-muted-foreground shrink-0" />
           <span className="text-[11px] text-muted-foreground shrink-0">
-            {children.length} Sub-Space{children.length === 1 ? "" : "s"}:
+            {children.length} Subnetzwerk{children.length === 1 ? "" : "e"}:
           </span>
           <div className="flex items-center gap-1 flex-wrap">
             {children.slice(0, 6).map((child) => (

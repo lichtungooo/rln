@@ -1,8 +1,8 @@
 /**
  * MobileTabSwitcher — Firefox/Chrome-Style Vollbild-Tab-Wechsler.
  *
- * Drei Reiter: Spaces · Module · Profil.
- * - Spaces: Karten-Grid der Spaces (Platzhalter in N4b, kommt in N4c)
+ * Drei Reiter: Netzwerke · Module · Profil.
+ * - Netzwerke: Karten-Grid der Netzwerke (Platzhalter in N4b, kommt in N4c)
  * - Module: offene Module als Karten + verfuegbare Module als Liste
  * - Profil: Profil-Bereich (Platzhalter in N4b, kommt in N4d)
  *
@@ -131,7 +131,7 @@ export function MobileTabSwitcher({
         </button>
         <nav className="flex flex-1 items-stretch" role="tablist">
           <ReiterButton active={view === 'spaces'} onClick={() => setView('spaces')}>
-            Spaces
+            Netzwerke
           </ReiterButton>
           <ReiterButton active={view === 'modules'} onClick={() => setView('modules')}>
             Module
@@ -230,7 +230,7 @@ function SwitcherFooter({
 
   const leftLabel =
     view === 'spaces'
-      ? 'Space-Einstellungen'
+      ? 'Netzwerk-Einstellungen'
       : view === 'modules'
         ? 'Modul-Einstellungen'
         : ''
@@ -240,7 +240,7 @@ function SwitcherFooter({
       ? onCreateSpace
       : undefined
 
-  const rightLabel = view === 'spaces' ? 'Neuer Space' : ''
+  const rightLabel = view === 'spaces' ? 'Neues Netzwerk' : ''
 
   // Wenn beide Seiten leer — Footer komplett ausblenden
   if (!left && !right) return null
@@ -487,8 +487,8 @@ function SpacesView({ spaces, activeSpaceId, onSelectSpace }: SpacesViewProps) {
     return (
       <PlatzhalterView
         icon={Compass}
-        title="Spaces"
-        hint="Du hast noch keine Spaces. Lege einen ueber das Plus unten rechts an."
+        title="Netzwerke"
+        hint="Du hast noch keine Netzwerke. Lege eins ueber das Plus unten rechts an."
       />
     )
   }
@@ -504,7 +504,7 @@ function SpacesView({ spaces, activeSpaceId, onSelectSpace }: SpacesViewProps) {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Spaces durchsuchen"
+              placeholder="Netzwerke durchsuchen"
               className="h-9 w-full rounded-md border border-border/60 bg-background pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
           </div>
@@ -554,7 +554,7 @@ function SpacesView({ spaces, activeSpaceId, onSelectSpace }: SpacesViewProps) {
       {filtered.length === 0 && (query || activeTag) && (
         <div className="rounded-lg border border-dashed border-border/60 bg-muted/30 px-4 py-6 text-center">
           <p className="text-xs text-muted-foreground">
-            Kein Space passt zu *
+            Kein Netzwerk passt zu *
             {query && <span className="font-mono">{query}</span>}
             {query && activeTag && ' · '}
             {activeTag && <span className="font-mono">#{activeTag}</span>}*.

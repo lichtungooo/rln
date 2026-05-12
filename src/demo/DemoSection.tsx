@@ -60,7 +60,7 @@ export function DemoSection() {
       {/* Status */}
       {count > 0 && (
         <div className="text-[11px] text-muted-foreground bg-amber-500/5 border border-amber-500/20 rounded px-2 py-1.5">
-          {count} Demo-Item{count === 1 ? "" : "s"} aktuell im Space.
+          {count} Demo-Item{count === 1 ? "" : "s"} aktuell im Netzwerk.
         </div>
       )}
 
