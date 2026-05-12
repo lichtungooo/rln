@@ -31,9 +31,24 @@ export interface MapSettingsPanelProps {
   config: MapModuleConfig
   onChange: (next: MapModuleConfig) => void
   pinTypeOptions: { id: string; label: string; defaultColor: string }[]
+  /**
+   * Optional: wenn gesetzt, oeffnet der "Stil"-Klick im PinsTab den Editor
+   * NICHT inline, sondern reicht den Pin-Typ als Selektion nach aussen.
+   * SettingsView nutzt das, um den Pin-Editor in den Module-Preview-Slot zu
+   * holen (Klick-Routing-Doktrin).
+   */
+  onSelectPinType?: (typeId: string | null) => void
+  /** Visuelle Markierung des aktuell ausgewaehlten Pin-Typs. */
+  selectedPinTypeId?: string | null
 }
 
-export function MapSettingsPanel({ config, onChange, pinTypeOptions }: MapSettingsPanelProps) {
+export function MapSettingsPanel({
+  config,
+  onChange,
+  pinTypeOptions,
+  onSelectPinType,
+  selectedPinTypeId,
+}: MapSettingsPanelProps) {
   return (
     <Tabs defaultValue="pins" className="w-full">
       <TabsList className="grid grid-cols-5 w-full">
@@ -60,7 +75,13 @@ export function MapSettingsPanel({ config, onChange, pinTypeOptions }: MapSettin
       </TabsList>
 
       <TabsContent value="pins" className="space-y-4 mt-4">
-        <PinsTab config={config} onChange={onChange} pinTypeOptions={pinTypeOptions} />
+        <PinsTab
+          config={config}
+          onChange={onChange}
+          pinTypeOptions={pinTypeOptions}
+          onSelectPinType={onSelectPinType}
+          selectedPinTypeId={selectedPinTypeId}
+        />
       </TabsContent>
 
       <TabsContent value="layer" className="space-y-4 mt-4">
@@ -93,12 +114,19 @@ function PinsTab({
   config,
   onChange,
   pinTypeOptions,
+  onSelectPinType,
+  selectedPinTypeId,
 }: {
   config: MapModuleConfig
   onChange: (next: MapModuleConfig) => void
   pinTypeOptions: { id: string; label: string; defaultColor: string }[]
+  onSelectPinType?: (typeId: string | null) => void
+  selectedPinTypeId?: string | null
 }) {
+  // Inline-Expand wird nur genutzt wenn KEIN externer Selektor gegeben ist
+  // (z.B. wenn das Panel ohne SettingsView-Kontext gerendert wird).
   const [expandedType, setExpandedType] = useState<string | null>(null)
+  const useExternal = !!onSelectPinType
 
   const togglePinType = (id: string) => {
     const set = new Set(config.pinTypes ?? [])
@@ -135,10 +163,26 @@ function PinsTab({
               iconSvg: userStyle?.iconSvg,
               imageUrl: userStyle?.imageUrl,
             }
-            const isExpanded = expandedType === opt.id
+            const isExpanded = !useExternal && expandedType === opt.id
+            const isSelected = useExternal && selectedPinTypeId === opt.id
+
+            const handleStilClick = () => {
+              if (useExternal) {
+                // Externe Selektion: toggelt im Channel — Editor erscheint im
+                // Module-Preview-Slot (SettingsView)
+                onSelectPinType?.(isSelected ? null : opt.id)
+              } else {
+                setExpandedType(isExpanded ? null : opt.id)
+              }
+            }
 
             return (
-              <div key={opt.id} className="border rounded-md bg-card overflow-hidden">
+              <div
+                key={opt.id}
+                className={`border rounded-md bg-card overflow-hidden transition-colors ${
+                  isSelected ? "border-primary bg-primary/5" : ""
+                }`}
+              >
                 <div className="flex items-center gap-2 p-2">
                   <input
                     type="checkbox"
@@ -163,15 +207,20 @@ function PinsTab({
                   />
                   <button
                     type="button"
-                    onClick={() => setExpandedType(isExpanded ? null : opt.id)}
+                    onClick={handleStilClick}
                     className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 px-2 py-1 rounded hover:bg-muted/50"
-                    disabled={!enabled}
                   >
-                    {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                    {useExternal ? (
+                      <ChevronRight className="h-3 w-3" />
+                    ) : isExpanded ? (
+                      <ChevronDown className="h-3 w-3" />
+                    ) : (
+                      <ChevronRight className="h-3 w-3" />
+                    )}
                     Stil
                   </button>
                 </div>
-                {isExpanded && enabled && (
+                {isExpanded && (
                   <div className="p-3 border-t bg-muted/20">
                     <PinStyleEditor
                       value={currentStyle}

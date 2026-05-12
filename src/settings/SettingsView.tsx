@@ -73,6 +73,8 @@ import { GeneralTab, AdvancedTab } from "./SpaceSettings"
 import { MembersView } from "../modules/members/MembersView"
 import { MapSettingsPanel } from "../modules/map/MapSettingsPanel"
 import { DEFAULT_PIN_STYLES, type MapModuleConfig } from "../modules/map/MapView"
+import { PinStyleEditor } from "../modules/map/PinStyleEditor"
+import { type PinStyle } from "../modules/map/pin-styles"
 import { useModuleConfig } from "../modules/use-module-config"
 
 // ============================================================
@@ -1064,22 +1066,47 @@ function MapConfigSection({ group }: { group: Group }) {
     })
   }
 
-  return <MapSettingsPanel config={config} onChange={handleChange} pinTypeOptions={pinTypeOptions} />
+  // Klick-Routing: Klick auf "Stil" oeffnet den Editor im Preview-Slot
+  const pinTypeChannel = useChannel("map-pin-type")
+
+  return (
+    <MapSettingsPanel
+      config={config}
+      onChange={handleChange}
+      pinTypeOptions={pinTypeOptions}
+      onSelectPinType={(id) => pinTypeChannel.select(id)}
+      selectedPinTypeId={pinTypeChannel.selectedId}
+    />
+  )
 }
 
-function ModulePreviewWidget({ group: _group }: { group: Group }) {
+function ModulePreviewWidget({ group }: { group: Group }) {
   const channel = useChannel("module")
+  const pinTypeChannel = useChannel("map-pin-type")
   const allModules = useMemo(() => getAllModules(), [])
   const selectedMod = useMemo(
     () => (channel.selectedId ? allModules.find((m) => m.id === channel.selectedId) : null),
     [channel.selectedId, allModules]
   )
 
+  // Spezial-Modus: Karte + Pin-Typ selektiert → Pin-Stil-Editor
+  if (selectedMod?.id === "map" && pinTypeChannel.selectedId) {
+    return (
+      <PinEditorPanel
+        group={group}
+        pinTypeId={pinTypeChannel.selectedId}
+        onClose={() => pinTypeChannel.select(null)}
+      />
+    )
+  }
+
   return (
     <div className="h-full w-full bg-card border rounded-xl overflow-hidden flex flex-col">
       <div className="px-3 py-2 border-b bg-muted/20 flex items-center gap-2 shrink-0">
         <Sparkles className="h-4 w-4 shrink-0 text-muted-foreground" />
-        <span className="text-sm font-semibold truncate flex-1">Vorschau</span>
+        <span className="text-sm font-semibold truncate flex-1">
+          {selectedMod?.id === "map" ? "Pin-Stil" : "Vorschau"}
+        </span>
       </div>
       <div className="flex-1 overflow-y-auto p-4">
         {!selectedMod && (
@@ -1087,7 +1114,14 @@ function ModulePreviewWidget({ group: _group }: { group: Group }) {
             Modul links waehlen, um die Vorschau zu sehen.
           </div>
         )}
-        {selectedMod && (
+        {selectedMod?.id === "map" && (
+          <div className="text-xs text-muted-foreground italic text-center py-6">
+            Klick im Konfig-Slot auf "Stil" eines Pin-Typs, um den Editor hier zu oeffnen.
+            <br />
+            Die echte Karte zeigt die Aenderungen live.
+          </div>
+        )}
+        {selectedMod && selectedMod.id !== "map" && (
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <div className="h-12 w-12 rounded-lg bg-primary/10 grid place-items-center shrink-0">
@@ -1109,6 +1143,80 @@ function ModulePreviewWidget({ group: _group }: { group: Group }) {
             </div>
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// Pin-Editor-Panel — rendert im Preview-Slot wenn ein Pin-Typ aktiv ist
+// ============================================================
+
+function PinEditorPanel({
+  group,
+  pinTypeId,
+  onClose,
+}: {
+  group: Group
+  pinTypeId: string
+  onClose: () => void
+}) {
+  const { setModuleConfig } = useModuleConfig()
+  const config: MapModuleConfig = useMemo(() => {
+    const moduleConfigs = group.data?.moduleConfig as Record<string, unknown> | undefined
+    return (moduleConfigs?.map as MapModuleConfig | undefined) ?? {}
+  }, [group])
+
+  const defaultStyle = DEFAULT_PIN_STYLES[pinTypeId]
+  const label = defaultStyle?.label ?? pinTypeId
+  const defaultColor = defaultStyle?.color ?? "#888888"
+
+  const userStyle = config.pinStyles?.[pinTypeId]
+  const currentStyle: PinStyle = {
+    color: userStyle?.color ?? defaultColor,
+    shape: userStyle?.shape ?? defaultStyle?.shape ?? "drop",
+    borderColor: userStyle?.borderColor,
+    borderWidth: userStyle?.borderWidth,
+    iconColor: userStyle?.iconColor,
+    glow: userStyle?.glow,
+    size: userStyle?.size,
+    iconSvg: userStyle?.iconSvg,
+    imageUrl: userStyle?.imageUrl,
+  }
+
+  const handleStyleChange = (next: PinStyle) => {
+    const nextConfig: MapModuleConfig = {
+      ...config,
+      pinStyles: { ...(config.pinStyles ?? {}), [pinTypeId]: next },
+    }
+    setModuleConfig(group, "map", nextConfig).catch((err) => {
+      console.error("[PinEditor] save failed", err)
+    })
+  }
+
+  return (
+    <div className="h-full w-full bg-card border rounded-xl overflow-hidden flex flex-col">
+      <div className="px-3 py-2 border-b bg-muted/20 flex items-center gap-2 shrink-0">
+        <Sparkles className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <span className="text-sm font-semibold truncate flex-1">Pin-Stil — {label}</span>
+        <button
+          type="button"
+          onClick={onClose}
+          className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/50"
+          aria-label="Editor schliessen"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
+      <div className="flex-1 overflow-y-auto p-3">
+        <PinStyleEditor
+          value={currentStyle}
+          onChange={handleStyleChange}
+          defaultColor={defaultColor}
+        />
+      </div>
+      <div className="px-3 py-2 border-t bg-muted/10 text-[10px] text-muted-foreground italic">
+        Vorschau lebt auf der echten Karte — Speichern wirkt sofort.
       </div>
     </div>
   )
