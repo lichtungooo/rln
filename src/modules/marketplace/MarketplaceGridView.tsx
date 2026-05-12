@@ -14,9 +14,21 @@ import {
   Hammer,
   Briefcase,
   ChevronRight,
+  Plus,
+  X,
   type LucideIcon,
 } from "lucide-react"
-import { useItems } from "@real-life-stack/toolkit"
+import {
+  useItems,
+  useCreateItem,
+  useCurrentUser,
+  Dialog,
+  DialogContent,
+  Button,
+  Input,
+  Label,
+  Textarea,
+} from "@real-life-stack/toolkit"
 import type { Item } from "@real-life-stack/data-interface"
 import type { ModuleViewProps } from "../registry"
 import {
@@ -166,6 +178,7 @@ export function MarketplaceGridView(props: ModuleViewProps) {
 function MarketplaceContent({ spaceId }: { spaceId: string | null }) {
   const spaceKey = spaceId ?? "default"
   const { data: items } = useItems({ type: ITEM_TYPE })
+  const [createOpen, setCreateOpen] = useState(false)
 
   const listItems: ListItem[] = useMemo(() => {
     return (items as Item[])
@@ -182,7 +195,12 @@ function MarketplaceContent({ spaceId }: { spaceId: string | null }) {
       case "marketplace-sidebar":
         return <CategoriesSidebar items={listItems} />
       case "marketplace-listings":
-        return <ListingsGrid items={listItems} />
+        return (
+          <ListingsGrid
+            items={listItems}
+            onCreateClick={() => setCreateOpen(true)}
+          />
+        )
       default:
         return null
     }
@@ -205,14 +223,18 @@ function MarketplaceContent({ spaceId }: { spaceId: string | null }) {
   ]
 
   return (
-    <PageGrid
-      storageKey={`rln-marketplace-v2-pages-${spaceKey}`}
-      defaultPages={pages}
-      availableWidgets={widgets}
-      renderWidget={renderWidget}
-      lockPages
-      mobileDrilldown
-    />
+    <>
+      <PageGrid
+        storageKey={`rln-marketplace-v2-pages-${spaceKey}`}
+        defaultPages={pages}
+        availableWidgets={widgets}
+        renderWidget={renderWidget}
+        lockPages
+        mobileDrilldown
+      />
+      <ItemDetailModal items={listItems} />
+      <ItemCreateModal open={createOpen} onClose={() => setCreateOpen(false)} />
+    </>
   )
 }
 
@@ -356,7 +378,13 @@ function CategoriesSidebar({ items }: { items: ListItem[] }) {
 // Inserate-Grid (Slot 2)
 // ============================================================
 
-function ListingsGrid({ items }: { items: ListItem[] }) {
+function ListingsGrid({
+  items,
+  onCreateClick,
+}: {
+  items: ListItem[]
+  onCreateClick: () => void
+}) {
   const channel = useChannel("marketplace-filter")
   const filterId = channel.selectedId ?? "world:all"
   const [query, setQuery] = useState("")
@@ -403,7 +431,7 @@ function ListingsGrid({ items }: { items: ListItem[] }) {
 
   return (
     <div className="h-full w-full bg-card border rounded-xl overflow-hidden flex flex-col">
-      {/* Header: Suche + Umkreis */}
+      {/* Header: Suche + Umkreis + Anlegen */}
       <div className="px-3 py-2 border-b shrink-0 space-y-2">
         <div className="flex items-center gap-2">
           <div className="relative flex-1">
@@ -416,6 +444,15 @@ function ListingsGrid({ items }: { items: ListItem[] }) {
               className="w-full h-8 pl-7 pr-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
           </div>
+          <Button
+            type="button"
+            size="sm"
+            onClick={onCreateClick}
+            className="h-8 shrink-0"
+          >
+            <Plus className="h-3.5 w-3.5 mr-1" />
+            Inserat
+          </Button>
           <span className="text-xs text-muted-foreground tabular-nums shrink-0">
             {filtered.length} / {items.length}
           </span>
@@ -525,6 +562,365 @@ function ListingCard({ item }: { item: ListItem }) {
         )}
       </div>
     </button>
+  )
+}
+
+// ============================================================
+// Inserat-Detail Modal
+// ============================================================
+
+function ItemDetailModal({ items }: { items: ListItem[] }) {
+  const channel = useChannel("marketplace-item")
+  const item = items.find((i) => i.id === channel.selectedId) ?? null
+
+  if (!item) return null
+
+  const data = item.data
+  const isNeed = data.kind === "need"
+  const priceType = data.priceType
+  const CatIcon = data.category ? CATEGORY_ICON_MAP[data.category] : Sparkles
+  const close = () => channel.select(null)
+
+  return (
+    <Dialog open={true} onOpenChange={(open) => { if (!open) close() }}>
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden p-0">
+        <div className="flex flex-col h-full max-h-[85vh]">
+          {/* Header */}
+          <div className="px-4 py-3 border-b flex items-center gap-2 shrink-0">
+            <CatIcon className="h-5 w-5 text-muted-foreground shrink-0" />
+            <div className="flex-1 min-w-0">
+              <h2 className="text-base font-semibold truncate">{data.title}</h2>
+              <div className="text-[10px] text-muted-foreground">
+                {data.category && CATEGORY_LABEL[data.category]}
+                {isNeed && " · Bedarf"}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={close}
+              className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted/50"
+              aria-label="Schliessen"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Body — scrollt */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {/* Bilder */}
+            {data.images && data.images.length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {data.images.slice(0, 6).map((src, idx) => (
+                  <div
+                    key={idx}
+                    className="aspect-[4/3] rounded-lg border bg-muted/40 overflow-hidden"
+                  >
+                    <img src={src} alt="" className="w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            )}
+            {(!data.images || data.images.length === 0) && (
+              <div className="aspect-[4/2] rounded-lg border bg-gradient-to-br from-muted/40 to-muted/80 flex items-center justify-center">
+                <CatIcon className="h-16 w-16 text-muted-foreground/40" />
+              </div>
+            )}
+
+            {/* Preis */}
+            {!isNeed && priceType && (
+              <div className="flex items-center gap-2">
+                <span
+                  className="px-3 py-1 text-sm font-bold rounded-full text-white"
+                  style={{ background: PRICE_TYPE_COLOR[priceType] }}
+                >
+                  {priceType === "sell" && data.priceAmount !== undefined
+                    ? `${data.priceAmount} EUR`
+                    : PRICE_TYPE_LABEL[priceType]}
+                </span>
+                {data.priceText && (
+                  <span className="text-sm text-muted-foreground">
+                    {data.priceText}
+                  </span>
+                )}
+              </div>
+            )}
+            {isNeed && (
+              <span className="inline-block px-3 py-1 text-sm font-bold rounded-full bg-blue-500 text-white">
+                BEDARF
+              </span>
+            )}
+
+            {/* Beschreibung */}
+            {data.description && (
+              <div>
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">
+                  Beschreibung
+                </div>
+                <p className="text-sm whitespace-pre-wrap leading-relaxed">
+                  {data.description}
+                </p>
+              </div>
+            )}
+
+            {/* Hashtags */}
+            {data.hashtags && data.hashtags.length > 0 && (
+              <div>
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">
+                  Hashtags
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {data.hashtags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Standort */}
+            {data.location?.address && (
+              <div>
+                <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">
+                  Standort
+                </div>
+                <div className="text-sm flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                  {data.location.address}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ============================================================
+// Inserat-Anlegen Modal
+// ============================================================
+
+function ItemCreateModal({
+  open,
+  onClose,
+}: {
+  open: boolean
+  onClose: () => void
+}) {
+  const createItem = useCreateItem()
+  const { data: currentUser } = useCurrentUser()
+
+  const [kind, setKind] = useState<MarketplaceKind>("offer")
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [category, setCategory] = useState<MarketplaceCategory>("tool")
+  const [priceType, setPriceType] = useState<PriceType>("sell")
+  const [priceAmount, setPriceAmount] = useState<string>("")
+  const [priceText, setPriceText] = useState<string>("")
+  const [hashtagsInput, setHashtagsInput] = useState<string>("")
+  const [address, setAddress] = useState<string>("")
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  const reset = () => {
+    setKind("offer")
+    setTitle("")
+    setDescription("")
+    setCategory("tool")
+    setPriceType("sell")
+    setPriceAmount("")
+    setPriceText("")
+    setHashtagsInput("")
+    setAddress("")
+    setError(null)
+  }
+
+  const handleSubmit = async () => {
+    if (!title.trim()) {
+      setError("Titel fehlt")
+      return
+    }
+    if (!currentUser?.id) {
+      setError("Kein User angemeldet")
+      return
+    }
+    setSaving(true)
+    setError(null)
+    try {
+      const hashtags = hashtagsInput
+        .split(/[\s,]+/)
+        .map((t) => t.replace(/^#/, "").trim().toLowerCase())
+        .filter(Boolean)
+
+      const data: MarketplaceData = {
+        kind,
+        title: title.trim(),
+        description: description.trim() || undefined,
+        category,
+        priceType: kind === "offer" ? priceType : undefined,
+        priceAmount:
+          kind === "offer" && priceType === "sell" && priceAmount
+            ? parseFloat(priceAmount)
+            : undefined,
+        priceText: priceText.trim() || undefined,
+        hashtags: hashtags.length > 0 ? hashtags : undefined,
+        location: address.trim() ? { lat: 0, lng: 0, address: address.trim() } : undefined,
+      }
+
+      await createItem({
+        type: ITEM_TYPE,
+        createdBy: currentUser.id,
+        data,
+      })
+      reset()
+      onClose()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Anlegen fehlgeschlagen")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
+      <DialogContent className="max-w-xl max-h-[85vh] overflow-y-auto">
+        <div className="space-y-3">
+          <h2 className="text-base font-semibold">Neues Inserat</h2>
+
+          <div className="flex gap-2">
+            {(["offer", "need"] as MarketplaceKind[]).map((k) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => setKind(k)}
+                className={`flex-1 px-3 py-2 rounded-md border text-sm transition-colors ${
+                  kind === k
+                    ? "border-primary bg-primary/10 text-primary font-semibold"
+                    : "border-border text-muted-foreground hover:bg-muted/40"
+                }`}
+              >
+                {k === "offer" ? "Ich biete" : "Ich brauche"}
+              </button>
+            ))}
+          </div>
+
+          <div>
+            <Label className="text-xs">Titel</Label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="z.B. Akku-Bohrmaschine zu verleihen"
+            />
+          </div>
+
+          <div>
+            <Label className="text-xs">Beschreibung</Label>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Details, Zustand, Termin..."
+              className="min-h-20"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <Label className="text-xs">Kategorie</Label>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value as MarketplaceCategory)}
+                className="w-full h-9 px-3 rounded-md border bg-background text-sm"
+              >
+                {ALL_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {CATEGORY_LABEL[c]}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {kind === "offer" && (
+              <div>
+                <Label className="text-xs">Preis-Typ</Label>
+                <select
+                  value={priceType}
+                  onChange={(e) => setPriceType(e.target.value as PriceType)}
+                  className="w-full h-9 px-3 rounded-md border bg-background text-sm"
+                >
+                  {ALL_PRICE_TYPES.map((pt) => (
+                    <option key={pt} value={pt}>
+                      {PRICE_TYPE_LABEL[pt]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+
+          {kind === "offer" && priceType === "sell" && (
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Preis (EUR)</Label>
+                <Input
+                  type="number"
+                  value={priceAmount}
+                  onChange={(e) => setPriceAmount(e.target.value)}
+                  placeholder="z.B. 25"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Preis-Zusatz</Label>
+                <Input
+                  value={priceText}
+                  onChange={(e) => setPriceText(e.target.value)}
+                  placeholder="z.B. VHB, Festpreis"
+                />
+              </div>
+            </div>
+          )}
+
+          <div>
+            <Label className="text-xs">Hashtags</Label>
+            <Input
+              value={hashtagsInput}
+              onChange={(e) => setHashtagsInput(e.target.value)}
+              placeholder="holz, werkzeug, verleih"
+            />
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              Komma- oder Leerzeichen-getrennt.
+            </p>
+          </div>
+
+          <div>
+            <Label className="text-xs">Standort (Adresse)</Label>
+            <Input
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="z.B. Kassel, Friedrich-Ebert-Str. 12"
+            />
+          </div>
+
+          {error && (
+            <p className="text-xs text-destructive bg-destructive/5 border border-destructive/30 rounded px-2 py-1">
+              {error}
+            </p>
+          )}
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button type="button" variant="ghost" onClick={onClose} disabled={saving}>
+              Abbrechen
+            </Button>
+            <Button type="button" onClick={handleSubmit} disabled={saving || !title.trim()}>
+              {saving ? "Speichere..." : "Anlegen"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 
