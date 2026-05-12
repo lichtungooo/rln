@@ -525,9 +525,9 @@ function ThemeAreasWidget({ group }: { group: Group }) {
       .map((m) => ({
         id: `module:${m.id}` as ThemeAreaId,
         label: m.label,
-        hint: `Theme fuer ${m.label}`,
+        hint: `Konfiguration fuer ${m.label}`,
         icon: m.icon ?? Puzzle,
-        ready: false,
+        ready: true,
       }))
   }, [group, allModules])
 
@@ -612,6 +612,15 @@ function ThemeSubItemsWidget() {
     }
     if (areaId === "background") {
       return BACKGROUND_SUB_ITEMS
+    }
+    if (areaId && areaId.startsWith("module:")) {
+      return [
+        {
+          id: "module-config",
+          label: "Konfiguration",
+          description: "Pin-Stile, Layout, Verhalten",
+        },
+      ]
     }
     return []
   }, [areaId])
@@ -732,11 +741,19 @@ function ThemeDetailWidget() {
           <BackgroundPatternDetail />
         )}
         {areaId &&
+          areaId.startsWith("module:") &&
+          subItemId === "module-config" && (
+            <ModuleBridgeDetail
+              moduleId={areaId.slice("module:".length)}
+            />
+          )}
+        {areaId &&
           areaId !== "presets" &&
           areaId !== "identity" &&
           areaId !== "topbar" &&
           areaId !== "dark" &&
-          areaId !== "background" && (
+          areaId !== "background" &&
+          !areaId.startsWith("module:") && (
             <ComingSoonInline
               label={BASE_AREAS.find((a) => a.id === areaId)?.label ?? "Bereich"}
             />
@@ -858,6 +875,17 @@ function ModuleListWidget({ group }: { group: Group }) {
     "module",
     useMemo(() => allModules.map((m) => ({ id: m.id })), [allModules])
   )
+
+  // Brueckenruf aus dem Theme-Tab — selektiert das Modul beim Tab-Wechsel
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ moduleId: string }>).detail
+      if (detail?.moduleId) channel.select(detail.moduleId)
+    }
+    window.addEventListener("rln-settings-select-module", handler)
+    return () => window.removeEventListener("rln-settings-select-module", handler)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const toggle = async (modId: string) => {
     if (!isAdmin) return
@@ -1111,6 +1139,68 @@ function DarkModeDetail() {
         alle Komponenten mit Tailwind-Dark-Variants ziehen mit. Speichern oben
         uebernimmt fuer alle Mitglieder.
       </div>
+    </div>
+  )
+}
+
+// ============================================================
+// Modul-Bruecke — verweist auf den Module-Tab
+// ============================================================
+
+function ModuleBridgeDetail({ moduleId }: { moduleId: string }) {
+  const allModules = useMemo(() => getAllModules(), [])
+  const mod = allModules.find((m) => m.id === moduleId)
+  const [, setParams] = useSearchParams()
+
+  if (!mod) {
+    return (
+      <div className="text-xs text-muted-foreground italic">
+        Modul {moduleId} nicht gefunden.
+      </div>
+    )
+  }
+  const Icon = mod.icon ?? Puzzle
+
+  const goToModuleTab = () => {
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        next.set("tab", "modules")
+        return next
+      },
+      { replace: false }
+    )
+    // Event fuer ModuleListWidget — selektiert das Modul im Channel
+    window.dispatchEvent(
+      new CustomEvent("rln-settings-select-module", { detail: { moduleId } })
+    )
+  }
+
+  return (
+    <div className="space-y-4 max-w-md">
+      <div className="flex items-center gap-3">
+        <div className="h-12 w-12 rounded-lg bg-primary/10 grid place-items-center shrink-0">
+          <Icon className="h-6 w-6 text-primary" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <h2 className="text-base font-semibold">{mod.label}</h2>
+          <p className="text-[10px] text-muted-foreground italic">
+            Modul-Konfiguration
+          </p>
+        </div>
+      </div>
+
+      <div className="text-sm text-muted-foreground leading-relaxed border-l-2 border-primary/30 pl-3 py-1">
+        Pin-Stile, Layout und das spezifische Theming fuer {mod.label} leben
+        im <span className="font-semibold text-foreground">Module-Tab</span>.
+        So bleibt die Modul-Konfig zentral an einem Ort — der Theme-Editor
+        deckt Welten, Identitaet, Topbar, Hintergrund und Dark Mode ab.
+      </div>
+
+      <Button type="button" size="sm" onClick={goToModuleTab}>
+        Zum Module-Tab — {mod.label}
+        <ChevronRight className="h-3 w-3 ml-1" />
+      </Button>
     </div>
   )
 }
