@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { Trophy, CheckCircle2, ArrowRight } from "lucide-react"
+import { Trophy, CheckCircle2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useQuests } from "../../quest"
 import type { QuestData } from "../../quest"
@@ -37,30 +37,20 @@ export function QuestWidget({ spaceSlug }: { spaceSlug: string | null }) {
     if (spaceSlug) navigate(`/${spaceSlug}/quest`)
   }
 
+  void goQuests
+
   return (
-    <div className="bg-card border rounded-xl p-4 h-full flex flex-col">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <Trophy className="h-5 w-5" style={{ color: "#E8751A" }} />
-          <div>
-            <div className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
-              Quests
-            </div>
-            <div className="text-base font-bold leading-tight">
-              {openQuests.length} offen · {doneCount} erledigt
-            </div>
+    <div className="bg-orange-50/60 rounded-xl p-4 h-full flex flex-col">
+      <div className="flex items-center gap-2 mb-3">
+        <Trophy className="h-5 w-5" style={{ color: "#E8751A" }} />
+        <div>
+          <div className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
+            Quests
+          </div>
+          <div className="text-base font-bold leading-tight">
+            {openQuests.length} offen · {doneCount} erledigt
           </div>
         </div>
-        <button
-          type="button"
-          onClick={goQuests}
-          disabled={!spaceSlug}
-          className="p-1 rounded hover:bg-muted/30 transition-colors disabled:opacity-40"
-          aria-label="Zum Quest-Modul"
-          title="Zum Quest-Modul"
-        >
-          <ArrowRight className="h-4 w-4 text-muted-foreground" />
-        </button>
       </div>
 
       <div className="flex-1 space-y-1.5 overflow-y-auto">
@@ -100,11 +90,6 @@ export function QuestWidget({ spaceSlug }: { spaceSlug: string | null }) {
               </button>
             )
           })
-        )}
-        {openQuests.length > 3 && (
-          <div className="text-[10px] text-muted-foreground italic text-center pt-1">
-            +{openQuests.length - 3} weitere — mit Pfeilen durchblaettern
-          </div>
         )}
       </div>
     </div>

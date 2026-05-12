@@ -88,7 +88,7 @@ export function DashboardHero({ spaceId }: { spaceId: string | null }) {
   return (
     <div
       ref={containerRef}
-      className="rounded-2xl border overflow-hidden relative h-full w-full"
+      className="rounded-2xl overflow-hidden relative h-full w-full"
       style={{
         background:
           "linear-gradient(135deg, rgba(232,117,26,0.04) 0%, rgba(251,191,36,0.04) 50%, rgba(168,85,247,0.04) 100%)",

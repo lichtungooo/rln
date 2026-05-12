@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { Sparkles, ArrowRight } from "lucide-react"
+import { Sparkles } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import {
   TREE_BEREICHE,
@@ -40,29 +40,20 @@ export function TreeWidget({ spaceSlug }: { spaceSlug: string | null }) {
     if (spaceSlug) navigate(`/${spaceSlug}/skill-tree`)
   }
 
+  // goTree wird beim Klick auf den Container ausgeloest (statt ArrowRight)
+  void goTree
+
   return (
-    <div className="bg-card border rounded-xl p-4 h-full flex flex-col">
+    <div className="bg-blue-50/60 rounded-xl p-4 h-full flex flex-col">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <div className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
-            Faehigkeitenbaum
-          </div>
-          <div className="flex items-center gap-2 mt-0.5">
-            <h3 className="text-lg font-bold">Level {totalProgress.level}</h3>
-            {synergyActive && <Sparkles className="h-4 w-4 text-purple-500" />}
-          </div>
+      <div className="mb-3">
+        <div className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
+          Faehigkeitenbaum
         </div>
-        <button
-          type="button"
-          onClick={goTree}
-          disabled={!spaceSlug}
-          className="p-1 rounded hover:bg-muted/30 transition-colors disabled:opacity-40"
-          aria-label="Zum Skill-Tree-Modul"
-          title="Zum Skill-Tree-Modul"
-        >
-          <ArrowRight className="h-4 w-4 text-muted-foreground" />
-        </button>
+        <div className="flex items-center gap-2 mt-0.5">
+          <h3 className="text-lg font-bold">Level {totalProgress.level}</h3>
+          {synergyActive && <Sparkles className="h-4 w-4 text-purple-500" />}
+        </div>
       </div>
 
       {/* 8 Bereiche kompakt — klickbar */}
@@ -105,13 +96,6 @@ export function TreeWidget({ spaceSlug }: { spaceSlug: string | null }) {
         })}
       </div>
 
-      {/* Footer */}
-      <div className="text-[10px] text-muted-foreground mt-3 pt-2 border-t flex justify-between">
-        <span>{totalXp.toLocaleString("de-DE")} XP gesamt</span>
-        <span>
-          {totalProgress.xpInLevel} / {totalProgress.xpNeeded} zum naechsten
-        </span>
-      </div>
     </div>
   )
 }
