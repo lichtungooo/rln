@@ -546,61 +546,58 @@ function MonthView({
   }
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center justify-between">
-          <span className="text-base">{MONTH_NAMES[month]} {year}</span>
-          <div className="flex gap-1">
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(-1)}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => onMonthChange(new Date())}>
-              Heute
-            </Button>
-            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(1)}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-7 gap-1 text-center mb-2">
-          {weekdays.map((d) => (
-            <div key={d} className="text-[11px] font-semibold text-muted-foreground py-1">{d}</div>
-          ))}
+    <div className="space-y-2">
+      {/* Kompakter Header — Card-Wrapper raus 2026-05-12 (Timo: Monat
+          muss viel kompakter sein) */}
+      <div className="flex items-center justify-between px-1">
+        <span className="text-sm font-semibold">{MONTH_NAMES[month]} {year}</span>
+        <div className="flex gap-0.5 items-center">
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => navigate(-1)}>
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <Button variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => onMonthChange(new Date())}>
+            Heute
+          </Button>
+          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => navigate(1)}>
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
         </div>
-        <div className="grid grid-cols-7 gap-1">
-          {days.map((d, i) => (
-            <div
-              key={i}
-              className={`aspect-square p-1 rounded text-xs flex flex-col ${
-                !d.isCurrentMonth
-                  ? "text-muted-foreground/30"
-                  : d.isToday
-                  ? "bg-primary/10 ring-1 ring-primary/30 font-semibold"
-                  : "hover:bg-muted/50"
-              }`}
-            >
-              <span className="self-end">{d.number}</span>
-              <div className="flex-1 flex flex-wrap gap-0.5 mt-1 content-start">
-                {d.instances.slice(0, 3).map((inst) => (
-                  <button
-                    key={inst.key}
-                    onClick={() => onItemClick(inst.item)}
-                    className="w-1.5 h-1.5 rounded-full"
-                    style={{ background: colors[inst.item.type] ?? "#888" }}
-                    title={String(inst.item.data.title ?? "")}
-                  />
-                ))}
-                {d.instances.length > 3 && (
-                  <span className="text-[9px] text-muted-foreground">+{d.instances.length - 3}</span>
-                )}
-              </div>
+      </div>
+
+      <div className="grid grid-cols-7 gap-px text-center bg-border/50 rounded-md overflow-hidden border">
+        {weekdays.map((d) => (
+          <div key={d} className="text-[10px] font-medium text-muted-foreground py-1 bg-muted/30">{d}</div>
+        ))}
+        {days.map((d, i) => (
+          <div
+            key={i}
+            className={`min-h-[3.5rem] p-1 text-[11px] flex flex-col gap-0.5 bg-background ${
+              !d.isCurrentMonth
+                ? "text-muted-foreground/30 bg-muted/10"
+                : d.isToday
+                ? "bg-primary/10 font-semibold"
+                : "hover:bg-muted/30"
+            }`}
+          >
+            <span className="text-right leading-none">{d.number}</span>
+            <div className="flex-1 flex flex-wrap gap-0.5 items-start content-start">
+              {d.instances.slice(0, 4).map((inst) => (
+                <button
+                  key={inst.key}
+                  onClick={() => onItemClick(inst.item)}
+                  className="w-1.5 h-1.5 rounded-full hover:scale-150 transition-transform"
+                  style={{ background: colors[inst.item.type] ?? "#888" }}
+                  title={String(inst.item.data.title ?? "")}
+                />
+              ))}
+              {d.instances.length > 4 && (
+                <span className="text-[8px] text-muted-foreground leading-none">+{d.instances.length - 4}</span>
+              )}
             </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 

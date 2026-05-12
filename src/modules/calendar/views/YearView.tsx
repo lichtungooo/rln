@@ -53,53 +53,52 @@ export function YearView({ items, currentYear, onYearChange, firstDayOfWeek, onD
   }, [items, currentYear])
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center justify-between">
-          <span className="text-base">{currentYear}</span>
-          <div className="flex gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => onYearChange(currentYear - 1)}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onYearChange(today.getFullYear())}
-            >
-              {today.getFullYear()}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7"
-              onClick={() => onYearChange(currentYear + 1)}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 12 }, (_, monthIdx) => (
-            <MiniMonth
-              key={monthIdx}
-              year={currentYear}
-              month={monthIdx}
-              eventDays={eventDays}
-              today={today}
-              firstDayOfWeek={firstDayOfWeek}
-              onDaySelect={onDaySelect}
-            />
-          ))}
+    <div className="space-y-2">
+      {/* Kompakter Header — Card-Wrapper raus 2026-05-12 */}
+      <div className="flex items-center justify-between px-1">
+        <span className="text-sm font-semibold">{currentYear}</span>
+        <div className="flex gap-0.5 items-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={() => onYearChange(currentYear - 1)}
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 px-2 text-xs"
+            onClick={() => onYearChange(today.getFullYear())}
+          >
+            {today.getFullYear()}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            onClick={() => onYearChange(currentYear + 1)}
+          >
+            <ChevronRight className="h-3.5 w-3.5" />
+          </Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 gap-2">
+        {Array.from({ length: 12 }, (_, monthIdx) => (
+          <MiniMonth
+            key={monthIdx}
+            year={currentYear}
+            month={monthIdx}
+            eventDays={eventDays}
+            today={today}
+            firstDayOfWeek={firstDayOfWeek}
+            onDaySelect={onDaySelect}
+          />
+        ))}
+      </div>
+    </div>
   )
 }
 
