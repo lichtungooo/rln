@@ -22,6 +22,7 @@ import {
   type TreeBereichId,
 } from "../gamification"
 import { useQuests } from "../quest/use-quests"
+import { useChannel, useChannelSync } from "../../components/SelectionContext"
 import type { QuestData } from "../quest/quest-engine"
 
 /**
@@ -45,7 +46,9 @@ export function SpiegelQuestTab(_props: SpiegelQuestTabProps) {
   const { data: skills } = useItems({ type: GAMIFICATION_ITEM_TYPES.skill })
   const { entries: logEntries } = useLog()
 
-  const [selectedQuestId, setSelectedQuestId] = useState<string | null>(null)
+  const questChannel = useChannel("quest")
+  const selectedQuestId = questChannel.selectedId
+  const setSelectedQuestId = (id: string | null) => questChannel.select(id)
   const [filter, setFilter] = useState<QuestFilter>("open")
 
   const filteredQuests = useMemo(() => {
@@ -54,6 +57,11 @@ export function SpiegelQuestTab(_props: SpiegelQuestTabProps) {
     return quests.filter((q) => !isCompleted(q.id))
   }, [quests, filter, isCompleted])
   const openQuests = filteredQuests // alte Variable beibehalten fuer minimale Aenderung
+
+  // Quest-Items im Channel registrieren — damit die navApi-Pfeile von
+  // PageGrid rechts/links durch die gefilterten Quests blaettern (Klick-
+  // Routing-Doktrin, feedback_klick_routing_doktrin.md).
+  useChannelSync("quest", filteredQuests)
 
   // Gruppiere nach Series + Singles
   const grouped = useMemo(() => {
