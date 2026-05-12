@@ -93,19 +93,19 @@ function SpiegelInner(props: ModuleViewProps<SpiegelModuleConfig>) {
     switch (widgetId) {
       case "profil-avatar":
         return (
-          <div className="h-full w-full rounded-xl border bg-card overflow-hidden p-2">
+          <div className="h-full w-full overflow-hidden">
             <SpiegelAvatarTab {...props} />
           </div>
         )
       case "profil-quest":
         return (
-          <div className="h-full w-full rounded-xl border bg-card overflow-hidden p-2">
+          <div className="h-full w-full overflow-hidden">
             <SpiegelQuestTab {...props} />
           </div>
         )
       case "profil-skill":
         return (
-          <div className="h-full w-full rounded-xl border bg-card overflow-hidden p-2">
+          <div className="h-full w-full overflow-hidden">
             <SpiegelSkillTab {...props} />
           </div>
         )

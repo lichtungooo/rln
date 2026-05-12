@@ -324,47 +324,9 @@ export function SpiegelSkillTab({ activeGroup }: SpiegelSkillTabProps) {
         )}
       </div>
 
-      {/* Interne Pfeile + Indikator-Punkte unten */}
-      <div className="flex justify-center items-center gap-2 pt-2 shrink-0">
-        <button
-          type="button"
-          onClick={navPrev}
-          disabled={!navEnabled}
-          className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
-          aria-label="Zurueck"
-        >
-          <ChevronLeft className="h-5 w-5" strokeWidth={1.5} />
-        </button>
-        {carouselActive && (
-          <div className="flex items-center gap-1.5">
-            {TREE_BEREICHE.map((_, i) => {
-              const leftIdx = leftPanel.kind === "bereich" ? leftPanel.bereichIdx : -1
-              const rightIdx = rightPanel.kind === "bereich" ? rightPanel.bereichIdx : -1
-              const active = i === leftIdx || (!isMobile && i === rightIdx)
-              return (
-                <div
-                  key={i}
-                  className={`h-1 rounded-full transition-all ${active ? "w-4 bg-primary" : "w-1 bg-muted"}`}
-                />
-              )
-            })}
-          </div>
-        )}
-        {skillNavPanel && (
-          <span className="text-[10px] text-muted-foreground font-mono">
-            Skills im Bereich
-          </span>
-        )}
-        <button
-          type="button"
-          onClick={navNext}
-          disabled={!navEnabled}
-          className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-20 transition-colors"
-          aria-label="Weiter"
-        >
-          <ChevronRight className="h-5 w-5" strokeWidth={1.5} />
-        </button>
-      </div>
+      {/* Interner Pfeile-Footer entfernt 2026-05-12 — PageGrid-navApi
+          uebernimmt die Klick-Routing-Navigation aussen rechts/links
+          (Klick-Routing-Doktrin, feedback_klick_routing_doktrin.md). */}
     </div>
   )
 }
