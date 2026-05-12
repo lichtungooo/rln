@@ -1,5 +1,5 @@
-import { useRef, useState } from "react"
-import { Sparkles, Library, Upload, ImageIcon, X } from "lucide-react"
+import { lazy, Suspense, useRef, useState } from "react"
+import { Sparkles, Library, Upload, ImageIcon, Shapes, X } from "lucide-react"
 import { Button, Label } from "@real-life-stack/toolkit"
 import {
   PIN_LIBRARY,
@@ -8,6 +8,8 @@ import {
   type PinShape,
   type PinStyle,
 } from "./pin-styles"
+
+const BsIconPicker = lazy(() => import("./BsIconPicker"))
 
 /**
  * PinStyleEditor — kompakter Editor fuer einen PinStyle.
@@ -39,6 +41,7 @@ const SHAPES: Array<{ value: PinShape; label: string }> = [
 
 export function PinStyleEditor({ value, onChange, defaultColor }: PinStyleEditorProps) {
   const [showLibrary, setShowLibrary] = useState(false)
+  const [showIconPicker, setShowIconPicker] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [uploading, setUploading] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
@@ -114,6 +117,53 @@ export function PinStyleEditor({ value, onChange, defaultColor }: PinStyleEditor
           ))}
         </div>
       )}
+
+      {/* Icon aus dem Bootstrap-Pack (react-icons/bs) */}
+      <div className="rounded-md p-2 bg-amber-50/60">
+        <div className="flex items-center justify-between mb-1.5">
+          <Label className="text-[10px] uppercase text-muted-foreground/70 flex items-center gap-1">
+            <Shapes className="h-3 w-3" />
+            Icon im Pin
+          </Label>
+          {style.iconSvg && (
+            <button
+              type="button"
+              onClick={() => set("iconSvg", undefined)}
+              className="text-[10px] text-destructive hover:underline inline-flex items-center gap-1"
+              title="Icon entfernen"
+            >
+              <X className="h-3 w-3" />
+              Entfernen
+            </button>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          <div
+            className="shrink-0 rounded-md bg-white/60 flex items-center justify-center"
+            style={{ width: 56, height: 56 }}
+          >
+            <div
+              style={{ width: 40, height: 48, display: "flex", alignItems: "center", justifyContent: "center" }}
+              dangerouslySetInnerHTML={{ __html: renderPinHtml(style, 36) }}
+            />
+          </div>
+          <div className="flex-1 min-w-0">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowIconPicker(true)}
+              className="text-xs w-full"
+            >
+              <Shapes className="h-3 w-3 mr-1" />
+              {style.iconSvg ? "Anderes Icon" : "Icon waehlen"}
+            </Button>
+            <p className="text-[10px] text-muted-foreground/70 mt-1 leading-tight">
+              Bootstrap-Icons — 2000+ Symbole. Werkzeug, Haus, Sterne, alles dabei.
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Bild-Pin (Phase D: Logo / Foto als Pin) */}
       <div className="border rounded-md p-2 bg-card">
@@ -238,6 +288,27 @@ export function PinStyleEditor({ value, onChange, defaultColor }: PinStyleEditor
         <Sparkles className="h-3 w-3 text-amber-500" />
         <span className="text-xs">Glow-Effekt</span>
       </label>
+
+      {showIconPicker && (
+        <Suspense
+          fallback={
+            <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/40">
+              <div className="bg-card rounded-xl px-4 py-3 text-sm shadow-2xl">
+                Icons werden geladen...
+              </div>
+            </div>
+          }
+        >
+          <BsIconPicker
+            previewColor={style.iconColor ?? style.color ?? "#1f2937"}
+            onPick={(svg) => {
+              onChange({ ...style, iconSvg: svg })
+              setShowIconPicker(false)
+            }}
+            onClose={() => setShowIconPicker(false)}
+          />
+        </Suspense>
+      )}
     </div>
   )
 }

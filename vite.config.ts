@@ -41,8 +41,23 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // React-Vendor in eigenen Chunk
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router')) {
+          // react-icons NICHT in vendor-react — gehoert in den lazy
+          // BsIconPicker-Chunk und soll nicht ins Hauptbundle.
+          if (id.includes('node_modules/react-icons')) {
+            return undefined
+          }
+          // react-dom/server* (nur fuer renderToStaticMarkup im
+          // BsIconPicker) bleibt im Importer-Chunk — nicht in vendor-react.
+          if (/node_modules\/react-dom\/(server|cjs\/react-dom-server)/.test(id)) {
+            return undefined
+          }
+          // React-Vendor in eigenen Chunk. Slash am Ende verhindert
+          // dass react-icons / react-router etc. mitschlucken.
+          if (
+            /node_modules\/react\//.test(id) ||
+            /node_modules\/react-dom\//.test(id) ||
+            /node_modules\/react-router(-dom)?\//.test(id)
+          ) {
             return 'vendor-react'
           }
           // Leaflet als eigener Chunk (gross + nur in Map verwendet)
