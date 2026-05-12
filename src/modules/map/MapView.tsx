@@ -55,6 +55,11 @@ export interface MapModuleConfig {
   defaultZoom?: number
   /** Pin-Styles pro Item-Typ (Form + Farbe + Border + Glow). */
   pinStyles?: Record<string, PinStyle>
+  /**
+   * Eigene Pin-Typen — vom User angelegt zusaetzlich zu DEFAULT_PIN_STYLES.
+   * Jeder hat eigene ID + Label, die Stil-Daten liegen in pinStyles[id].
+   */
+  customPinTypes?: Array<{ id: string; label: string }>
   /** Zeige Action-Button unten rechts? */
   actionButton?: {
     enabled: boolean

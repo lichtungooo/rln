@@ -8,7 +8,7 @@ import {
   TabsTrigger,
   TabsContent,
 } from "@real-life-stack/toolkit"
-import { Pin, Layers, MousePointerClick, SlidersHorizontal, Search, ChevronDown, ChevronRight, Trash2, Plus, ArrowUp, ArrowDown } from "lucide-react"
+import { Pin, Layers, MousePointerClick, SlidersHorizontal, Search, ChevronDown, ChevronRight, Trash2, Plus, ArrowUp, ArrowDown, Sparkles } from "lucide-react"
 import type { MapModuleConfig, MapActionEntry } from "./MapView"
 import { TILE_PROVIDERS, DEFAULT_PIN_STYLES, resolvePinStyle } from "./MapView"
 import { PinStyleEditor } from "./PinStyleEditor"
@@ -142,6 +142,51 @@ function PinsTab({
     })
   }
 
+  // Custom Pin-Typen
+  const customPinTypes = config.customPinTypes ?? []
+  const customOptions = customPinTypes.map((c) => ({
+    id: c.id,
+    label: c.label,
+    defaultColor: "#888888",
+  }))
+  const allOptions: Array<{ id: string; label: string; defaultColor: string; isCustom?: boolean }> = [
+    ...pinTypeOptions.map((opt) => ({ ...opt, isCustom: false })),
+    ...customOptions.map((opt) => ({ ...opt, isCustom: true })),
+  ]
+
+  const addCustomPinType = () => {
+    const id = `custom-${Date.now().toString(36)}`
+    const label = `Neuer Pin ${customPinTypes.length + 1}`
+    onChange({
+      ...config,
+      customPinTypes: [...customPinTypes, { id, label }],
+      pinTypes: [...(config.pinTypes ?? []), id],
+    })
+    // Direkt selektieren → Editor oeffnet sich
+    onSelectPinType?.(id)
+  }
+
+  const renameCustomPinType = (id: string, label: string) => {
+    onChange({
+      ...config,
+      customPinTypes: customPinTypes.map((c) => (c.id === id ? { ...c, label } : c)),
+    })
+  }
+
+  const removeCustomPinType = (id: string) => {
+    const nextCustom = customPinTypes.filter((c) => c.id !== id)
+    const nextPinTypes = (config.pinTypes ?? []).filter((t) => t !== id)
+    const nextStyles = { ...(config.pinStyles ?? {}) }
+    delete nextStyles[id]
+    onChange({
+      ...config,
+      customPinTypes: nextCustom.length > 0 ? nextCustom : undefined,
+      pinTypes: nextPinTypes,
+      pinStyles: Object.keys(nextStyles).length > 0 ? nextStyles : undefined,
+    })
+    if (selectedPinTypeId === id) onSelectPinType?.(null)
+  }
+
   return (
     <div className="space-y-3">
       <div>
@@ -149,7 +194,7 @@ function PinsTab({
           Pin-Typen
         </h4>
         <div className="space-y-2">
-          {pinTypeOptions.map((opt) => {
+          {allOptions.map((opt) => {
             const enabled = (config.pinTypes ?? []).includes(opt.id)
             const userStyle = config.pinStyles?.[opt.id]
             const currentStyle: PinStyle = {
@@ -190,9 +235,19 @@ function PinsTab({
                     checked={enabled}
                     onChange={() => togglePinType(opt.id)}
                   />
-                  <Label htmlFor={`pin-${opt.id}`} className="flex-1 cursor-pointer text-sm">
-                    {opt.label}
-                  </Label>
+                  {opt.isCustom ? (
+                    <input
+                      type="text"
+                      value={opt.label}
+                      onChange={(e) => renameCustomPinType(opt.id, e.target.value)}
+                      className="flex-1 text-sm bg-transparent border-b border-transparent hover:border-border focus:border-primary outline-none px-1 -mx-1"
+                      placeholder="Pin-Name"
+                    />
+                  ) : (
+                    <Label htmlFor={`pin-${opt.id}`} className="flex-1 cursor-pointer text-sm">
+                      {opt.label}
+                    </Label>
+                  )}
                   {/* Mini-Pin-Preview */}
                   <div
                     className="shrink-0"
@@ -219,6 +274,17 @@ function PinsTab({
                     )}
                     Stil
                   </button>
+                  {opt.isCustom && (
+                    <button
+                      type="button"
+                      onClick={() => removeCustomPinType(opt.id)}
+                      className="text-muted-foreground hover:text-destructive p-1 rounded hover:bg-muted/50"
+                      title="Pin-Typ entfernen"
+                      aria-label="Pin-Typ entfernen"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                  )}
                 </div>
                 {isExpanded && (
                   <div className="p-3 border-t bg-muted/20">
@@ -232,6 +298,16 @@ function PinsTab({
               </div>
             )
           })}
+
+          {/* + Eigener Pin-Typ */}
+          <button
+            type="button"
+            onClick={addCustomPinType}
+            className="w-full border-2 border-dashed border-border rounded-md p-3 flex items-center justify-center gap-2 text-sm text-muted-foreground hover:text-foreground hover:border-primary/40 hover:bg-muted/30 transition-all"
+          >
+            <Sparkles className="h-4 w-4" />
+            Eigener Pin-Typ
+          </button>
         </div>
       </div>
     </div>
