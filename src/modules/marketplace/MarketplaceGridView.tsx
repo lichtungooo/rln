@@ -57,6 +57,7 @@ import {
   type PriceType,
   type MarketplaceCategory,
 } from "./marketplace-schema"
+import { ImageGalleryInput } from "./ImageGalleryInput"
 
 /**
  * MarketplaceGridView — Marktplatz im Kleinanzeigen-Layout.
@@ -389,6 +390,31 @@ function ListingsGrid({
   const filterId = channel.selectedId ?? "world:all"
   const [query, setQuery] = useState("")
   const [radius, setRadius] = useState<RadiusValue>(DEFAULT_RADIUS_VALUE)
+  const [showSuggestions, setShowSuggestions] = useState(false)
+
+  // Auto-Complete: alle Hashtags + erste Wort-Tokens aus Titeln
+  const suggestions = useMemo(() => {
+    const set = new Set<string>()
+    for (const item of items) {
+      for (const tag of item.data.hashtags ?? []) {
+        set.add(`#${tag}`)
+      }
+      const title = item.data.title ?? ""
+      for (const word of title.split(/\s+/).slice(0, 3)) {
+        const clean = word.toLowerCase().replace(/[^a-z0-9aeoeu]/g, "")
+        if (clean.length >= 3) set.add(clean)
+      }
+    }
+    return Array.from(set).sort()
+  }, [items])
+
+  const filteredSuggestions = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return []
+    return suggestions
+      .filter((s) => s.toLowerCase().includes(q) && s.toLowerCase() !== q)
+      .slice(0, 8)
+  }, [suggestions, query])
 
   const filtered = useMemo(() => {
     let result = items
@@ -440,9 +466,33 @@ function ListingsGrid({
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
               placeholder="Was suchst du?"
               className="w-full h-8 pl-7 pr-2 rounded-md border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
             />
+            {showSuggestions && filteredSuggestions.length > 0 && (
+              <div className="absolute left-0 right-0 top-full mt-1 z-20 rounded-md border bg-popover shadow-lg max-h-60 overflow-y-auto">
+                <ul className="py-1">
+                  {filteredSuggestions.map((s) => (
+                    <li key={s}>
+                      <button
+                        type="button"
+                        onMouseDown={(e) => e.preventDefault()}
+                        onClick={() => {
+                          setQuery(s.replace(/^#/, ""))
+                          setShowSuggestions(false)
+                        }}
+                        className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted/60 transition-colors"
+                      >
+                        <SearchIcon className="h-3 w-3 inline mr-1.5 text-muted-foreground" />
+                        {s}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
           <Button
             type="button"
@@ -723,6 +773,7 @@ function ItemCreateModal({
   const [priceText, setPriceText] = useState<string>("")
   const [hashtagsInput, setHashtagsInput] = useState<string>("")
   const [address, setAddress] = useState<string>("")
+  const [images, setImages] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -736,6 +787,7 @@ function ItemCreateModal({
     setPriceText("")
     setHashtagsInput("")
     setAddress("")
+    setImages([])
     setError(null)
   }
 
@@ -768,6 +820,7 @@ function ItemCreateModal({
             : undefined,
         priceText: priceText.trim() || undefined,
         hashtags: hashtags.length > 0 ? hashtags : undefined,
+        images: images.length > 0 ? images : undefined,
         location: address.trim() ? { lat: 0, lng: 0, address: address.trim() } : undefined,
       }
 
@@ -892,6 +945,14 @@ function ItemCreateModal({
             />
             <p className="text-[10px] text-muted-foreground mt-0.5">
               Komma- oder Leerzeichen-getrennt.
+            </p>
+          </div>
+
+          <div>
+            <Label className="text-xs">Bilder</Label>
+            <ImageGalleryInput value={images} onChange={setImages} max={5} />
+            <p className="text-[10px] text-muted-foreground mt-0.5">
+              Bis zu 5 Bilder. Erstes Bild wird auf der Card gezeigt.
             </p>
           </div>
 
