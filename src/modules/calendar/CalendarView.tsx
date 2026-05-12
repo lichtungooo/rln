@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback } from "react"
-import { Plus, ChevronLeft, ChevronRight, CalendarDays, List, Layers, MapPin, Tag, Ticket, Clock, Grid3x3, User as UserIcon, X } from "lucide-react"
+import { Plus, ChevronLeft, ChevronRight, CalendarDays, List, Layers, MapPin, Tag, Ticket, Clock, Grid3x3, User as UserIcon, X, Download, Link as LinkIcon, Check } from "lucide-react"
 import {
   useItems,
   useCreateItem,
@@ -32,6 +32,7 @@ import type { Reminder } from "./reminders"
 import { useReminderScheduler } from "./useReminderScheduler"
 import { ParticipationControls } from "./ParticipationControls"
 import { useMyParticipations } from "./useParticipation"
+import { generateIcs, downloadIcs, buildIcsDataUrl } from "./ics"
 import { CalendarFilterBar, applyCalendarFilter, collectHashtags, emptyFilter, type CalendarFilterState } from "./CalendarFilterBar"
 import { DayView } from "./views/DayView"
 import { YearView } from "./views/YearView"
@@ -148,6 +149,7 @@ export function CalendarView({ spaceId, activeGroup, config, isPreview, onOpenSe
   const [creating, setCreating] = useState(false)
   const [editItem, setEditItem] = useState<Item | null>(null)
   const [detailItem, setDetailItem] = useState<Item | null>(null)
+  const [subscribeOpen, setSubscribeOpen] = useState(false)
   const [filter, setFilter] = useState<CalendarFilterState>(emptyFilter)
   const { data: currentUser } = useCurrentUser()
   const { mutate: createItem } = useCreateItem()
@@ -308,6 +310,17 @@ export function CalendarView({ spaceId, activeGroup, config, isPreview, onOpenSe
       headerRight={
         <>
           <StatsBar />
+          <Button
+            type="button"
+            onClick={() => setSubscribeOpen(true)}
+            size="sm"
+            variant="ghost"
+            className="h-7"
+            title="Kalender abonnieren oder als ICS exportieren"
+          >
+            <LinkIcon className="h-3.5 w-3.5 mr-1" />
+            Abonnieren
+          </Button>
           {cfg.showCreateButton && (
             <Button onClick={() => setCreating(true)} size="sm" className="h-7">
               <Plus className="h-3.5 w-3.5 mr-1" />
@@ -418,6 +431,14 @@ export function CalendarView({ spaceId, activeGroup, config, isPreview, onOpenSe
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Subscribe-Modal — Kalender abonnieren via ICS-Download oder Data-URL */}
+      <SubscribeModal
+        items={allItems}
+        open={subscribeOpen}
+        onClose={() => setSubscribeOpen(false)}
+        feedName={`Real Life Network — ${activeGroup?.name ?? "Kalender"}`}
+      />
         </div>
       )}
     />
@@ -1369,6 +1390,120 @@ function EventDetailModal({
               </Button>
             )}
           </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ============================================================
+// SubscribeModal — ICS-Download + Data-URL fuer Kalender-Apps
+// ============================================================
+
+function SubscribeModal({
+  items,
+  open,
+  onClose,
+  feedName,
+}: {
+  items: Item[]
+  open: boolean
+  onClose: () => void
+  feedName: string
+}) {
+  const [copied, setCopied] = useState(false)
+  if (!open) return null
+
+  const icsContent = generateIcs(items, feedName)
+  const dataUrl = buildIcsDataUrl(icsContent)
+
+  const handleDownload = () => {
+    downloadIcs(icsContent, `${feedName.toLowerCase().replace(/\s+/g, "-")}.ics`)
+  }
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(dataUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // ignore
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose() }}>
+      <DialogContent className="max-w-xl">
+        <DialogTitle className="text-base font-semibold">
+          Kalender abonnieren
+        </DialogTitle>
+
+        <div className="space-y-4 mt-3">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Download className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-semibold">ICS-Datei herunterladen</h3>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Einmaliger Schnappschuss. Importieren in Google Calendar,
+              Apple Calendar, Outlook — alle {items.length} Termine in einer
+              Datei.
+            </p>
+            <Button type="button" size="sm" onClick={handleDownload}>
+              <Download className="h-3.5 w-3.5 mr-1" />
+              Als ICS speichern
+            </Button>
+          </div>
+
+          <div className="space-y-2 pt-4 border-t">
+            <div className="flex items-center gap-2">
+              <LinkIcon className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-sm font-semibold">Subscribe-URL kopieren</h3>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Data-URL als ICS-Snapshot. In Google Calendar /Apple Calendar
+              unter "Kalender ueber URL abonnieren" einfuegen.
+            </p>
+            <div className="flex items-center gap-2">
+              <Input
+                value={dataUrl}
+                readOnly
+                onClick={(e) => (e.target as HTMLInputElement).select()}
+                className="font-mono text-[10px] flex-1"
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={handleCopy}
+                className="shrink-0"
+              >
+                {copied ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 mr-1" />
+                    Kopiert
+                  </>
+                ) : (
+                  <>
+                    <LinkIcon className="h-3.5 w-3.5 mr-1" />
+                    Kopieren
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          <div className="text-[10px] text-muted-foreground italic border-l-2 border-primary/30 pl-3 py-1">
+            Live-Abonnement (mit automatischer Aktualisierung) folgt sobald
+            der eigene Relay-Server steht. Die Snapshot-URL ist statisch —
+            beim erneuten Oeffnen des Modals wird sie aktualisiert.
+          </div>
+        </div>
+
+        <div className="flex justify-end mt-3">
+          <Button type="button" variant="ghost" size="sm" onClick={onClose}>
+            Schliessen
+          </Button>
         </div>
       </DialogContent>
     </Dialog>
