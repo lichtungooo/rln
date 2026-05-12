@@ -20,7 +20,7 @@ export function LogWidget() {
   const { selectedId, select } = useChannel("log")
 
   return (
-    <div className="bg-card border rounded-xl p-4 h-full flex flex-col">
+    <div className="bg-violet-50/60 rounded-xl p-4 h-full flex flex-col">
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <ScrollText className="h-5 w-5" style={{ color: "#A855F7" }} />
@@ -51,12 +51,11 @@ export function LogWidget() {
                 key={entry.id}
                 type="button"
                 onClick={() => select(entry.id)}
-                className={`w-full text-left p-2 rounded-md border transition-colors ${
+                className={`w-full text-left p-2 rounded-md transition-colors ${
                   isSelected
-                    ? "border-primary bg-primary/5 shadow-sm"
-                    : "border-transparent hover:bg-muted/30"
+                    ? "bg-violet-100 shadow-sm"
+                    : "hover:bg-violet-100/50"
                 }`}
-                style={{ borderLeftWidth: 2, borderLeftColor: "#A855F7" }}
               >
                 <div className="flex items-start gap-2">
                   {isSynergy && (
@@ -97,11 +96,6 @@ export function LogWidget() {
               </button>
             )
           })
-        )}
-        {items.length > preview.length && (
-          <div className="text-[10px] text-muted-foreground italic text-center pt-1">
-            +{items.length - preview.length} weitere — mit Pfeilen durchblaettern
-          </div>
         )}
       </div>
     </div>

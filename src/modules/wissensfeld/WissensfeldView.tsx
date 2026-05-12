@@ -444,7 +444,7 @@ function FrageCard({
     <button
       type="button"
       onClick={onClick}
-      className="w-full text-left bg-card border rounded-lg p-4 transition-all hover:shadow-md hover:border-primary/40"
+      className="w-full text-left bg-white/80 rounded-lg p-4 transition-all hover:shadow-md hover:bg-white"
     >
       <p className="text-base font-medium leading-snug mb-2">{data.content}</p>
 

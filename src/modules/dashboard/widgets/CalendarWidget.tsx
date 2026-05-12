@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { Calendar as CalIcon, ArrowRight, MapPin } from "lucide-react"
+import { Calendar as CalIcon, MapPin } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useItems } from "@real-life-stack/toolkit"
 import { useChannel, useChannelSync } from "../../../components/SelectionContext"
@@ -39,30 +39,20 @@ export function CalendarWidget({ spaceSlug }: { spaceSlug: string | null }) {
     if (spaceSlug) navigate(`/${spaceSlug}/calendar`)
   }
 
+  void goCalendar
+
   return (
-    <div className="bg-card border rounded-xl p-4 h-full flex flex-col">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <CalIcon className="h-5 w-5" style={{ color: "#3B82F6" }} />
-          <div>
-            <div className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
-              Kalender
-            </div>
-            <div className="text-base font-bold leading-tight">
-              {upcoming.length} Termin{upcoming.length === 1 ? "" : "e"}
-            </div>
+    <div className="bg-sky-50/60 rounded-xl p-4 h-full flex flex-col">
+      <div className="flex items-center gap-2 mb-3">
+        <CalIcon className="h-5 w-5" style={{ color: "#3B82F6" }} />
+        <div>
+          <div className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
+            Kalender
+          </div>
+          <div className="text-base font-bold leading-tight">
+            {upcoming.length} Termin{upcoming.length === 1 ? "" : "e"}
           </div>
         </div>
-        <button
-          type="button"
-          onClick={goCalendar}
-          disabled={!spaceSlug}
-          className="p-1 rounded hover:bg-muted/30 transition-colors disabled:opacity-40"
-          aria-label="Zum Kalender-Modul"
-          title="Zum Kalender-Modul"
-        >
-          <ArrowRight className="h-4 w-4 text-muted-foreground" />
-        </button>
       </div>
 
       <div className="flex-1 space-y-1.5 overflow-y-auto">
@@ -81,10 +71,10 @@ export function CalendarWidget({ spaceSlug }: { spaceSlug: string | null }) {
                 key={event.id}
                 type="button"
                 onClick={() => select(event.id)}
-                className={`w-full text-left p-2 rounded-md border transition-colors flex items-start gap-2 ${
+                className={`w-full text-left p-2 rounded-md transition-colors flex items-start gap-2 ${
                   isSelected
-                    ? "border-primary bg-primary/5 shadow-sm"
-                    : "border-transparent hover:bg-muted/30"
+                    ? "bg-sky-100 shadow-sm"
+                    : "hover:bg-sky-100/50"
                 }`}
               >
                 <div className="w-10 text-center shrink-0">
@@ -107,11 +97,6 @@ export function CalendarWidget({ spaceSlug }: { spaceSlug: string | null }) {
               </button>
             )
           })
-        )}
-        {upcoming.length > 3 && (
-          <div className="text-[10px] text-muted-foreground italic text-center pt-1">
-            +{upcoming.length - 3} weitere — mit Pfeilen durchblaettern
-          </div>
         )}
       </div>
     </div>

@@ -482,7 +482,7 @@ function StatCard({
   hint: string
 }) {
   return (
-    <div className="p-3 rounded-lg border bg-card">
+    <div className="p-3 rounded-lg bg-white/70">
       <div className="flex items-center gap-1.5 mb-1">
         <Icon className="h-3.5 w-3.5" style={{ color }} />
         <span className="text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">

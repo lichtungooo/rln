@@ -362,9 +362,9 @@ function CalendarInner({ spaceId, activeGroup, config, isPreview, onOpenSettings
         // statt im PageGrid-Header. Scrollverhalten je nach activeView.
         const isAgenda = activeView === "agenda" || activeView === "mine"
         return (
-          <div className={`h-full w-full bg-card border rounded-xl flex flex-col`}>
+          <div className={`h-full w-full bg-sky-50/60 rounded-xl flex flex-col`}>
             {/* Toolbar im Slot — Abonnieren + Neuer Eintrag */}
-            <div className="flex items-center justify-end gap-2 px-3 py-2 border-b shrink-0">
+            <div className="flex items-center justify-end gap-2 px-3 py-2 bg-sky-100/40 shrink-0">
               <Button
                 type="button"
                 onClick={() => setSubscribeOpen(true)}
@@ -1525,8 +1525,8 @@ function EventDetailPanel({
 
   if (!item) {
     return (
-      <div className="h-full w-full bg-card border rounded-xl overflow-hidden flex flex-col">
-        <div className="px-3 py-2 border-b bg-muted/20 flex items-center gap-2 shrink-0">
+      <div className="h-full w-full bg-sky-50/60 rounded-xl overflow-hidden flex flex-col">
+        <div className="px-3 py-2 bg-sky-100/40 flex items-center gap-2 shrink-0">
           <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" />
           <span className="text-sm font-semibold truncate flex-1">Termin</span>
         </div>
@@ -1564,8 +1564,8 @@ function EventDetailPanel({
     d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })
 
   return (
-    <div className="h-full w-full bg-card border rounded-xl overflow-hidden flex flex-col">
-      <div className="px-3 py-2 border-b bg-muted/20 flex items-center gap-2 shrink-0">
+    <div className="h-full w-full bg-sky-50/60 rounded-xl overflow-hidden flex flex-col">
+      <div className="px-3 py-2 bg-sky-100/40 flex items-center gap-2 shrink-0">
         <div className="w-1 h-4 rounded-full shrink-0" style={{ background: typeColor }} />
         <span className="text-sm font-semibold truncate flex-1">{title}</span>
         <button

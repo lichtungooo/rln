@@ -367,14 +367,15 @@ function Panel({
     const showActive = activeSkillBereichIdx === state.bereichIdx
     return (
       <div
-        className="rounded-xl border bg-card overflow-hidden flex flex-col h-full"
-        style={{ borderLeftWidth: 3, borderLeftColor: bereich.color }}
+        className="rounded-xl overflow-hidden flex flex-col h-full"
+        style={{ background: `${bereich.color}10` }}
       >
         <button
           type="button"
           onClick={() => onSelectBereich?.(bereich.id)}
           disabled={!onSelectBereich}
-          className="px-2.5 py-1.5 border-b bg-muted/20 flex items-center gap-2 text-left w-full hover:bg-muted/30 transition-colors disabled:cursor-default"
+          className="px-2.5 py-1.5 flex items-center gap-2 text-left w-full hover:bg-black/5 transition-colors disabled:cursor-default"
+          style={{ background: `${bereich.color}18` }}
           title={onSelectBereich ? "Klick zeigt Bereich-Detail" : undefined}
         >
           <div
@@ -591,10 +592,10 @@ function SkillDetail({
 
   return (
     <div
-      className="rounded-xl border bg-card overflow-hidden flex flex-col h-full"
-      style={{ borderLeftWidth: 3, borderLeftColor: color }}
+      className="rounded-xl overflow-hidden flex flex-col h-full"
+      style={{ background: `${color}10` }}
     >
-      <div className="px-2.5 py-1.5 border-b bg-muted/20 flex items-center gap-2">
+      <div className="px-2.5 py-1.5 flex items-center gap-2" style={{ background: `${color}18` }}>
         <div
           className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 border"
           style={{ background: `${color}18`, borderColor: color }}

@@ -111,8 +111,8 @@ export function SpiegelQuestTab(_props: SpiegelQuestTabProps) {
   return (
     <div className="h-full grid grid-cols-1 md:grid-cols-2 gap-2 min-h-0">
       {/* Links: Offene Quests */}
-      <div className="rounded-xl border bg-card overflow-hidden flex flex-col h-full min-h-0">
-        <div className="px-3 py-2 border-b bg-muted/20 flex items-center gap-2">
+      <div className="rounded-xl bg-orange-50/60 overflow-hidden flex flex-col h-full min-h-0">
+        <div className="px-3 py-2 bg-orange-100/40 flex items-center gap-2">
           <Trophy className="h-4 w-4 text-primary shrink-0" />
           {(["open", "done", "all"] as QuestFilter[]).map((f) => (
             <button
@@ -177,7 +177,7 @@ export function SpiegelQuestTab(_props: SpiegelQuestTabProps) {
       </div>
 
       {/* Rechts: Log oder Quest-Detail */}
-      <div className="rounded-xl border bg-card overflow-hidden flex flex-col h-full min-h-0">
+      <div className="rounded-xl bg-violet-50/60 overflow-hidden flex flex-col h-full min-h-0">
         {selectedQuest ? (
           <QuestDetailPanel
             quest={selectedQuest}

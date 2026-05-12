@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { MapPin, ArrowRight } from "lucide-react"
+import { MapPin } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useItems } from "@real-life-stack/toolkit"
 import { useChannel, useChannelSync } from "../../../components/SelectionContext"
@@ -24,30 +24,20 @@ export function PlaceWidget({ spaceSlug }: { spaceSlug: string | null }) {
     if (spaceSlug) navigate(`/${spaceSlug}/map`)
   }
 
+  void goMap
+
   return (
-    <div className="bg-card border rounded-xl p-4 h-full flex flex-col">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <MapPin className="h-5 w-5" style={{ color: "#10B981" }} />
-          <div>
-            <div className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
-              Orte
-            </div>
-            <div className="text-base font-bold leading-tight">
-              {places.length} Pin{places.length === 1 ? "" : "s"}
-            </div>
+    <div className="bg-emerald-50/60 rounded-xl p-4 h-full flex flex-col">
+      <div className="flex items-center gap-2 mb-3">
+        <MapPin className="h-5 w-5" style={{ color: "#10B981" }} />
+        <div>
+          <div className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
+            Orte
+          </div>
+          <div className="text-base font-bold leading-tight">
+            {places.length} Pin{places.length === 1 ? "" : "s"}
           </div>
         </div>
-        <button
-          type="button"
-          onClick={goMap}
-          disabled={!spaceSlug}
-          className="p-1 rounded hover:bg-muted/30 transition-colors disabled:opacity-40"
-          aria-label="Zur Karte"
-          title="Zur Karte"
-        >
-          <ArrowRight className="h-4 w-4 text-muted-foreground" />
-        </button>
       </div>
 
       <div className="flex-1 space-y-1.5 overflow-y-auto">
@@ -66,12 +56,11 @@ export function PlaceWidget({ spaceSlug }: { spaceSlug: string | null }) {
                 key={place.id}
                 type="button"
                 onClick={() => select(place.id)}
-                className={`w-full text-left p-2 rounded-md border transition-colors ${
+                className={`w-full text-left p-2 rounded-md transition-colors ${
                   isSelected
-                    ? "border-primary bg-primary/5 shadow-sm"
-                    : "border-transparent hover:bg-muted/30"
+                    ? "bg-emerald-100 shadow-sm"
+                    : "hover:bg-emerald-100/50"
                 }`}
-                style={{ borderLeftWidth: 2, borderLeftColor: "#10B981" }}
               >
                 <div className="flex items-start gap-2">
                   <MapPin className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color: "#10B981" }} />
@@ -87,11 +76,6 @@ export function PlaceWidget({ spaceSlug }: { spaceSlug: string | null }) {
               </button>
             )
           })
-        )}
-        {items.length > preview.length && (
-          <div className="text-[10px] text-muted-foreground italic text-center pt-1">
-            +{items.length - preview.length} weitere — mit Pfeilen durchblaettern
-          </div>
         )}
       </div>
     </div>

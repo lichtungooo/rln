@@ -38,7 +38,7 @@ export function BereichDetailWidget() {
 
   if (!selected || !bereichInfo) {
     return (
-      <div className="h-full w-full bg-card border rounded-xl flex flex-col items-center justify-center text-xs text-muted-foreground italic p-4 text-center gap-2">
+      <div className="h-full w-full bg-blue-50/60 rounded-xl flex flex-col items-center justify-center text-xs text-muted-foreground italic p-4 text-center gap-2">
         <Network className="h-6 w-6 opacity-40" />
         <p>Bereich-Detail</p>
         <p className="text-[10px]">
@@ -53,10 +53,13 @@ export function BereichDetailWidget() {
   const Icon = bereichInfo.icon
 
   return (
-    <div className="h-full w-full bg-card border rounded-xl flex flex-col overflow-hidden">
+    <div
+      className="h-full w-full rounded-xl flex flex-col overflow-hidden"
+      style={{ background: `${bereichInfo.color}10` }}
+    >
       <div
-        className="px-3 py-2 border-b flex items-center gap-2"
-        style={{ background: `${bereichInfo.color}10` }}
+        className="px-3 py-2 flex items-center gap-2"
+        style={{ background: `${bereichInfo.color}18` }}
       >
         <Icon className="h-4 w-4 shrink-0" style={{ color: bereichInfo.color }} />
         <span className="text-sm font-semibold truncate flex-1">{bereichInfo.label}</span>

@@ -1,5 +1,5 @@
 import { useMemo } from "react"
-import { MapPin, ArrowRight } from "lucide-react"
+import { MapPin } from "lucide-react"
 import { MapContainer, TileLayer, Marker, useMap } from "react-leaflet"
 import L from "leaflet"
 import { useNavigate } from "react-router-dom"
@@ -46,9 +46,11 @@ export function MapWidget({ spaceSlug }: { spaceSlug: string | null }) {
     if (spaceSlug) navigate(`/${spaceSlug}/map`)
   }
 
+  void goMap
+
   if (validPlaces.length === 0) {
     return (
-      <div className="h-full w-full bg-card border rounded-xl flex flex-col items-center justify-center text-xs text-muted-foreground italic p-4 text-center gap-2">
+      <div className="h-full w-full bg-emerald-50/60 rounded-xl flex flex-col items-center justify-center text-xs text-muted-foreground italic p-4 text-center gap-2">
         <MapPin className="h-6 w-6 opacity-40" />
         <p>Karte</p>
         <p className="text-[10px]">
@@ -60,7 +62,7 @@ export function MapWidget({ spaceSlug }: { spaceSlug: string | null }) {
 
   return (
     <div
-      className="h-full w-full bg-card border rounded-xl overflow-hidden relative"
+      className="h-full w-full bg-emerald-50/60 rounded-xl overflow-hidden relative"
       style={{ isolation: "isolate" }}
     >
       <MapContainer
@@ -100,21 +102,10 @@ export function MapWidget({ spaceSlug }: { spaceSlug: string | null }) {
       </MapContainer>
 
       {/* Header overlay */}
-      <div className="absolute top-2 left-2 z-[400] flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-md px-2 py-1 shadow-sm border">
+      <div className="absolute top-2 left-2 z-[400] flex items-center gap-2 bg-background/90 backdrop-blur-sm rounded-md px-2 py-1 shadow-sm">
         <MapPin className="h-3.5 w-3.5" style={{ color: "#10B981" }} />
         <span className="text-xs font-semibold">{validPlaces.length} Pins</span>
       </div>
-
-      <button
-        type="button"
-        onClick={goMap}
-        disabled={!spaceSlug}
-        className="absolute top-2 right-2 z-[400] p-1 rounded bg-background/90 backdrop-blur-sm shadow-sm border hover:bg-background transition-colors disabled:opacity-40"
-        aria-label="Zur Karte"
-        title="Zur vollen Karte"
-      >
-        <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
-      </button>
     </div>
   )
 }

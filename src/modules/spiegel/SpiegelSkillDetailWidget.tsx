@@ -35,7 +35,7 @@ export function SpiegelSkillDetailWidget() {
 
   if (!selected || !bereich) {
     return (
-      <div className="h-full w-full bg-card border rounded-xl flex flex-col items-center justify-center text-xs text-muted-foreground italic p-4 text-center gap-2">
+      <div className="h-full w-full bg-blue-50/60 rounded-xl flex flex-col items-center justify-center text-xs text-muted-foreground italic p-4 text-center gap-2">
         <Network className="h-6 w-6 opacity-40" />
         <p>Skill-Detail</p>
         <p className="text-[10px]">
@@ -53,10 +53,10 @@ export function SpiegelSkillDetailWidget() {
 
   return (
     <div
-      className="h-full w-full bg-card border rounded-xl flex flex-col overflow-hidden"
-      style={{ borderLeftWidth: 3, borderLeftColor: color }}
+      className="h-full w-full rounded-xl flex flex-col overflow-hidden"
+      style={{ background: `${color}10` }}
     >
-      <div className="px-3 py-2 border-b bg-muted/20 flex items-center gap-2">
+      <div className="px-3 py-2 flex items-center gap-2" style={{ background: `${color}18` }}>
         <div
           className="w-5 h-5 rounded-full flex items-center justify-center shrink-0 border"
           style={{ background: `${color}18`, borderColor: color }}
@@ -83,7 +83,7 @@ export function SpiegelSkillDetailWidget() {
         <button
           type="button"
           onClick={() => select(null)}
-          className="shrink-0 p-1 rounded hover:bg-muted transition-colors"
+          className="shrink-0 p-1 rounded hover:bg-black/10 transition-colors"
           aria-label="Schliessen"
         >
           <X className="h-3.5 w-3.5 text-muted-foreground" />

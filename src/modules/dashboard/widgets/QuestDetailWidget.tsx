@@ -80,7 +80,7 @@ export function QuestDetailWidget() {
 
   if (!selected || !data) {
     return (
-      <div className="h-full w-full bg-card border rounded-xl flex flex-col items-center justify-center text-xs text-muted-foreground italic p-4 text-center gap-2">
+      <div className="h-full w-full bg-orange-50/60 rounded-xl flex flex-col items-center justify-center text-xs text-muted-foreground italic p-4 text-center gap-2">
         <Trophy className="h-6 w-6 opacity-40" />
         <p>Quest-Detail</p>
         <p className="text-[10px]">
@@ -91,14 +91,14 @@ export function QuestDetailWidget() {
   }
 
   return (
-    <div className="h-full w-full bg-card border rounded-xl flex flex-col overflow-hidden">
-      <div className="px-3 py-2 border-b bg-muted/20 flex items-center gap-2">
+    <div className="h-full w-full bg-orange-50/60 rounded-xl flex flex-col overflow-hidden">
+      <div className="px-3 py-2 bg-orange-100/40 flex items-center gap-2">
         <Trophy className="h-4 w-4 shrink-0" style={{ color: "#E8751A" }} />
         <span className="text-sm font-semibold truncate flex-1">{data.title}</span>
         <button
           type="button"
           onClick={() => select(null)}
-          className="shrink-0 p-1 rounded hover:bg-muted transition-colors"
+          className="shrink-0 p-1 rounded hover:bg-orange-200/50 transition-colors"
           aria-label="Schliessen"
         >
           <X className="h-3.5 w-3.5 text-muted-foreground" />

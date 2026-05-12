@@ -58,9 +58,9 @@ export function SpiegelLogTab() {
   const { selectedId, select } = useChannel("log")
 
   return (
-    <div className="h-full w-full bg-card border rounded-xl overflow-hidden flex flex-col">
+    <div className="h-full w-full bg-violet-50/60 rounded-xl overflow-hidden flex flex-col">
       {/* Header: Titel + Suche + Filter */}
-      <div className="border-b shrink-0">
+      <div className="shrink-0">
         <div className="px-3 py-2 flex items-center gap-2">
           <ScrollText className="h-4 w-4 shrink-0" style={{ color: "#A855F7" }} />
           <div className="flex-1 min-w-0">
