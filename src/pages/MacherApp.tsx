@@ -234,6 +234,11 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
   )
 
   const activeWorkspace: Workspace | null = useMemo(() => {
+    // Spezial-Pfad fuer Overview — /netzwerke zeigt die Uebersicht aller Netzwerke
+    if (urlSlug === 'netzwerke') {
+      const overview = workspaces.find((w) => w.scope === 'overview')
+      if (overview) return overview
+    }
     if (urlSlug) {
       // Slug zuerst, dann ID-Fallback
       const group = findGroupBySlugOrId(groups, urlSlug)
@@ -310,6 +315,8 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
 
   // Helper: bevorzugte URL fuer einen Space + Modul
   const buildSpacePath = useCallback((groupId: string, moduleId: string) => {
+    // Overview-Workspace → dedizierter Pfad fuer die Netzwerke-Uebersicht
+    if (groupId === '__overview__') return '/netzwerke'
     const group = groups.find((g) => g.id === groupId)
     const segment = group ? getSpacePathSegment(group) : groupId
     return `/${segment}/${moduleId}`
@@ -583,16 +590,7 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
             )}
           </div>
 
-          {/* Handshake-QR — Identitaet verifizieren mit anderem Menschen */}
-          <button
-            type="button"
-            onClick={() => setVerifyDialogOpen(true)}
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition text-muted-foreground hover:text-foreground hover:bg-muted"
-            aria-label="Handshake (QR-Code)"
-            title="Handshake — Identitaet verifizieren per QR-Code"
-          >
-            <QrCode className="h-4 w-4" />
-          </button>
+          {/* QR-Button war hier — wandert nach rechts neben das Profil-Menu */}
 
           {/* Suche — Desktop neben Workspace, vor den Tabs */}
           <GlobalSearch
@@ -648,6 +646,18 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
             >
               <SettingsIcon className="h-3.5 w-3.5" />
             </button>
+
+            {/* Handshake-QR — zwischen Zahnrad und Profil-Menu */}
+            <button
+              type="button"
+              onClick={() => setVerifyDialogOpen(true)}
+              className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              aria-label="Handshake (QR-Code)"
+              title="Handshake — Identitaet verifizieren per QR-Code"
+            >
+              <QrCode className="h-4 w-4" />
+            </button>
+
             <UserMenu
               user={userData}
               onProfile={() => setProfileDialogOpen(true)}
