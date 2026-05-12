@@ -665,7 +665,7 @@ function GeneralPreview({ group }: { group: Group }) {
 // Tab: Allgemein
 // ============================================================
 
-function GeneralTab({ group }: { group: Group }) {
+export function GeneralTab({ group }: { group: Group }) {
   const updateGroup = useUpdateGroup()
   const { data: allGroups } = useGroups()
   const meta = getSpaceMeta(group)
@@ -1415,7 +1415,7 @@ function ModuleConfigPreview({ moduleId, draft }: { moduleId: string; draft: unk
 // Tab: Erweitert
 // ============================================================
 
-function AdvancedTab({ group }: { group: Group }) {
+export function AdvancedTab({ group }: { group: Group }) {
   const updateGroup = useUpdateGroup()
   const [busy, setBusy] = useState(false)
   const [confirmReset, setConfirmReset] = useState(false)
