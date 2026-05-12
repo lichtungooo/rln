@@ -9,6 +9,7 @@ import { StatsBar } from "../gamification"
 import { SpiegelAvatarTab } from "./SpiegelAvatarTab"
 import { SpiegelQuestTab } from "./SpiegelQuestTab"
 import { SpiegelSkillTab } from "./SpiegelSkillTab"
+import { SpiegelLogTab } from "./SpiegelLogTab"
 import { SpiegelSkillDetailWidget } from "./SpiegelSkillDetailWidget"
 import { BereichDetailWidget } from "../dashboard/widgets/BereichDetailWidget"
 // Demo-Seed-Hook entfernt 2026-05-12 — Demo-Daten leben in Settings/Erweitert
@@ -26,7 +27,7 @@ import { BereichDetailWidget } from "../dashboard/widgets/BereichDetailWidget"
  *   - Pfeile aussen nur sichtbar wenn ein Channel aktiv ist
  */
 
-export type SpiegelTab = "avatar" | "quest" | "skill"
+export type SpiegelTab = "avatar" | "quest" | "skill" | "log"
 
 export interface SpiegelModuleConfig {
   defaultTab?: SpiegelTab
@@ -38,8 +39,9 @@ export const spiegelDefaultConfig: SpiegelModuleConfig = {
 
 const PROFIL_WIDGETS: AvailableWidget[] = [
   { id: "profil-avatar", label: "Avatar + Inventar", defaultColSpan: 6, defaultRowSpan: 4 },
-  { id: "profil-quest", label: "Quests + Log", defaultColSpan: 6, defaultRowSpan: 4 },
+  { id: "profil-quest", label: "Quests", defaultColSpan: 6, defaultRowSpan: 4 },
   { id: "profil-skill", label: "Faehigkeitsbaum", defaultColSpan: 6, defaultRowSpan: 4 },
+  { id: "profil-log", label: "Log — Spiegel der Reise", defaultColSpan: 6, defaultRowSpan: 4 },
   { id: "skill-detail", label: "Skill-Detail", defaultColSpan: 3, defaultRowSpan: 4 },
   { id: "bereich-detail", label: "Bereich-Detail", defaultColSpan: 3, defaultRowSpan: 4 },
 ]
@@ -59,6 +61,11 @@ const DEFAULT_PAGES: GridPage[] = [
     id: "skill",
     name: "Skill",
     slots: [{ id: "s1", widget: "profil-skill", colSpan: 6, rowSpan: 4 }],
+  },
+  {
+    id: "log",
+    name: "Log",
+    slots: [{ id: "s1", widget: "profil-log", colSpan: 6, rowSpan: 4 }],
   },
 ]
 
@@ -106,6 +113,12 @@ function SpiegelInner(props: ModuleViewProps<SpiegelModuleConfig>) {
         return (
           <div className="h-full w-full overflow-hidden">
             <SpiegelSkillTab {...props} />
+          </div>
+        )
+      case "profil-log":
+        return (
+          <div className="h-full w-full overflow-hidden">
+            <SpiegelLogTab />
           </div>
         )
       case "skill-detail":
