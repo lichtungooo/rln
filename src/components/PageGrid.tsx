@@ -249,12 +249,13 @@ export function PageGrid({
 
   return (
     <div ref={containerRef} className="flex flex-col h-full w-full">
-      {/* Header: Seiten-Tabs + Zahnrad. Auf Mobile horizontal scrollbar. */}
+      {/* Header: Seiten-Tabs + Zahnrad. Auf Mobile horizontal scrollbar.
+          Hintergrund nutzt --topbar-background (vom Theme), Fallback Gradient. */}
       <div
         className="border-b px-3 sm:px-4 py-2 flex items-center gap-2 shrink-0"
         style={{
           background:
-            "linear-gradient(90deg, rgba(232,117,26,0.05) 0%, rgba(168,85,247,0.04) 100%)",
+            "var(--topbar-background, linear-gradient(90deg, rgba(232,117,26,0.05) 0%, rgba(168,85,247,0.04) 100%))",
         }}
       >
         <div className="flex items-center gap-1 min-w-0 overflow-x-auto sm:overflow-visible sm:flex-wrap">

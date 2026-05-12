@@ -176,10 +176,25 @@ export function getTheme(id: string | null | undefined): ThemeDefinition {
 }
 
 /**
+ * Theme-Extras — Variablen jenseits der Tailwind-Identitaet.
+ * Werden zusammen mit den Preset-Vars aufs documentElement geschrieben,
+ * haben aber KEINEN Preset-Anker (sind immer optional).
+ *
+ * Aktuell:
+ *   topbarBackground — Toolbar-Hintergrund (Farbe oder Gradient als CSS-Wert)
+ *   pageBackgroundTint, darkMode etc. folgen.
+ */
+export interface ThemeExtras {
+  topbarBackground?: string
+}
+
+/**
  * Theme-Overrides — per Netzwerk gesetzte Einzelfarben, die ueber dem
  * Preset liegen. Persistiert in `group.data.themeOverrides`.
+ *
+ * Kombiniert Identitaets-Vars (Partial<ThemeVars>) + Extras (ThemeExtras).
  */
-export type ThemeOverrides = Partial<ThemeVars>
+export type ThemeOverrides = Partial<ThemeVars> & ThemeExtras
 
 /**
  * Effektive Theme-Vars = Preset-Vars + Overrides (Overrides gewinnen).
@@ -211,6 +226,11 @@ const CSS_VAR_MAP: ReadonlyArray<[keyof ThemeVars, string]> = [
   ["ring", "--ring"],
 ]
 
+/** Mapping fuer Theme-Extras → CSS-Variable-Name. */
+const EXTRA_VAR_MAP: ReadonlyArray<[keyof ThemeExtras, string]> = [
+  ["topbarBackground", "--topbar-background"],
+]
+
 /**
  * Theme aufs `document.documentElement` schreiben.
  *
@@ -227,6 +247,7 @@ export function applyThemeToRoot(
 
   if (isDefault && !hasOverrides) {
     CSS_VAR_MAP.forEach(([, cssVar]) => root.style.removeProperty(cssVar))
+    EXTRA_VAR_MAP.forEach(([, cssVar]) => root.style.removeProperty(cssVar))
     delete root.dataset.theme
     return
   }
@@ -234,6 +255,15 @@ export function applyThemeToRoot(
   const vars = mergeThemeVars(themeId, overrides)
   CSS_VAR_MAP.forEach(([key, cssVar]) => {
     root.style.setProperty(cssVar, vars[key])
+  })
+  // Extras separat — kein Preset-Anker, nur setzen wenn Override vorhanden
+  EXTRA_VAR_MAP.forEach(([key, cssVar]) => {
+    const value = overrides?.[key]
+    if (value) {
+      root.style.setProperty(cssVar, value)
+    } else {
+      root.style.removeProperty(cssVar)
+    }
   })
   root.dataset.theme = themeId ?? DEFAULT_THEME_ID
 }

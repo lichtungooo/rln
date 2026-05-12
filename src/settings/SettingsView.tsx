@@ -160,8 +160,8 @@ interface ThemeDraftContextValue {
   saving: boolean
   error: string | null
   setThemeId: (id: string) => void
-  setOverride: (key: keyof ThemeVars, value: string) => void
-  removeOverride: (key: keyof ThemeVars) => void
+  setOverride: (key: keyof ThemeOverrides, value: string) => void
+  removeOverride: (key: keyof ThemeOverrides) => void
   save: () => Promise<void>
   cancel: () => void
 }
@@ -214,11 +214,11 @@ function ThemeDraftProvider({
   const isDirty =
     draftThemeId !== savedThemeId || draftOverridesKey !== savedOverridesKey
 
-  const setOverride = useCallback((key: keyof ThemeVars, value: string) => {
+  const setOverride = useCallback((key: keyof ThemeOverrides, value: string) => {
     setDraftOverrides((prev) => ({ ...prev, [key]: value }))
   }, [])
 
-  const removeOverride = useCallback((key: keyof ThemeVars) => {
+  const removeOverride = useCallback((key: keyof ThemeOverrides) => {
     setDraftOverrides((prev) => {
       const next = { ...prev }
       delete next[key]
@@ -476,9 +476,14 @@ interface ThemeAreaDef {
 const BASE_AREAS: ThemeAreaDef[] = [
   { id: "presets", label: "Welten", hint: "5 vorgefertigte Themes", icon: Sparkles, ready: true },
   { id: "identity", label: "Identitaet", hint: "Primary, Accent, Background, Foreground", icon: Palette, ready: true },
-  { id: "topbar", label: "Topbar", hint: "Farbe, Gradient, Logo", icon: PanelTop, ready: false },
+  { id: "topbar", label: "Topbar", hint: "Hintergrund der Toolbar", icon: PanelTop, ready: true },
   { id: "background", label: "Hintergrund", hint: "Tint, Pattern", icon: ImageIcon, ready: false },
   { id: "dark", label: "Dark Mode", hint: "Auto / Hell / Dunkel", icon: Moon, ready: false },
+]
+
+// Topbar-Sub-Items — eine fuer den Hintergrund (Farbe oder Gradient)
+const TOPBAR_SUB_ITEMS: ThemeSubItem[] = [
+  { id: "topbarBackground", label: "Hintergrund", description: "Farbe oder Gradient der oberen Leiste" },
 ]
 
 interface ThemeSubItem {
@@ -588,6 +593,9 @@ function ThemeSubItemsWidget() {
     }
     if (areaId === "identity") {
       return IDENTITY_SUB_ITEMS
+    }
+    if (areaId === "topbar") {
+      return TOPBAR_SUB_ITEMS
     }
     return []
   }, [areaId])
@@ -702,9 +710,15 @@ function ThemeDetailWidget() {
         {areaId === "identity" && subItemId && (
           <IdentityDetail subItemId={subItemId as keyof ThemeVars} />
         )}
-        {areaId && areaId !== "presets" && areaId !== "identity" && (
-          <ComingSoonInline label={BASE_AREAS.find((a) => a.id === areaId)?.label ?? "Bereich"} />
-        )}
+        {areaId === "topbar" && subItemId === "topbarBackground" && <TopbarDetail />}
+        {areaId &&
+          areaId !== "presets" &&
+          areaId !== "identity" &&
+          areaId !== "topbar" && (
+            <ComingSoonInline
+              label={BASE_AREAS.find((a) => a.id === areaId)?.label ?? "Bereich"}
+            />
+          )}
       </div>
     </div>
   )
@@ -1150,6 +1164,132 @@ function AdminDetailWidget({
             config={undefined}
           />
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
+// Topbar-Detail — Farbe oder Gradient fuer die Toolbar
+// ============================================================
+
+const TOPBAR_PRESETS: { id: string; label: string; value: string }[] = [
+  {
+    id: "macher",
+    label: "Macher-Gradient",
+    value:
+      "linear-gradient(90deg, rgba(232,117,26,0.05) 0%, rgba(168,85,247,0.04) 100%)",
+  },
+  {
+    id: "lichtung",
+    label: "Lichtung-Gold",
+    value: "linear-gradient(90deg, rgba(212,175,55,0.10) 0%, rgba(255,236,179,0.08) 100%)",
+  },
+  {
+    id: "marine",
+    label: "Marine",
+    value: "linear-gradient(90deg, rgba(30,95,142,0.08) 0%, rgba(99,180,234,0.06) 100%)",
+  },
+  {
+    id: "wald",
+    label: "Wald",
+    value: "linear-gradient(90deg, rgba(59,122,69,0.08) 0%, rgba(168,212,99,0.06) 100%)",
+  },
+  {
+    id: "nacht",
+    label: "Nacht",
+    value: "linear-gradient(90deg, rgba(15,23,42,0.85) 0%, rgba(30,41,59,0.70) 100%)",
+  },
+]
+
+function TopbarDetail() {
+  const { draft, setOverride, removeOverride } = useThemeDraft()
+  const overrideValue = draft.overrides.topbarBackground
+  const hasOverride = !!overrideValue
+
+  // Hex-Picker fuer Solid-Color: wenn overrideValue keinem Gradient entspricht
+  const [solidHex, setSolidHex] = useState<string>(() =>
+    overrideValue && overrideValue.startsWith("#") ? overrideValue : "#FAF8F5"
+  )
+
+  return (
+    <div className="space-y-4 max-w-md">
+      <div>
+        <h2 className="text-base font-semibold">Topbar-Hintergrund</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          Die obere Leiste mit Tabs und Aktionen — Farbe oder Gradient.
+        </p>
+      </div>
+
+      <div className="space-y-2">
+        <div className="text-[10px] uppercase font-semibold text-muted-foreground">
+          Voreingestellte Gradienten
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {TOPBAR_PRESETS.map((preset) => {
+            const isActive = overrideValue === preset.value
+            return (
+              <button
+                key={preset.id}
+                type="button"
+                onClick={() => setOverride("topbarBackground", preset.value)}
+                className={`relative p-2 rounded-lg border-2 text-left transition-all hover:scale-[1.02] ${
+                  isActive ? "border-primary" : "border-border"
+                }`}
+              >
+                <div
+                  className="h-6 w-full rounded mb-1.5 border"
+                  style={{ background: preset.value }}
+                />
+                <div className="text-[11px] font-medium truncate">{preset.label}</div>
+                {isActive && (
+                  <Check className="absolute top-1.5 right-1.5 h-3 w-3 text-primary" />
+                )}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className="text-[10px] uppercase font-semibold text-muted-foreground">
+          Eigene Farbe (Solid)
+        </div>
+        <div className="flex items-center gap-3 p-3 border rounded-lg bg-muted/20">
+          <input
+            type="color"
+            value={solidHex}
+            onChange={(e) => {
+              setSolidHex(e.target.value)
+              setOverride("topbarBackground", e.target.value)
+            }}
+            className="h-12 w-12 rounded cursor-pointer border-0 bg-transparent"
+            aria-label="Topbar-Farbe waehlen"
+          />
+          <div className="flex-1 min-w-0">
+            <div className="text-sm font-mono">{solidHex}</div>
+            <div className="text-[10px] text-muted-foreground">
+              uebernimmt sofort
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {hasOverride && (
+        <button
+          type="button"
+          onClick={() => removeOverride("topbarBackground")}
+          className="flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground px-3 py-2 rounded border"
+          title="Zurueck zum Default-Gradient"
+        >
+          <RotateCcw className="h-3 w-3" />
+          Zuruecksetzen
+        </button>
+      )}
+
+      <div className="text-[11px] text-muted-foreground leading-relaxed border-l-2 border-primary/30 pl-3 py-1">
+        Die Topbar-Farbe wirkt live in der Toolbar oben — in allen Modulen.
+        Speichern oben uebernimmt sie fuer alle Mitglieder.
       </div>
     </div>
   )
