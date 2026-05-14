@@ -16,6 +16,7 @@ import {
   BILDUNGS_BEREICH_BY_ID,
   TIER_BY_ID,
   useSkillV2Progress,
+  useSkillAttestations,
   DREI_HAENDE_FULL,
   DREI_HAENDE_SKILLS,
   tierStufe,
@@ -44,6 +45,7 @@ import {
 import { SkillKettenBahn } from "./SkillKettenBahn"
 import { ConstellationView } from "./ConstellationView"
 import { QuerschnittView } from "./QuerschnittView"
+import { AttestationInbox } from "./AttestationInbox"
 
 interface BereichDaten {
   id: string
@@ -201,13 +203,14 @@ const BEREICHE: BereichDaten[] = [
   },
 ]
 
-type ViewMode = "bahn" | "constellation" | "querschnitt"
+type ViewMode = "bahn" | "constellation" | "querschnitt" | "anfragen"
 
 export function SkillBahnView(_props: ModuleViewProps) {
   const [aktivId, setAktivId] = useState<string>("holz")
   const [skillId, setSkillId] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>("constellation")
-  const { progress, setTier, clearTier, count: erreichteCount } = useSkillV2Progress()
+  const { progress, effectiveSkills, setTier, clearTier, count: erreichteCount } = useSkillV2Progress()
+  const { myRequests, requestAttestation, withdrawRequest } = useSkillAttestations()
 
   const aktiv = BEREICHE.find((b) => b.id === aktivId) ?? BEREICHE[0]
 
@@ -282,6 +285,15 @@ export function SkillBahnView(_props: ModuleViewProps) {
             >
               Querschnitt
             </button>
+            <button
+              onClick={() => setViewMode("anfragen")}
+              className={`
+                px-3 py-1.5 rounded-md text-sm font-semibold transition-colors
+                ${viewMode === "anfragen" ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted/50"}
+              `}
+            >
+              Anfragen
+            </button>
           </div>
         </div>
         <p className="text-sm text-muted-foreground">
@@ -300,6 +312,8 @@ export function SkillBahnView(_props: ModuleViewProps) {
         />
       ) : viewMode === "querschnitt" ? (
         <QuerschnittView />
+      ) : viewMode === "anfragen" ? (
+        <AttestationInbox allSkills={allSkills} />
       ) : (
         <>
       {/* Bereich-Auswahl (Tabs) */}
@@ -366,7 +380,7 @@ export function SkillBahnView(_props: ModuleViewProps) {
         skills={aktiv.skills}
         bereichColor={aktiv.color}
         selectedSkillId={skillId}
-        userTiers={progress.skills}
+        userTiers={effectiveSkills}
         onSkillClick={(id) => setSkillId(id === skillId ? null : id)}
       />
 
@@ -461,8 +475,8 @@ export function SkillBahnView(_props: ModuleViewProps) {
             <div className="text-xs font-semibold mb-2">Mein Fortschritt</div>
             <div className="flex flex-wrap gap-2 items-center">
               <span className="text-xs text-muted-foreground">
-                {progress.skills[aktivSkill.id]
-                  ? `Aktuell: ${TIER_BY_ID[progress.skills[aktivSkill.id]].name}`
+                {effectiveSkills[aktivSkill.id]
+                  ? `Aktuell: ${TIER_BY_ID[effectiveSkills[aktivSkill.id]].name}`
                   : "Noch nicht eingetragen"}
               </span>
               <button
@@ -504,10 +518,53 @@ export function SkillBahnView(_props: ModuleViewProps) {
                 </button>
               )}
             </div>
-            <div className="text-[10px] text-muted-foreground mt-2">
-              Hoehere Stufen ("kann", "kann lehren", "meistert", "gibt weiter") brauchen Attestation
-              durch Mentor oder Werk-Beleg. Kommt in der naechsten Phase.
-            </div>
+
+            {/* Attestation-Anfrage fuer Tier 3 (kann) */}
+            {(() => {
+              const offeneAnfrage = myRequests.find((r) => {
+                const d = r.data as { skillId: string; status: string }
+                return d.skillId === aktivSkill.id && d.status === "pending"
+              })
+              const erreichterTier = effectiveSkills[aktivSkill.id]
+              const erreichtKann = erreichterTier && tierStufe(erreichterTier) >= 3
+
+              if (erreichtKann) {
+                return (
+                  <div className="mt-3 text-xs text-emerald-700">
+                    ✓ Bestaetigung erhalten — Tier "{TIER_BY_ID[erreichterTier!].name}".
+                  </div>
+                )
+              }
+              if (offeneAnfrage) {
+                return (
+                  <div className="mt-3 flex items-center gap-2 text-xs">
+                    <span className="text-violet-700 font-semibold">
+                      Anfrage offen — wartet auf Mentor.
+                    </span>
+                    <button
+                      onClick={() => withdrawRequest(offeneAnfrage.id)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      zuruecknehmen
+                    </button>
+                  </div>
+                )
+              }
+              return (
+                <div className="mt-3">
+                  <button
+                    onClick={() => requestAttestation(aktivSkill.id, "kann")}
+                    className="text-xs px-2 py-1 rounded-md font-semibold text-white"
+                    style={{ backgroundColor: "#6B21A8" }}
+                  >
+                    "Kann ich" — Bestaetigung anfragen
+                  </button>
+                  <div className="text-[10px] text-muted-foreground mt-1">
+                    Anfrage geht an alle Mentoren im Netz. Wer erkennt, dass du kannst, bestaetigt.
+                  </div>
+                </div>
+              )
+            })()}
           </div>
         </div>
       )}

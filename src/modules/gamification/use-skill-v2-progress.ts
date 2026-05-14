@@ -21,6 +21,10 @@ import {
 import type { Item } from "@real-life-stack/data-interface"
 import type { Tier } from "./skill-system"
 import { TIER_BY_ID, tierStufe } from "./skill-system"
+import {
+  SKILL_ATTESTATION_TYPE,
+  type SkillAttestationData,
+} from "./use-skill-attestation"
 
 export const SKILL_V2_PROGRESS_TYPE = "skill-v2-progress"
 
@@ -37,6 +41,7 @@ const EMPTY: SkillV2ProgressData = {
 
 export function useSkillV2Progress() {
   const { data: items } = useItems({ type: SKILL_V2_PROGRESS_TYPE })
+  const { data: attestations } = useItems({ type: SKILL_ATTESTATION_TYPE })
   const { data: currentUser } = useCurrentUser()
   const { mutate: createItem } = useCreateItem()
   const { mutate: updateItem } = useUpdateItem()
@@ -55,18 +60,46 @@ export function useSkillV2Progress() {
     }
   }, [myItem])
 
+  /** Attestationen, die fuer mich ausgestellt wurden — Tier 3+. */
+  const attestedSkills = useMemo<Record<string, Tier>>(() => {
+    if (!currentUser?.id) return {}
+    const out: Record<string, Tier> = {}
+    for (const a of attestations) {
+      const d = a.data as Partial<SkillAttestationData>
+      if (d.learnerId !== currentUser.id) continue
+      if (!d.skillId || !d.tier) continue
+      const current = out[d.skillId]
+      if (!current || tierStufe(d.tier) > tierStufe(current)) {
+        out[d.skillId] = d.tier
+      }
+    }
+    return out
+  }, [attestations, currentUser?.id])
+
+  /** Effektiver Stand: Maximum aus Selbst-Eintrag und Attestationen. */
+  const effectiveSkills = useMemo<Record<string, Tier>>(() => {
+    const out: Record<string, Tier> = { ...data.skills }
+    for (const [skillId, tier] of Object.entries(attestedSkills)) {
+      const current = out[skillId]
+      if (!current || tierStufe(tier) > tierStufe(current)) {
+        out[skillId] = tier
+      }
+    }
+    return out
+  }, [data.skills, attestedSkills])
+
   const getTier = useCallback(
-    (skillId: string): Tier | null => data.skills[skillId] ?? null,
-    [data]
+    (skillId: string): Tier | null => effectiveSkills[skillId] ?? null,
+    [effectiveSkills]
   )
 
   const hasReached = useCallback(
     (skillId: string, minimum: Tier): boolean => {
-      const current = data.skills[skillId]
+      const current = effectiveSkills[skillId]
       if (!current) return false
       return tierStufe(current) >= tierStufe(minimum)
     },
-    [data]
+    [effectiveSkills]
   )
 
   const setTier = useCallback(
@@ -117,12 +150,17 @@ export function useSkillV2Progress() {
   )
 
   return {
+    /** Selbst-Eintrag-Daten. */
     progress: data,
+    /** Tier-Stufen aus Attestationen (Tier 3+). */
+    attestedSkills,
+    /** Effektiver Stand: Maximum aus Selbst und Attestation. Wird in UI genutzt. */
+    effectiveSkills,
     getTier,
     hasReached,
     setTier,
     clearTier,
-    /** Anzahl der Skills, die ich auf mindestens "gespuert" habe. */
-    count: Object.keys(data.skills).length,
+    /** Anzahl der Skills im effektiven Stand. */
+    count: Object.keys(effectiveSkills).length,
   }
 }

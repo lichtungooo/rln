@@ -205,6 +205,16 @@ export {
   type SkillV2ProgressData,
 } from "./use-skill-v2-progress"
 
+// Attestation-Flow (Tier 3+) — Anfrage + Approve durch Mentor
+export {
+  useSkillAttestations,
+  SKILL_ATTESTATION_REQUEST_TYPE,
+  SKILL_ATTESTATION_TYPE,
+  type AttestationStatus,
+  type SkillAttestationRequestData,
+  type SkillAttestationData,
+} from "./use-skill-attestation"
+
 // Querschnitt: Mentoren-Achse (20 Skills, vier Schwellen)
 export {
   MENTOR_GRUNDLAGEN,
