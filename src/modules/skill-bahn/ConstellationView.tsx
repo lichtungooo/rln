@@ -19,11 +19,15 @@ import {
   type Potenzialfeld,
   type HandwerksBereich,
   type BildungsBereich,
+  type Tier,
+  type SkillV2,
 } from "../gamification/skill-system"
 
 interface ConstellationViewProps {
   onBereichSelect?: (bereichId: string) => void
   selectedBereichId?: string | null
+  userTiers?: Record<string, Tier>
+  allSkills?: SkillV2[]
 }
 
 interface BereicheForFeld {
@@ -38,7 +42,24 @@ function getBereicheForFeld(feld: Potenzialfeld): BereicheForFeld {
   }
 }
 
-export function ConstellationView({ onBereichSelect, selectedBereichId }: ConstellationViewProps) {
+function getFortschrittForFeld(
+  feld: Potenzialfeld,
+  allSkills: SkillV2[],
+  userTiers: Record<string, Tier>
+): { gesamt: number; erreicht: number } {
+  const feldSkills = allSkills.filter((s) => s.potenzialfelder.includes(feld.id))
+  const erreicht = feldSkills.filter((s) => userTiers[s.id]).length
+  return { gesamt: feldSkills.length, erreicht }
+}
+
+export function ConstellationView({
+  onBereichSelect,
+  selectedBereichId,
+  userTiers,
+  allSkills,
+}: ConstellationViewProps) {
+  const hatProgress = userTiers && allSkills && Object.keys(userTiers).length > 0
+
   return (
     <div className="space-y-3">
       <div className="rounded-2xl p-4 bg-card">
@@ -53,6 +74,9 @@ export function ConstellationView({ onBereichSelect, selectedBereichId }: Conste
         {POTENZIALFELDER.map((feld) => {
           const bereiche = getBereicheForFeld(feld)
           const Icon = feld.icon
+          const fortschritt = hatProgress
+            ? getFortschrittForFeld(feld, allSkills!, userTiers!)
+            : null
           return (
             <div
               key={feld.id}
@@ -65,7 +89,16 @@ export function ConstellationView({ onBereichSelect, selectedBereichId }: Conste
                 style={{ backgroundColor: `${feld.color}30` }}
               >
                 <Icon className="w-5 h-5 shrink-0" style={{ color: feld.color }} />
-                <h3 className="font-bold text-sm leading-tight">{feld.name}</h3>
+                <h3 className="font-bold text-sm leading-tight flex-1">{feld.name}</h3>
+                {fortschritt && fortschritt.erreicht > 0 && (
+                  <span
+                    className="text-[10px] font-semibold px-2 py-0.5 rounded-full text-white"
+                    style={{ backgroundColor: feld.color }}
+                    title={`Erreicht: ${fortschritt.erreicht} von ${fortschritt.gesamt}`}
+                  >
+                    {fortschritt.erreicht} / {fortschritt.gesamt}
+                  </span>
+                )}
               </div>
 
               {/* Body */}

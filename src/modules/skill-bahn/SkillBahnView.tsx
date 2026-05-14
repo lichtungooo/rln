@@ -16,6 +16,9 @@ import {
   BILDUNGS_BEREICH_BY_ID,
   TIER_BY_ID,
   useSkillV2Progress,
+  DREI_HAENDE_FULL,
+  DREI_HAENDE_SKILLS,
+  tierStufe,
   type SkillV2,
   type SkillKette,
   type Tier,
@@ -213,6 +216,32 @@ export function SkillBahnView(_props: ModuleViewProps) {
     return aktiv.skills.find((s) => s.id === skillId) ?? null
   }, [aktiv.skills, skillId])
 
+  // Alle Skills aus allen Bereichen plus Querschnitte — fuer Constellation-Fortschritt
+  const allSkills = useMemo(() => {
+    return [
+      ...BEREICHE.flatMap((b) => b.skills),
+      ...DREI_HAENDE_SKILLS,
+    ]
+  }, [])
+
+  // Drei-Haende-Sicherheits-Lizenz pruefen
+  const dreiHaendeStatus = useMemo(() => {
+    return DREI_HAENDE_FULL.map((hand) => {
+      const erreicht = hand.buendel.every((skillName) => {
+        // Wurzel-Skills tragen Namen, keine IDs in buendel — wir suchen via Skill-Name
+        const skill = DREI_HAENDE_SKILLS.find((s) => s.name === skillName)
+        if (!skill) return false
+        const tier = progress.skills[skill.id]
+        if (!tier) return false
+        return tierStufe(tier) >= tierStufe(hand.schwellenTier)
+      })
+      return { hand, erreicht }
+    })
+  }, [progress.skills])
+
+  const alleHaendeErreicht = dreiHaendeStatus.every((s) => s.erreicht)
+  const istHandwerksBereich = aktiv.art === "handwerk"
+
   function handleSelectBereich(id: string) {
     setAktivId(id)
     setSkillId(null)
@@ -266,6 +295,8 @@ export function SkillBahnView(_props: ModuleViewProps) {
         <ConstellationView
           onBereichSelect={handleSelectBereich}
           selectedBereichId={aktivId}
+          userTiers={progress.skills}
+          allSkills={allSkills}
         />
       ) : viewMode === "querschnitt" ? (
         <QuerschnittView />
@@ -297,6 +328,37 @@ export function SkillBahnView(_props: ModuleViewProps) {
           )
         })}
       </div>
+
+      {/* Drei-Haende-Sicherheits-Lizenz vor Handwerks-Bereichen */}
+      {istHandwerksBereich && !alleHaendeErreicht && (
+        <div className="rounded-2xl p-4 bg-amber-50 border-l-4 border-amber-400">
+          <div className="flex items-start gap-3">
+            <div className="text-xl">✋</div>
+            <div className="flex-1">
+              <div className="text-sm font-bold mb-1">Eingangsschwelle: Drei Haende</div>
+              <div className="text-xs text-muted-foreground mb-2">
+                Vor jedem Handwerks-Bereich liegen die drei Wurzel-Haende.
+                Wer sie auf Tier "probiert" hat, geht sicher in die Werkstatt.
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {dreiHaendeStatus.map(({ hand, erreicht }) => (
+                  <span
+                    key={hand.id}
+                    className={`text-[11px] px-2 py-1 rounded-md ${
+                      erreicht
+                        ? "bg-emerald-500 text-white font-semibold"
+                        : "bg-amber-200 text-amber-900"
+                    }`}
+                  >
+                    {erreicht ? "✓ " : "○ "}
+                    {hand.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bahn-Visualisierung */}
       <SkillKettenBahn
