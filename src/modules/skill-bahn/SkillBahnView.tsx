@@ -38,6 +38,7 @@ import {
 } from "../gamification"
 import { SkillKettenBahn } from "./SkillKettenBahn"
 import { ConstellationView } from "./ConstellationView"
+import { QuerschnittView } from "./QuerschnittView"
 
 interface BereichDaten {
   id: string
@@ -195,7 +196,7 @@ const BEREICHE: BereichDaten[] = [
   },
 ]
 
-type ViewMode = "bahn" | "constellation"
+type ViewMode = "bahn" | "constellation" | "querschnitt"
 
 export function SkillBahnView(_props: ModuleViewProps) {
   const [aktivId, setAktivId] = useState<string>("holz")
@@ -240,6 +241,15 @@ export function SkillBahnView(_props: ModuleViewProps) {
             >
               Bahn
             </button>
+            <button
+              onClick={() => setViewMode("querschnitt")}
+              className={`
+                px-3 py-1.5 rounded-md text-sm font-semibold transition-colors
+                ${viewMode === "querschnitt" ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted/50"}
+              `}
+            >
+              Querschnitt
+            </button>
           </div>
         </div>
         <p className="text-sm text-muted-foreground">
@@ -254,6 +264,8 @@ export function SkillBahnView(_props: ModuleViewProps) {
           onBereichSelect={handleSelectBereich}
           selectedBereichId={aktivId}
         />
+      ) : viewMode === "querschnitt" ? (
+        <QuerschnittView />
       ) : (
         <>
       {/* Bereich-Auswahl (Tabs) */}
