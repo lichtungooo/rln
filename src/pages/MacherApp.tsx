@@ -40,7 +40,7 @@ import type {
   ConnectorOption,
   GroupDialogMode,
 } from '@real-life-stack/toolkit'
-import { MacherProfileDialog } from '../modules/profile/MacherProfileDialog'
+import { WotProfileDialog } from '../modules/profile/WotProfileDialog'
 import { macherProfileConfig } from '../modules/profile/macher-profile-config'
 import { getProfileConfig } from '../modules/types'
 import { useProfileExtension, splitProfileUpdates } from '../modules/profile/use-profile-extension'
@@ -868,13 +868,20 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
         onRemoveMember={async (groupId, userId) => { await removeMember(groupId, userId) }}
       />
 
-      <MacherProfileDialog
+      <WotProfileDialog
         open={profileDialogOpen}
         onOpenChange={setProfileDialogOpen}
-        config={profileConfig}
         profile={profileData}
         contactCount={activeContacts.length}
         onSave={handleSaveProfile}
+        onLogout={
+          activeConnectorId === 'wot' && isAuthenticatable(connector)
+            ? async () => {
+                await connector.logout()
+                window.location.reload()
+              }
+            : undefined
+        }
       />
 
       <ContactsDialog
