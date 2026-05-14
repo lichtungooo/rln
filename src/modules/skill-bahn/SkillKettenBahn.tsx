@@ -24,6 +24,8 @@ interface SkillKettenBahnProps {
   bereichColor: string
   onSkillClick?: (skillId: string) => void
   selectedSkillId?: string | null
+  /** Optional: aktuelle User-Tier-Stufen pro Skill. */
+  userTiers?: Record<string, Tier>
 }
 
 // Tier-Visualisierung — wie voll ist der Kreis
@@ -43,6 +45,7 @@ export function SkillKettenBahn({
   bereichColor,
   onSkillClick,
   selectedSkillId,
+  userTiers,
 }: SkillKettenBahnProps) {
   const skillById = useMemo(() => {
     const map = new Map<string, SkillV2>()
@@ -87,6 +90,8 @@ export function SkillKettenBahn({
             const tierInfo = TIER_BY_ID[skill.tier]
             const verzweigungen = verzweigungenByAb.get(skill.id)
             const isLast = idx === hauptSkills.length - 1
+            const userTier = userTiers?.[skill.id]
+            const isReached = !!userTier
 
             return (
               <div key={skill.id} className="flex flex-col items-center">
@@ -103,16 +108,31 @@ export function SkillKettenBahn({
                     <div
                       className={`
                         w-16 h-16 rounded-full flex items-center justify-center
-                        ${fill.ringClass} ${fill.bgClass}
-                        shadow-sm
+                        ${fill.ringClass}
+                        ${isReached ? "shadow-md" : "shadow-sm"}
                       `}
-                      style={{ "--tw-ring-color": bereichColor } as React.CSSProperties}
+                      style={{
+                        "--tw-ring-color": bereichColor,
+                        backgroundColor: isReached ? bereichColor : "white",
+                      } as React.CSSProperties}
                     >
-                      <span className="text-xs font-bold text-foreground">{tierStufe(skill.tier)}</span>
+                      <span
+                        className="text-xs font-bold"
+                        style={{ color: isReached ? "white" : undefined }}
+                      >
+                        {tierStufe(skill.tier)}
+                      </span>
                     </div>
                     <div className="mt-2 text-center w-full">
                       <div className={`text-xs leading-tight ${fill.textClass}`}>{skill.name}</div>
-                      <div className="text-[10px] text-muted-foreground mt-0.5">{tierInfo.name}</div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5">
+                        {tierInfo.name}
+                        {userTier && (
+                          <span className="ml-1 font-semibold" style={{ color: bereichColor }}>
+                            · du: {TIER_BY_ID[userTier].name}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </button>
 

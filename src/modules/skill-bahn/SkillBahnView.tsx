@@ -15,8 +15,10 @@ import {
   HANDWERKS_BEREICH_BY_ID,
   BILDUNGS_BEREICH_BY_ID,
   TIER_BY_ID,
+  useSkillV2Progress,
   type SkillV2,
   type SkillKette,
+  type Tier,
   HOLZ_SKILLS, HOLZ_HAUPTKETTE,
   METALL_SKILLS, METALL_HAUPTKETTE,
   GARTEN_SKILLS, GARTEN_HAUPTKETTE,
@@ -202,6 +204,7 @@ export function SkillBahnView(_props: ModuleViewProps) {
   const [aktivId, setAktivId] = useState<string>("holz")
   const [skillId, setSkillId] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<ViewMode>("constellation")
+  const { progress, setTier, clearTier, count: erreichteCount } = useSkillV2Progress()
 
   const aktiv = BEREICHE.find((b) => b.id === aktivId) ?? BEREICHE[0]
 
@@ -301,6 +304,7 @@ export function SkillBahnView(_props: ModuleViewProps) {
         skills={aktiv.skills}
         bereichColor={aktiv.color}
         selectedSkillId={skillId}
+        userTiers={progress.skills}
         onSkillClick={(id) => setSkillId(id === skillId ? null : id)}
       />
 
@@ -389,6 +393,66 @@ export function SkillBahnView(_props: ModuleViewProps) {
               </span>
             ))}
           </div>
+
+          {/* Selbst-Eintrag der ersten zwei Tier-Stufen */}
+          <div className="mt-4 pt-3 border-t border-foreground/10">
+            <div className="text-xs font-semibold mb-2">Mein Fortschritt</div>
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="text-xs text-muted-foreground">
+                {progress.skills[aktivSkill.id]
+                  ? `Aktuell: ${TIER_BY_ID[progress.skills[aktivSkill.id]].name}`
+                  : "Noch nicht eingetragen"}
+              </span>
+              <button
+                onClick={() => setTier(aktivSkill.id, "gespuert")}
+                className={`text-xs px-2 py-1 rounded-md transition-colors ${
+                  progress.skills[aktivSkill.id] === "gespuert"
+                    ? "text-white font-semibold"
+                    : "text-foreground hover:opacity-80"
+                }`}
+                style={
+                  progress.skills[aktivSkill.id] === "gespuert"
+                    ? { backgroundColor: aktiv.color }
+                    : { backgroundColor: `${aktiv.color}30` }
+                }
+              >
+                Hab ich gespuert
+              </button>
+              <button
+                onClick={() => setTier(aktivSkill.id, "probiert")}
+                className={`text-xs px-2 py-1 rounded-md transition-colors ${
+                  progress.skills[aktivSkill.id] === "probiert"
+                    ? "text-white font-semibold"
+                    : "text-foreground hover:opacity-80"
+                }`}
+                style={
+                  progress.skills[aktivSkill.id] === "probiert"
+                    ? { backgroundColor: aktiv.color }
+                    : { backgroundColor: `${aktiv.color}30` }
+                }
+              >
+                Hab ich probiert
+              </button>
+              {progress.skills[aktivSkill.id] && (
+                <button
+                  onClick={() => clearTier(aktivSkill.id)}
+                  className="text-xs px-2 py-1 rounded-md text-muted-foreground hover:text-foreground"
+                >
+                  Zuruecksetzen
+                </button>
+              )}
+            </div>
+            <div className="text-[10px] text-muted-foreground mt-2">
+              Hoehere Stufen ("kann", "kann lehren", "meistert", "gibt weiter") brauchen Attestation
+              durch Mentor oder Werk-Beleg. Kommt in der naechsten Phase.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {erreichteCount > 0 && (
+        <div className="rounded-2xl p-3 bg-card text-xs text-muted-foreground">
+          Eigener Stand: <span className="font-semibold text-foreground">{erreichteCount}</span> Skills eingetragen.
         </div>
       )}
         </>

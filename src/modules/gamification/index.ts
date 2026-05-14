@@ -198,6 +198,13 @@ export {
   DREI_HAENDE_FULL,
 } from "./seed-drei-haende"
 
+// User-Progress fuer das neue Skill-System
+export {
+  useSkillV2Progress,
+  SKILL_V2_PROGRESS_TYPE,
+  type SkillV2ProgressData,
+} from "./use-skill-v2-progress"
+
 // Querschnitt: Mentoren-Achse (20 Skills, vier Schwellen)
 export {
   MENTOR_GRUNDLAGEN,
