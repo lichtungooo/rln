@@ -1301,9 +1301,11 @@ function getInitialConnectorId(): string {
   const params = new URLSearchParams(window.location.search)
   if (params.has('reset')) {
     resetLocalData()
-    return 'local'
+    return params.get('connector') ?? 'wot'
   }
-  return params.get('connector') ?? localStorage.getItem(STORAGE_KEY_CONNECTOR) ?? 'local'
+  // Default: WoT. Identitaet als Fundament. LocalConnector nur als Dev-Modus
+  // via ?connector=local oder explizite Auswahl im UI.
+  return params.get('connector') ?? localStorage.getItem(STORAGE_KEY_CONNECTOR) ?? 'wot'
 }
 
 // --- App Root ---
