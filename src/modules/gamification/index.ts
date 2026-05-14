@@ -88,3 +88,43 @@ export {
 export { ARCHETYPES, getArchetype, type Archetype, type ArchetypeId } from "./archetypes"
 
 export { StatsBar } from "./StatsBar"
+
+// ============================================================
+// Neues Skill-System (Stand 14.05.2026) — parallel zum alten
+// Konzept-Quelle: rln/Konzepte/SKILL-TREE-NEUBAU.md
+// ============================================================
+
+export {
+  POTENZIALFELDER,
+  POTENZIALFELD_BY_ID,
+  HANDWERKS_BEREICHE,
+  HANDWERKS_BEREICH_BY_ID,
+  BILDUNGS_BEREICHE,
+  BILDUNGS_BEREICH_BY_ID,
+  TIER_STUFEN,
+  TIER_BY_ID,
+  tierStufe,
+  DREI_HAENDE,
+  DREI_HAND_BY_ID,
+  INNERE_LINIEN,
+  type PotenzialfeldId,
+  type Potenzialfeld,
+  type HandwerksBereichId,
+  type HandwerksBereich,
+  type BildungsBereichId,
+  type BildungsBereich,
+  type Tier,
+  type TierInfo,
+  type DreiHandId,
+  type DreiHand,
+  type InnereLinieId,
+  type InnereLinie,
+  type Altersfreigabe,
+  type KantenTyp,
+  type AttestationModus,
+  type ExternalAnchor,
+  type SkillEdge,
+  type SkillV2,
+  type SkillKette,
+  type AttestationRef,
+} from "./skill-system"
