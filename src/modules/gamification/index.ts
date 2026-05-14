@@ -141,3 +141,7 @@ export { GARTEN_SKILLS, GARTEN_HAUPTKETTE, GARTEN_KETTEN } from "./seed-garten"
 export { ELEKTRONIK_SKILLS, ELEKTRONIK_HAUPTKETTE, ELEKTRONIK_KETTEN } from "./seed-elektronik"
 export { BAU_SKILLS, BAU_HAUPTKETTE, BAU_KETTEN } from "./seed-bau"
 export { REPARIEREN_SKILLS, REPARIEREN_HUB_KETTE, REPARIEREN_KETTEN } from "./seed-reparieren"
+
+// Seed-Daten Bildungs-Bereiche
+export { MATHEMATIK_SKILLS, MATHEMATIK_HAUPTKETTE, MATHEMATIK_KETTEN } from "./seed-mathematik"
+export { SPORT_SKILLS, SPORT_HAUPTKETTE, SPORT_KETTEN } from "./seed-sport"
