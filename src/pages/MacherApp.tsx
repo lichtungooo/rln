@@ -263,13 +263,13 @@ function MacherHome({ activeConnectorId, onConnectorChange }: { activeConnectorI
   // Vollbild-Settings unter dem Zahnrad in der Navbar.
   // Dashboard zuerst — der private Spiegel ist die Heimat. Dann Karte als
   // raeumlicher Anker, dann die anderen Module.
-  const DEFAULT_MODULE_IDS = ['dashboard', 'profil', 'map', 'kanban', 'calendar', 'marketplace', 'wissensfeld', 'valluet']
+  const DEFAULT_MODULE_IDS = ['dashboard', 'profil', 'map', 'kanban', 'calendar', 'marketplace', 'wissensfeld', 'valluet', 'skill-bahn']
   // Meta-Module die IMMER sichtbar sind (auch wenn ein Space sie nicht in
   // group.data.modules hat). Das sind die Schaufenster-Module der Macher-Map:
   // Marketplace + Kalender + Wissensfeld + Valluet zum Probieren.
   // Funktions-Module die immer als Tab sichtbar sein sollen, auch wenn ein
   // Space sie nicht in group.data.modules hat.
-  const ALWAYS_VISIBLE_MODULES = ['profil', 'marketplace', 'calendar', 'wissensfeld', 'valluet', 'settings']
+  const ALWAYS_VISIBLE_MODULES = ['profil', 'marketplace', 'calendar', 'wissensfeld', 'valluet', 'skill-bahn', 'settings']
   // Module, die NIE als Tab erscheinen — auch wenn sie in group.data.modules
   // stehen. Sie bleiben registriert (Dashboard-Widgets brauchen sie), aber
   // tauchen nicht in der Tab-Leiste auf. Avatar/Quest/Skill-Tree sind jetzt
@@ -1009,8 +1009,8 @@ function AuthGate({ connector, children }: { connector: DataInterface; children:
 // eigene Modul-Auswahl, eigene Hashtags. Subnetzwerke ererben (visuell)
 // und setzen eigene Akzente per description + hashtags.
 
-const MACHER_MODULES = ['dashboard', 'map', 'kanban', 'calendar', 'marketplace', 'wissensfeld', 'quest', 'skill-tree', 'avatar']
-const SCHULE_MODULES = ['dashboard', 'map', 'calendar', 'wissensfeld', 'quest', 'skill-tree', 'avatar']
+const MACHER_MODULES = ['dashboard', 'map', 'kanban', 'calendar', 'marketplace', 'wissensfeld', 'quest', 'skill-tree', 'skill-bahn', 'avatar']
+const SCHULE_MODULES = ['dashboard', 'map', 'calendar', 'wissensfeld', 'quest', 'skill-tree', 'skill-bahn', 'avatar']
 const ADVENTURE_MODULES = ['dashboard', 'map', 'calendar', 'marketplace', 'quest', 'avatar']
 
 const macherMapDemoData = {
