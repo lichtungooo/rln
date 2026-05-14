@@ -128,3 +128,11 @@ export {
   type SkillKette,
   type AttestationRef,
 } from "./skill-system"
+
+// Pilot-Seed: Holz-Werkstatt (Stand 14.05.2026)
+export {
+  HOLZ_SKILLS,
+  HOLZ_SKILL_BY_ID,
+  HOLZ_HAUPTKETTE,
+  HOLZ_KETTEN,
+} from "./seed-holz"
