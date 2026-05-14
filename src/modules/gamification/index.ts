@@ -152,6 +152,20 @@ export {
   NATURWISSENSCHAFTEN_KETTEN,
 } from "./seed-naturwissenschaften"
 
+// Weitere Bildungs-Bereiche
+export { KUNST_SKILLS, KUNST_HAUPTKETTE, KUNST_KETTEN } from "./seed-kunst"
+export { MUSIK_SKILLS, MUSIK_HAUPTKETTE, MUSIK_KETTEN } from "./seed-musik"
+export {
+  HAUSWIRTSCHAFT_SKILLS,
+  HAUSWIRTSCHAFT_HAUPTKETTE,
+  HAUSWIRTSCHAFT_KETTEN,
+} from "./seed-hauswirtschaft"
+export {
+  LERNEN_LERNEN_SKILLS,
+  LERNEN_LERNEN_HAUPTKETTE,
+  LERNEN_LERNEN_KETTEN,
+} from "./seed-lernen-lernen"
+
 // Querschnitt: Drei Haende (Wurzel-Skills, Sicherheits-Lizenz)
 export {
   VERMESSER_SKILLS,
@@ -163,3 +177,14 @@ export {
   HAND_WERKSTATT,
   DREI_HAENDE_FULL,
 } from "./seed-drei-haende"
+
+// Querschnitt: Mentoren-Achse (20 Skills, vier Schwellen)
+export {
+  MENTOR_GRUNDLAGEN,
+  MENTOR_BEGLEITUNG,
+  MENTOR_VERTIEFUNG,
+  MENTOR_MEISTERSCHAFT,
+  MENTOREN_SKILLS,
+  MENTOR_SCHWELLEN,
+  type MentorSchwelle,
+} from "./seed-mentoren"

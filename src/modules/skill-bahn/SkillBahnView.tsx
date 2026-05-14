@@ -27,6 +27,10 @@ import {
   SPORT_SKILLS, SPORT_HAUPTKETTE,
   SPRACHE_SKILLS, SPRACHE_HAUPTKETTE,
   NATURWISSENSCHAFTEN_SKILLS, NATURWISSENSCHAFTEN_HUB_KETTE,
+  KUNST_SKILLS, KUNST_HAUPTKETTE,
+  MUSIK_SKILLS, MUSIK_HAUPTKETTE,
+  HAUSWIRTSCHAFT_SKILLS, HAUSWIRTSCHAFT_HAUPTKETTE,
+  LERNEN_LERNEN_SKILLS, LERNEN_LERNEN_HAUPTKETTE,
 } from "../gamification"
 import { SkillKettenBahn } from "./SkillKettenBahn"
 
@@ -119,6 +123,38 @@ const BEREICHE: BereichDaten[] = [
     art: "bildung",
     skills: NATURWISSENSCHAFTEN_SKILLS,
     kette: NATURWISSENSCHAFTEN_HUB_KETTE,
+  },
+  {
+    id: "kunst",
+    name: BILDUNGS_BEREICH_BY_ID.kunst.name,
+    color: BILDUNGS_BEREICH_BY_ID.kunst.color,
+    art: "bildung",
+    skills: KUNST_SKILLS,
+    kette: KUNST_HAUPTKETTE,
+  },
+  {
+    id: "musik",
+    name: BILDUNGS_BEREICH_BY_ID.musik.name,
+    color: BILDUNGS_BEREICH_BY_ID.musik.color,
+    art: "bildung",
+    skills: MUSIK_SKILLS,
+    kette: MUSIK_HAUPTKETTE,
+  },
+  {
+    id: "hauswirtschaft",
+    name: BILDUNGS_BEREICH_BY_ID.hauswirtschaft.name,
+    color: BILDUNGS_BEREICH_BY_ID.hauswirtschaft.color,
+    art: "bildung",
+    skills: HAUSWIRTSCHAFT_SKILLS,
+    kette: HAUSWIRTSCHAFT_HAUPTKETTE,
+  },
+  {
+    id: "lernen-lernen",
+    name: BILDUNGS_BEREICH_BY_ID["lernen-lernen"].name,
+    color: BILDUNGS_BEREICH_BY_ID["lernen-lernen"].color,
+    art: "bildung",
+    skills: LERNEN_LERNEN_SKILLS,
+    kette: LERNEN_LERNEN_HAUPTKETTE,
   },
 ]
 
