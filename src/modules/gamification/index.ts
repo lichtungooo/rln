@@ -129,10 +129,15 @@ export {
   type AttestationRef,
 } from "./skill-system"
 
-// Pilot-Seed: Holz-Werkstatt (Stand 14.05.2026)
+// Seed-Daten Handwerks-Bereiche (Stand 14.05.2026)
 export {
   HOLZ_SKILLS,
   HOLZ_SKILL_BY_ID,
   HOLZ_HAUPTKETTE,
   HOLZ_KETTEN,
 } from "./seed-holz"
+export { METALL_SKILLS, METALL_HAUPTKETTE, METALL_KETTEN } from "./seed-metall"
+export { GARTEN_SKILLS, GARTEN_HAUPTKETTE, GARTEN_KETTEN } from "./seed-garten"
+export { ELEKTRONIK_SKILLS, ELEKTRONIK_HAUPTKETTE, ELEKTRONIK_KETTEN } from "./seed-elektronik"
+export { BAU_SKILLS, BAU_HAUPTKETTE, BAU_KETTEN } from "./seed-bau"
+export { REPARIEREN_SKILLS, REPARIEREN_HUB_KETTE, REPARIEREN_KETTEN } from "./seed-reparieren"
