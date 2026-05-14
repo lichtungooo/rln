@@ -145,3 +145,21 @@ export { REPARIEREN_SKILLS, REPARIEREN_HUB_KETTE, REPARIEREN_KETTEN } from "./se
 // Seed-Daten Bildungs-Bereiche
 export { MATHEMATIK_SKILLS, MATHEMATIK_HAUPTKETTE, MATHEMATIK_KETTEN } from "./seed-mathematik"
 export { SPORT_SKILLS, SPORT_HAUPTKETTE, SPORT_KETTEN } from "./seed-sport"
+export { SPRACHE_SKILLS, SPRACHE_HAUPTKETTE, SPRACHE_KETTEN } from "./seed-sprache"
+export {
+  NATURWISSENSCHAFTEN_SKILLS,
+  NATURWISSENSCHAFTEN_HUB_KETTE,
+  NATURWISSENSCHAFTEN_KETTEN,
+} from "./seed-naturwissenschaften"
+
+// Querschnitt: Drei Haende (Wurzel-Skills, Sicherheits-Lizenz)
+export {
+  VERMESSER_SKILLS,
+  SICHERHEIT_SKILLS,
+  WERKSTATT_SKILLS,
+  DREI_HAENDE_SKILLS,
+  HAND_VERMESSER,
+  HAND_SICHERHEIT,
+  HAND_WERKSTATT,
+  DREI_HAENDE_FULL,
+} from "./seed-drei-haende"
