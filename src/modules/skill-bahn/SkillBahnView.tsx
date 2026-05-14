@@ -31,6 +31,10 @@ import {
   MUSIK_SKILLS, MUSIK_HAUPTKETTE,
   HAUSWIRTSCHAFT_SKILLS, HAUSWIRTSCHAFT_HAUPTKETTE,
   LERNEN_LERNEN_SKILLS, LERNEN_LERNEN_HAUPTKETTE,
+  FREMDSPRACHEN_SKILLS, FREMDSPRACHEN_HAUPTKETTE,
+  GESELLSCHAFT_SKILLS, GESELLSCHAFT_HAUPTKETTE,
+  RELIGION_ETHIK_SKILLS, RELIGION_ETHIK_HAUPTKETTE,
+  BERUFSORIENTIERUNG_SKILLS, BERUFSORIENTIERUNG_HAUPTKETTE,
 } from "../gamification"
 import { SkillKettenBahn } from "./SkillKettenBahn"
 
@@ -155,6 +159,38 @@ const BEREICHE: BereichDaten[] = [
     art: "bildung",
     skills: LERNEN_LERNEN_SKILLS,
     kette: LERNEN_LERNEN_HAUPTKETTE,
+  },
+  {
+    id: "fremdsprachen",
+    name: BILDUNGS_BEREICH_BY_ID.fremdsprachen.name,
+    color: BILDUNGS_BEREICH_BY_ID.fremdsprachen.color,
+    art: "bildung",
+    skills: FREMDSPRACHEN_SKILLS,
+    kette: FREMDSPRACHEN_HAUPTKETTE,
+  },
+  {
+    id: "gesellschaft",
+    name: BILDUNGS_BEREICH_BY_ID.gesellschaft.name,
+    color: BILDUNGS_BEREICH_BY_ID.gesellschaft.color,
+    art: "bildung",
+    skills: GESELLSCHAFT_SKILLS,
+    kette: GESELLSCHAFT_HAUPTKETTE,
+  },
+  {
+    id: "religion-ethik",
+    name: BILDUNGS_BEREICH_BY_ID["religion-ethik"].name,
+    color: BILDUNGS_BEREICH_BY_ID["religion-ethik"].color,
+    art: "bildung",
+    skills: RELIGION_ETHIK_SKILLS,
+    kette: RELIGION_ETHIK_HAUPTKETTE,
+  },
+  {
+    id: "berufsorientierung",
+    name: BILDUNGS_BEREICH_BY_ID.berufsorientierung.name,
+    color: BILDUNGS_BEREICH_BY_ID.berufsorientierung.color,
+    art: "bildung",
+    skills: BERUFSORIENTIERUNG_SKILLS,
+    kette: BERUFSORIENTIERUNG_HAUPTKETTE,
   },
 ]
 

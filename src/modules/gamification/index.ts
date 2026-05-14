@@ -165,6 +165,26 @@ export {
   LERNEN_LERNEN_HAUPTKETTE,
   LERNEN_LERNEN_KETTEN,
 } from "./seed-lernen-lernen"
+export {
+  FREMDSPRACHEN_SKILLS,
+  FREMDSPRACHEN_HAUPTKETTE,
+  FREMDSPRACHEN_KETTEN,
+} from "./seed-fremdsprachen"
+export {
+  GESELLSCHAFT_SKILLS,
+  GESELLSCHAFT_HAUPTKETTE,
+  GESELLSCHAFT_KETTEN,
+} from "./seed-gesellschaft"
+export {
+  RELIGION_ETHIK_SKILLS,
+  RELIGION_ETHIK_HAUPTKETTE,
+  RELIGION_ETHIK_KETTEN,
+} from "./seed-religion-ethik"
+export {
+  BERUFSORIENTIERUNG_SKILLS,
+  BERUFSORIENTIERUNG_HAUPTKETTE,
+  BERUFSORIENTIERUNG_KETTEN,
+} from "./seed-berufsorientierung"
 
 // Querschnitt: Drei Haende (Wurzel-Skills, Sicherheits-Lizenz)
 export {
