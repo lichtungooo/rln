@@ -64,6 +64,7 @@ import { wissensfeldModule } from '../modules/wissensfeld'
 import { valluetModule } from '../modules/valluet'
 import { settingsModule } from '../modules/settings'
 import { skillBahnModule } from '../modules/skill-bahn'
+import { GlobalWotNotifications } from '../components/GlobalWotNotifications'
 import { useSpaceTheme } from '../themes/use-space-theme'
 import { SpaceSettings, type SpaceSettingsTab } from '../settings/SpaceSettings'
 import { MobileSpaceSettings } from '../settings/MobileSpaceSettings'
@@ -1393,6 +1394,7 @@ export default function MacherApp() {
     <ConnectorProvider connector={connector} key={connectorId}>
       <IncomingEventsProvider>
         <AuthGate connector={connector}>
+          <GlobalWotNotifications />
           <MacherHome activeConnectorId={connectorId} onConnectorChange={setConnectorId} />
         </AuthGate>
       </IncomingEventsProvider>
