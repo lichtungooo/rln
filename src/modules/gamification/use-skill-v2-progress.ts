@@ -17,12 +17,15 @@ import {
   useCreateItem,
   useUpdateItem,
   useCurrentUser,
+  useClaims,
 } from "@real-life-stack/toolkit"
 import type { Item } from "@real-life-stack/data-interface"
 import type { Tier } from "./skill-system"
 import { TIER_BY_ID, tierStufe } from "./skill-system"
 import {
   SKILL_ATTESTATION_TYPE,
+  SKILL_CLAIM_TAG,
+  tierFromClaimTags,
   type SkillAttestationData,
 } from "./use-skill-attestation"
 
@@ -45,6 +48,7 @@ export function useSkillV2Progress() {
   const { data: currentUser } = useCurrentUser()
   const { mutate: createItem } = useCreateItem()
   const { mutate: updateItem } = useUpdateItem()
+  const { attestations: signedAttestations } = useClaims()
 
   const myItem = useMemo<Item | null>(() => {
     if (!currentUser?.id) return null
@@ -64,6 +68,8 @@ export function useSkillV2Progress() {
   const attestedSkills = useMemo<Record<string, Tier>>(() => {
     if (!currentUser?.id) return {}
     const out: Record<string, Tier> = {}
+
+    // Quelle 1: Spiegel-Items (UI-Inbox)
     for (const a of attestations) {
       const d = a.data as Partial<SkillAttestationData>
       if (d.learnerId !== currentUser.id) continue
@@ -73,8 +79,22 @@ export function useSkillV2Progress() {
         out[d.skillId] = d.tier
       }
     }
+
+    // Quelle 2: SignedClaims aus Antons WoT-Storage — kryptographisch
+    // signierte Attestationen sind die echte Wahrheit.
+    for (const claim of signedAttestations) {
+      if (!claim.tags?.includes(SKILL_CLAIM_TAG)) continue
+      if (claim.to !== currentUser.id) continue
+      const tier = tierFromClaimTags(claim.tags)
+      if (!tier) continue
+      const skillId = claim.claim
+      const current = out[skillId]
+      if (!current || tierStufe(tier) > tierStufe(current)) {
+        out[skillId] = tier
+      }
+    }
     return out
-  }, [attestations, currentUser?.id])
+  }, [attestations, signedAttestations, currentUser?.id])
 
   /** Effektiver Stand: Maximum aus Selbst-Eintrag und Attestationen. */
   const effectiveSkills = useMemo<Record<string, Tier>>(() => {

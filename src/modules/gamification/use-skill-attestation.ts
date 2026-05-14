@@ -21,9 +21,28 @@ import {
   useCreateItem,
   useUpdateItem,
   useCurrentUser,
+  useClaims,
 } from "@real-life-stack/toolkit"
 import type { Item } from "@real-life-stack/data-interface"
 import type { Tier } from "./skill-system"
+
+/** Tag-Prefix fuer Skill-Tier in SignedClaims. */
+export const SKILL_CLAIM_TAG = "skill-attestation"
+export const SKILL_TIER_TAG_PREFIX = "tier:"
+
+/** Baut Tag-Array fuer einen Skill-Claim. */
+function buildSkillClaimTags(tier: Tier): string[] {
+  return [SKILL_CLAIM_TAG, `${SKILL_TIER_TAG_PREFIX}${tier}`]
+}
+
+/** Liest Tier aus Claim-Tags. */
+export function tierFromClaimTags(tags?: string[]): Tier | null {
+  if (!tags) return null
+  const tierTag = tags.find((t) => t.startsWith(SKILL_TIER_TAG_PREFIX))
+  if (!tierTag) return null
+  const tier = tierTag.slice(SKILL_TIER_TAG_PREFIX.length) as Tier
+  return tier
+}
 
 export const SKILL_ATTESTATION_REQUEST_TYPE = "skill-attestation-request"
 export const SKILL_ATTESTATION_TYPE = "skill-attestation"
@@ -64,6 +83,7 @@ export function useSkillAttestations() {
   const { data: currentUser } = useCurrentUser()
   const { mutate: createItem } = useCreateItem()
   const { mutate: updateItem } = useUpdateItem()
+  const { supported: claimsSupported, createClaim } = useClaims()
 
   /** Anfragen, die ICH gestellt habe. */
   const myRequests = useMemo<Item[]>(() => {
@@ -149,7 +169,27 @@ export function useSkillAttestations() {
       const reqData = req.data as SkillAttestationRequestData
       const now = new Date().toISOString()
 
-      // Attestation-Item anlegen
+      // Plus: SignedClaim via Antons WoT-Storage anlegen — kryptographisch
+      // signiert, automatisch zum Lerner synced. Das ist der eigentliche
+      // Vertrauens-Anker. Item dient nur als Inbox-Spiegel.
+      if (claimsSupported) {
+        try {
+          await createClaim(
+            req.createdBy,
+            reqData.skillId,
+            buildSkillClaimTags(reqData.requestedTier)
+          )
+        } catch (e) {
+          // Signed-Claim ist die primaere Quelle — wenn das scheitert,
+          // ist die Attestation nicht echt. Werfen, damit der Anwender
+          // weiss, dass nichts gespeichert wurde.
+          throw new Error(
+            `Bestaetigung konnte nicht kryptographisch signiert werden: ${e instanceof Error ? e.message : String(e)}`
+          )
+        }
+      }
+
+      // Attestation-Item anlegen (Spiegel fuer Inbox-UI)
       const attestationData: SkillAttestationData = {
         skillId: reqData.skillId,
         learnerId: req.createdBy,
