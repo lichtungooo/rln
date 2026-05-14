@@ -1,70 +1,598 @@
 # Skill-Tree-Neubau — Konzept
 
-*Synthese der sechs Recherche-Berichte, Stand 2026-05-13.*
-*Rohberichte in [recherche/](recherche/)*
+*Synthese aus acht Recherche-Berichten (Handwerks-Landschaft, Schul-Skills, Macher-Skills, Rollenspiel-Skill-Trees, Mentoren, Hornbach Baustoff Union, Frameworks, Schul-Potenzialmodelle).*
+*Stand 2026-05-14.*
+*Rohberichte in [recherche/](recherche/).*
 
 ---
 
 ## Kernsaetze
 
-1. **Ein Tree, zwei Welten.** Handwerk und Schule teilen denselben Datensatz, aber mit zwei Sichten: Gewerk-Sicht (was kann ich) und Potenzialfeld-Sicht (worin steckt meine Begabung). Faceted Classification, kein Eltern-Konflikt.
-
-2. **Skills sind verbunden, nicht aufgelistet.** Voraussetzungen als Kanten, drei Typen: Pflicht (gesetzlich/sicherheit), Empfohlen (didaktisch), Synergie (verstaerkt). Skill als Knoten, Gewerk als Cluster, Potenzialfeld als Faerbung, Mentoren-Pfad als parallele Linie.
-
-3. **Begabung ist Verb, nicht Substantiv.** Der Tree zeigt was waechst, nicht was fehlt. Stufen-Sprache: gespuert, probiert, kann, kann lehren, meistert. Jede Stufe traegt einen Beleg — Foto, Geschichte, Werkstueck, Zeuge.
-
-4. **Mentoren sind eigene Welt.** Parallele Skill-Achse fuer Lernbegleiter. Pfad: Lerner → Mit-Lerner → Quest-Geber → Mentor → Meister-Mentor. Anerkennung ueber drei Quellen: formale Pruefung (AEVO/Meister), Peer-Bestaetigung (Open Badges), gelebte Beziehung (Attestations von Lernenden).
-
-5. **Datenfundament steht.** ESCO (13.890 Skills + 3.039 Berufe) + EU-Frameworks (DigComp, EntreComp, LifeComp, GreenComp). HwO Anlage A/B1/B2 (147 Gewerke) als Top-Sortierung. DQR 1-8 als vertikale Achse. Open Badges 3.0 + W3C Verifiable Credentials 2.0 als Attest-Format — direkter Anschluss an Antons WoT.
+1. **Drei Schichten, ein Datenmodell.** Acht Potenzialfelder (universell), 6 Handwerks-Bereiche + 12 Bildungs-Bereiche (anwendbar), Skill-Ketten innerhalb der Aeste (lernbar). Drei Sichten — Constellation, Sunburst, Bahn — auf dieselben Daten.
+2. **Lesbarkeit traegt Tiefe.** Maximal drei Ebenen tief pro Cluster, klare Voraussetzungen mit Ampel-Logik, sofortige Belohnung. Path of Exile zeigt was passiert, wenn 1300 Knoten sichtbar werden — 80 Prozent springen ab.
+3. **Begabung ist Verb.** Sechs Tier-Stufen — *gespuert / probiert / kann / kann-lehren / meistert / gibt-weiter*. Jede Stufe traegt einen Beleg: Foto, Werkstueck, Zeuge, Attestation.
+4. **Drei Haende als Sicherheits-Lizenz.** Vermesser, Sicherheit, Werkstatt — die Wurzel-Skills, ohne die kein Bereich oeffnet.
+5. **Mentoren als parallele Achse.** 20 Mentor-Skills, vier Schwellen. Wer kann lehren, waechst weiter durch Begleitung.
+6. **Sprache einfach und klar.** Saegen, Loeten, Pflanzen, Mauern, Lesen, Schreiben, Schwimmen. Ein bis drei Worte, aktive Verben, kindgerecht.
+7. **Datenfundament steht.** ESCO + HwO + DQR + EU-Frameworks + Open Badges 3.0 als Anschluss an Antons WoT.
+8. **Weisse Gamification.** Sinn, Meisterschaft, Selbstausdruck, Verbundenheit. Keine Streaks, kein FOMO, keine Hearts.
 
 ---
 
-## I. Zwei Welten — eine Architektur
+## I. Architektur in drei Schichten
 
-### Das Macher-Netzwerk und das Schul-Netzwerk teilen den Tree
+```
+┌─────────────────────────────────────────────────────────────┐
+│  SCHICHT 1 — Acht Potenzialfelder (Constellation, Skyrim)    │
+│  Raum-Bau · Stoff-Form · System-Logik · Welt-Wachstum        │
+│  Mensch-Verbindung · Wort-Wirkung · Initiative-Werk          │
+│  Koerper-Bewegung                                            │
+│  Universell, lose verbunden, traegt alles                    │
+├─────────────────────────────────────────────────────────────┤
+│  SCHICHT 2a — Sechs Handwerks-Bereiche (Hub-and-Spoke, D2)   │
+│  Holz · Metall · Garten und Pflanzen · Elektronik und Loeten │
+│  Bauen und Renovieren · Reparieren und Upcycling             │
+│                                                              │
+│  SCHICHT 2b — Zwoelf Bildungs-Bereiche (Hub-and-Spoke +      │
+│   Constellation + Linear)                                    │
+│  Sprache · Fremdsprachen · Mathematik · Naturwissenschaften  │
+│  Gesellschaft · Religion-Ethik-Philosophie · Kunst · Musik   │
+│  Koerper und Bewegung · Hauswirtschaft · Lernen lernen       │
+│  Berufsorientierung                                          │
+├─────────────────────────────────────────────────────────────┤
+│  SCHICHT 3 — Skill-Ketten innerhalb der Aeste (Linear, Duo)  │
+│  4 bis 7 Stufen pro Skill-Kette, Verzweigung an Schwellen    │
+└─────────────────────────────────────────────────────────────┘
+```
 
-| | Macher-Netzwerk | Schul-Netzwerk |
+**Querschnitt 1: Drei Haende** — Wurzel-Skills (Vermesser, Sicherheit, Werkstatt). Sicherheits-Lizenz vor allen Bereichen.
+**Querschnitt 2: Mentoren-Achse** — 20 Mentor-Skills, 4 Schwellen, parallel zur Fach-Achse.
+**Querschnitt 3: Innere Linie** — Stille, Natur, Koerper, Selbsterkenntnis, Geburts-Wurzel, Innerer Frieden, Rueckverbindung. Wirkt durch alle Bereiche.
+
+**Summe: rund 260 Skills.** Unter der 300er-Komplexitaets-Grenze, leserlich.
+
+---
+
+## II. Schicht 1 — Acht Potenzialfelder
+
+Aus Gardner (Multiple Intelligenzen), VIA-Charakterstaerken, OECD Learning Compass und der Handwerks-Realitaet. Jedes Feld oeffnet eine Tuer in Schule und Werkstatt.
+
+| Feld | Was darin lebt | Schul-Andock | Handwerks-Andock |
+|---|---|---|---|
+| **1. Raum und Bau** | raeumlich-konstruktiv | Mathe (Geometrie), Physik (Statik) | Holz, Metall, Bauen |
+| **2. Stoff und Form** | gestalterisch-aesthetisch | Kunst, Musik, Design | Holz (Schnitzen), Schmuck, Konditor |
+| **3. System und Logik** | analytisch-systemisch | Physik, Chemie, Informatik | Elektronik, Mechatronik |
+| **4. Welt und Wachstum** | forschend, oekologisch | Biologie, Geographie | Garten, Forstwirt, Imker |
+| **5. Mensch und Verbindung** | sozial-koordinativ | Sozialkunde, Religion, Ethik | Pflege, Erzieher, Mentor |
+| **6. Wort und Wirkung** | kommunikativ-sprachlich | Deutsch, Fremdsprachen | Kundengespraech, Marketing |
+| **7. Initiative und Werk** | unternehmerisch-handelnd | Wirtschaft, Politik | Selbststaendigkeit, Werkstatt-Gruendung |
+| **8. Koerper und Bewegung** | koerperlich-kinaesthetisch | Sport, Tanz | Bauarbeit, Schmieden, Geruest |
+
+Visualisierung als **Constellation**: acht Cluster im Raum, lose ueber Synergie-Knoten verbunden. Jedes Feld traegt drei bis fuenf Anker-Skills (universell, bereichs-uebergreifend). Wer Anker freischaltet, beschleunigt Skills in mehreren Bereichen.
+
+**Beispiel-Anker im Feld Raum-Bau:** Messen · Planen · Bauen · Pruefen.
+**Beispiel-Anker im Feld Koerper-Bewegung:** Stand · Atem · Kraft · Geschicklichkeit.
+
+---
+
+## III. Schicht 2a — Sechs Handwerks-Bereiche
+
+Hornbach-Anker, Werkstatt-Praxis. Architektur: **Hub-and-Spoke mit Tier-Logik** (Diablo-II-Lesbarkeit). Pro Bereich 18–22 Skills in drei Tier-Ebenen.
+
+### Holz
+
+Tischlerei, Schreinerei, Drechseln, Schnitzen.
+
+**Skill-Kette Hauptpfad:**
+```
+Schleifen → Messen → Saegen → Bohren → Schrauben → Hobeln → Zinken → Drechseln
+   (Tier 1)              (Tier 2)              (Tier 3)
+```
+
+**Verzweigung bei Hobeln:**
+- Pfad Moebel: Leimen → Furnieren → eigenes Moebel
+- Pfad Kunst: Schnitzen → Intarsie → Skulptur
+
+**Synergien:**
+- mit Mathematik "Strecke messen" → Praezision-Bonus
+- mit Metall "Stahl erkennen" → Werkzeug-Pflege als Bonus-Skill
+
+**Sicherheits-Schwellen (DGUV):** Tischkreissaege ab 16, Drechselbank ab 14.
+
+### Metall
+
+Schmieden, Schweissen, Feilen, Gewinde.
+
+**Skill-Kette Hauptpfad:**
+```
+Stahl erkennen → Feilen → Saegen → Bohren → Biegen → Schmieden → Schweissen → Haerten
+```
+
+**Verzweigung bei Schweissen:**
+- WIG · MIG · Elektrode — drei parallele Aeste
+- bei Biegen: Treiben → Punzen (Schmuck-Pfad)
+
+**Synergien:**
+- mit Elektronik "Stromkreis" → Schweissgeraet verstehen
+- mit Physik "Temperatur" → Gluehfarben lesen
+
+### Garten und Pflanzen
+
+Gemueseanbau, Permakultur, Imkerei, Wildkraeuter.
+
+**Skill-Kette Hauptpfad:**
+```
+Boden spueren → Saen → Pikieren → Pflanzen → Pflegen → Ernten → Vermehren → Permakultur
+```
+
+**Verzweigung bei Ernten:**
+- Lagern · Einkochen · Trocknen — drei Erhaltungs-Aeste
+- bei Pflanzen: Beet → Hochbeet → Gewaechshaus
+
+**Synergien:**
+- mit Naturwissenschaften "Boden" → Boden-Chemie verstehen
+- mit Hauswirtschaft "Konservieren" → vom Beet zum Teller
+
+### Elektronik und Loeten
+
+Schaltungen, Arduino, Reparatur-Elektronik.
+
+**Skill-Kette Hauptpfad:**
+```
+Stromkreis → Widerstand verstehen → Loeten → Schaltung lesen → LED → Arduino → Sensor → Aktor
+```
+
+**Verzweigung bei Arduino:**
+- Pfad Software: Raspberry Pi → Programmieren tiefer
+- Pfad Hardware: Eigene Platine → Aetzen → Loeten Stufe 2
+
+**Synergien:**
+- mit Mathematik "Algebra" → Ohmsches Gesetz frei
+- mit Physik "Magnetismus" → Motor steuern
+
+**Sicherheits-Schwelle:** 230V-Anschluss ab 18 mit Fachkraft.
+
+### Bauen und Renovieren
+
+Mauern, Verputzen, Beton, Trockenbau, Daemmung.
+
+**Skill-Kette Hauptpfad:**
+```
+Werkzeug-Pflege → Mauern → Verputzen → Streichen → Fliesen → Bodenlegen → Trockenbau → Daemmen
+```
+
+**Verzweigung bei Verputzen:**
+- Lehm · Kalk · Gips — drei Materialien
+- bei Trockenbau: Wand → Decke → Dach
+
+**Synergien:**
+- mit Mathematik "Flaeche" → Material-Mengen rechnen
+- mit Physik "Statik" → Hebel verstehen
+
+**Sicherheits-Schwellen:** Geruest ab 16, Dacharbeit ab 16 mit Auffanggurt.
+
+### Reparieren und Upcycling
+
+Diagnose, Schrauben, Naehen, Lackieren, Reanimieren.
+
+Sonderform: **Hub mit vier Spokes**. Wurzel-Skill ist die Diagnose.
+
+**Hub:** Diagnose (Fehler beobachten + Fehler erzaehlen + Multimeter lesen)
+
+**Spokes:**
+- **Holz:** Risse fuellen → Leim-Verbindung → Furnier ausbessern
+- **Metall:** Schraube oeffnen → Gewinde retten → Schweiss-Reparatur
+- **Stoff:** Nadel fuehren → Naht setzen → Patch
+- **Elektronik:** Geraet oeffnen → Multimeter lesen → Bauteil tauschen
+
+**Synergie:** Wer drei Spokes auf Tier 3 hat, bekommt **Universal-Macher** als Anker-Skill.
+
+---
+
+## IV. Schicht 2b — Zwoelf Bildungs-Bereiche
+
+Schul-Anker, akademische Linie. Architektur je nach Substanz: Hub-and-Spoke, Constellation oder Linear-Pfad.
+
+### Sprache und Wort (Deutsch) — Linear mit Verzweigung
+
+```
+Lesen → Verstehen → Schreiben → Vortragen → Argumentieren → Erzaehlen → Dichten
+```
+
+Verzweigung bei Schreiben:
+- Sach-Pfad: Brief → Bericht → Essay
+- Kunst-Pfad: Geschichte → Gedicht → Lyrik
+
+Synergie mit Innerer Linie "Selbsterkenntnis" → Tagebuch als Praxis.
+
+### Fremdsprachen — Linear-Pfad pro Sprache
+
+```
+Begruessen → Sich vorstellen → Einkaufen → Erzaehlen → Verstehen → Lesen → Schreiben → Diskutieren
+```
+
+Duolingo-Pattern. **Ohne Streak-Druck.** Sprachen: Englisch (Pflicht), Franzoesisch, Spanisch, Latein.
+
+### Mathematik — Tier-basiert, Spirale
+
+```
+Strecke messen → Flaeche → Volumen → Bruch → Algebra → Geometrie → Statistik → Funktionen
+```
+
+**Bruner-Spirale:** Messen kehrt auf Tier 1 (Linealraum) und Tier 5 (Vektorraum) wieder. Gleicher Skill, tiefere Form.
+
+Synergien:
+- mit Holz "Saegen" → Praezision in echten Massen
+- mit Bauen "Mauern" → Material-Mengen rechnen
+
+### Naturwissenschaften — Hub-and-Spoke mit drei Hubs
+
+**Hub 1 Stoffe (Chemie):** Mischen → Trennen → Reagieren → Saeure und Base → Salz und Kristall
+**Hub 2 Kraefte (Physik):** Hebel → Rolle → Energie → Magnet → Schaltung
+**Hub 3 Leben (Biologie):** Zelle → Pflanze → Tier → Mensch → Oekosystem
+
+Plus **Informatik als eigene Linie:** Algorithmus → Programm → Datenstruktur → Netzwerk → KI-Grundlagen.
+
+Synergie: Wer alle drei Hubs auf Tier 2 hat → **Forscher-Auge** als Anker.
+
+### Gesellschaft — Constellation
+
+```
+Familie · Nachbarschaft · Stadt · Land · Welt · Geschichte · Wirtschaft · Recht
+```
+
+Acht Themen lose verbunden, jedes atmet fuer sich.
+
+Synergie mit Sprache "Argumentieren" → Debattier-Skill.
+
+### Religion, Ethik, Philosophie — Constellation
+
+```
+Stille · Frage · Wert · Recht · Tod · Liebe · Sinn · Wahrheit
+```
+
+Disco-Elysium-Pattern: Skills als **Stimmen**, nicht als Punkte.
+
+Eng verzahnt mit Innerer Linie.
+
+### Kunst — Hub-and-Spoke (Wurzel: Sehen)
+
+**Hub:** Sehen (Wahrnehmen + Komposition + Farblehre)
+
+**Spokes:**
+- Zeichnen → Malen → Aquarellieren
+- Formen → Modellieren → Plastik
+- Foto → Bildbearbeitung → Film
+- Komposition → Farblehre → Stil
+
+Synergie mit Holz "Schnitzen" → Skulptur.
+
+### Musik — Tier-basiert mit Verzweigung
+
+```
+Hoeren → Rhythmus klatschen → Singen → Instrument waehlen → Spielen → Noten lesen → Komponieren
+```
+
+Verzweigung bei Instrument:
+- Saite · Tasten · Blas · Schlag
+
+Synergie mit Sport "Atem" → Stimme tragen.
+
+### Koerper und Bewegung (Sport) — Tier-basiert mit Verzweigung
+
+```
+Stand → Atem → Kraft → Ausdauer → Geschicklichkeit → Mannschaft → Wettkampf
+```
+
+Verzweigung bei Geschicklichkeit:
+- Ball · Rad · Wasser · Schnee
+
+Plus Tanz, Akrobatik, Kampfkunst, Yoga als parallele Bahnen.
+
+Synergie mit Innerer Linie "Koerper" → Achtsamkeit in Bewegung.
+
+### Hauswirtschaft und Ernaehrung — Hub-and-Spoke (Wurzel: Versorgen)
+
+**Hub:** Versorgen (Bedarf erkennen + Plan + Lagern)
+
+**Spokes:**
+- Einkaufen → Lagern → Resteverwertung
+- Kochen → Backen → Einkochen
+- Waschen → Naehen → Flicken
+- Putzen → Reparieren → Verschoenern
+
+Synergie mit Garten "Ernten" → vom Beet zum Teller.
+
+### Lernen lernen — Linear, universell
+
+```
+Aufmerksamkeit → Notiz machen → Frage stellen → Erklaeren → Wiederholen → Reflektieren → Lernpartner → Selbst-Pfad
+```
+
+Universell. Faerbt alle anderen Bereiche.
+
+### Berufsorientierung — Constellation
+
+```
+Praktikum · Gespraech · Werkstatt-Besuch · Schnupper-Tag · Berufsbild · Bewerbung · Erstgespraech · Reflektion
+```
+
+Eng mit Mentoren-Achse verbunden.
+
+---
+
+## V. Schicht 3 — Skill-Ketten innerhalb der Aeste
+
+Pattern: **Linear-Pfad mit Verzweigung** (Duolingo neue Version, ohne Streak).
+
+Pro Skill-Kette vier bis sieben Stufen — die sechs Tier-Stufen plus optionale Tiefen-Anker.
+
+**Verzweigung an Schwellen** (Pathfinder-Feats-Pattern): An jedem Tier-Uebergang waehlt der Lernende A oder B. Z.B. bei Holz "Hobeln": **Moebel-Pfad** (Leimen → Furnieren) oder **Kunst-Pfad** (Schnitzen → Intarsie).
+
+**Tiefen-Anker** am Ende einer Kette: Wer eine Kette abschliesst (Tier 6 "gibt-weiter"), bekommt einen Anker-Skill, der quer in andere Bereiche strahlt. Beispiel: Wer Holz auf Meisterstufe traegt, bekommt **Holz-Hueter** — kann Holz-Quests in allen Festival-Werkstaetten leiten.
+
+---
+
+## VI. Sechs Tier-Stufen
+
+| Stufe | Bedeutung | Beleg |
 |---|---|---|
-| **Sub-Spaces** | Macher Berlin, Macher Hamburg, Macher Kassel | Gesamtschule Gudensberg, Talentschule Bochum |
-| **Zugang** | freiwillig, freizeitlich, Festival/Werkstatt | systemisch, schulisch, Klasse 7-10 |
-| **Tree-Sicht (Default)** | Gewerke (Holz, Metall, Garten, Elektro, Bau, Reparatur) | Potenzialfelder (Raum/Bau, Stoff/Form, System/Logik, Welt/Wachstum, Mensch/Verbindung, Wort/Wirkung, Initiative/Werk) |
-| **Tree-Sicht (alternativ)** | Potenzialfelder als Tags | Gewerke als Andock-Punkte |
-| **Mentoren** | Handwerksmeister, Festival-Coaches, Hornbach-Workshop-Leiter | Lehrer, Lernbegleiter, Eltern-Mentoren, externe Profis |
-| **Quests** | freiwillige Projekte, Werkstueck-orientiert | Schulische Lernsituationen + Praxistage |
+| 1. **gespuert** | Funke gezuendet, erstes Interesse | Selbsteintrag |
+| 2. **probiert** | Erste konkrete Erfahrung, Werk-Versuch | Foto, Werkstueck |
+| 3. **kann** | Mastery erreicht, Werk gelingt | Mentor-Attestation |
+| 4. **kann-lehren** | Faehigkeit so tief, dass anderen helfen funktioniert | Mit-Lerner-Attestationen |
+| 5. **meistert** | Voll beherrscht, eigenstaendig, ueberraschend | Meister-Attestation, Pruefung, Wettbewerb |
+| 6. **gibt-weiter** | Traegt Bewegung, schenkt der Gemeinschaft Spuren | Mentor-Quests an andere |
 
-**Ein Mensch traegt EIN Profil mit EINEM Tree.** Beide Netzwerke fuettern denselben Datensatz. Ein Kind aus der Gesamtschule Gudensberg bekommt Skill-XP fuer einen Werkstatttag bei Macher Kassel. Ein Macher Berlin-Erwachsener gibt Mentor-Quests an Schul-Gruppen — wachst dabei in seiner Mentor-Achse.
+Wissenschaftlich getragen durch Bloom Mastery Learning (1968, Hattie 2007 d=0.79). Sprache durch Hueter-Linie inspiriert (Begabung als Verb).
 
 ---
 
-## II. Datenfundament
+## VII. Drei Haende — Sicherheits-Lizenz vor jedem Bereich
 
-### ESCO als Skill-Steinbruch
-13.890 Skills + 3.039 Berufe in 28 Sprachen, frei nutzbar. Linked Open Data mit RDF/TTL/CSV/JSON-LD. [tabiya-tech/tabiya-open-dataset](https://github.com/tabiya-tech/tabiya-open-dataset) liefert die saubere Variante zum Direkt-Import. Jeder unserer Skill-Knoten traegt eine ESCO-ID als `externalAnchor` — wir sind europaeisch anschlussfaehig.
+Wurzel-Skills, die unter allen Bereichen liegen. Aus DGUV-Regeln, JArbSchG, IHK-Vorbildungs-Standards.
 
-### EU-Kompetenz-Frameworks als Begleitschiene
-- **DigComp 2.2** (21 digitale Kompetenzen × 8 Niveaus) → System und Logik
-- **EntreComp** (15 unternehmerische Kompetenzen × 8 Stufen × 442 Lernergebnisse) → Initiative und Werk
-- **LifeComp** (9 personale/soziale Kompetenzen) → Mensch und Verbindung + Querschnitt
-- **GreenComp** (12 Nachhaltigkeits-Kompetenzen) → Welt und Wachstum
+| Hand | Buendel | Alter |
+|---|---|---|
+| **Hand des Vermessers** | Messen + Skizze + Material erkennen | ab 8 |
+| **Hand der Sicherheit** | PSA + Erste Hilfe + Werkzeug pflegen | ab 8 |
+| **Hand der Werkstatt** | Arbeitsplatz halten + Stille halten + Auftrag annehmen | ab 6 |
 
-### HwO + DQR als Strukturachsen
-- **HwO Anlage A** (53 zulassungspflichtige Gewerke), **B1** (42 zulassungsfrei), **B2** (52 handwerksaehnlich) — 147 Gewerke als Top-Ebene
-- **DQR 1-8** als vertikale Achse: Schnupperkurs 1-2, Lehre 3-4, Geselle 4, Meister 6
+**Drei Haende auf Tier 2 = Sicherheits-Lizenz.** Erst dann oeffnet sich der Eintritt in die Handwerks-Bereiche. Pathfinder-2e-Pattern: Praerequisits klar, Schwelle bewusst.
 
-### Open Badges 3.0 + W3C VC 2.0 als Attest-Format
-Skill-Attestierungen sind kryptographisch signierte Verifiable Credentials. Wallet-kompatibel zum EUDI-Wallet ab 2026. Direkt an Antons Ed25519 + DID andockbar. JSON-LD-Beispiel:
+---
+
+## VIII. Mentoren-Achse (parallel)
+
+20 atomare Mentor-Skills, eigene Achse neben den Fach-Skills. Im Profil als zweite Krone.
+
+**Stufe 1 Grundlagen:** Sicherheits-Einweisung · Vormachen · Erklaeren mit einfachen Worten · Aktives Zuhoeren · Wuerde-Wahrung
+
+**Stufe 2 Begleitung:** Beobachten · Offene Fragen stellen · Korrektur bei Gefahr · Loben am Verhalten · Reflexionsgespraech fuehren
+
+**Stufe 3 Vertiefung:** Lernsituation gestalten · Gruppendynamik halten · Fehlerkultur leben · Motivation halten · Konflikt moderieren
+
+**Stufe 4 Meisterschaft:** Co-Kreativitaet · Subjekt-Subjekt-Haltung · Andere Mentoren ausbilden · Quest-Design · Lebens-Begleitung
+
+**Vier Schwellen:**
+
+| Schwelle | Bedingung | Was erlaubt |
+|---|---|---|
+| **Mit-Lerner** | 3 abgeschlossene Quests im Gebiet | Anderen helfen, die er selbst gemacht hat |
+| **Quest-Geber** | 5 Mit-Lerner-Erfahrungen + 3 Peer-Attestations | Eigene Quests anbieten |
+| **Mentor** | 20 Quest-Begleitungen mit positiven Attestations | Offizielle Mentor-Rolle, Workshop-Leiter |
+| **Meister-Mentor** | AEVO-Schein + 50 Mentor-Attestations + 3 Mentor-zu-Mentor-Attestations | Andere zu Mentoren ausbilden |
+
+**Wissenschaftlich getragen:** Big Brothers Big Sisters-Wirkungsstudien (1300 Jugendliche RCT, 18-Monats-Effekt, 30-Jahre-Langzeitstudie), AEVO als formaler Anker, OECD Learning Compass 2030 Teaching Compass.
+
+---
+
+## IX. Innere Linie (Querschnitt durch alle Bereiche)
+
+Sieben Linien wirken in allen Skills als Geist:
+
+1. **Stille** — Drei Atemzuege vor jedem Schnitt
+2. **Natur** — Material als Lebewesen achten
+3. **Koerper** — Stand, Atem, Hand bewusst fuehren
+4. **Selbsterkenntnis** — eigene Muster erkennen
+5. **Geburts-Wurzel** — fruehe Praegung als unsichtbares Erbe (fuer Lehrer und Eltern, nicht fuer Schueler direkt)
+6. **Innerer Frieden** — Herz-Hirn-Kohaerenz, Polyvagal-Sicherheit
+7. **Rueckverbindung** — Mensch-Natur-Erde-Universum als Geflecht
+
+Wissenschaftlich tragend: Kabat-Zinn MBSR, MindUP, Brisch SAFE, HeartMath, Porges, Marshall Rosenberg.
+
+**Sichtbar im Profil**, nicht in der Skill-Karte. Disco-Elysium-Pattern: Skills als **Stimmen**, nicht als Punkte.
+
+---
+
+## X. Synergien zwischen Bereichen
+
+Synergie-Knoten verbinden Bereiche und beschleunigen Lernen. Beispiele:
+
+| Synergie | Was passiert |
+|---|---|
+| Holz "Saegen" + Mathematik "Strecke messen" | Praezision-Bonus, Werkstueck-Mass exakt |
+| Metall "Schweissen" + Naturwissenschaften "Energie" | Lichtbogen verstehen, Schweiss-Strom rechnen |
+| Garten "Boden" + Naturwissenschaften "Chemie" | pH-Wert, Naehrstoff-Kreislauf, Kompost-Wissen |
+| Elektronik "Stromkreis" + Mathematik "Algebra" | Ohmsches Gesetz frei, Schaltung berechnen |
+| Bauen "Mauern" + Mathematik "Flaeche" | Material-Mengen rechnen, Verband planen |
+| Sport "Atem" + Musik "Singen" | Stimme tragen, Phrasen halten |
+| Kunst "Sehen" + Holz "Schnitzen" | Skulptur, Form aus Material |
+| Sprache "Argumentieren" + Gesellschaft | Debattier-Skill, Position halten |
+| Innere Linie "Selbsterkenntnis" + Sprache "Schreiben" | Tagebuch als Praxis |
+
+---
+
+## XI. Voraussetzungs-Logik (Ampel)
+
+Drei Kanten-Typen zwischen Skill-Knoten:
+
+| Farbe | Typ | Beispiel |
+|---|---|---|
+| **Rot — Pflicht** | gesetzlich, sicherheits-zwingend | Sicherheits-Einweisung vor Maschinen-Bedienung (DGUV) |
+| **Gelb — Empfohlen** | didaktisch sinnvoll | Handsaege vor Tischkreissaege (Ausbildungsordnung) |
+| **Gruen — Synergie** | optional, verstaerkt | Mass nehmen verstaerkt jedes Gewerk |
+
+**Alters-Tore als zweite Schicht.** Pro Skill ein Mindest-Alter aus JArbSchG, DGUV-Schulregeln. Kinder unter dem Alter sehen den Knoten — koennen den Quest jedoch nur mit Erwachsenen-Begleitung starten.
+
+---
+
+## XII. Datenstruktur
+
+```typescript
+export type PotenzialfeldId =
+  | 'raum-bau' | 'stoff-form' | 'system-logik' | 'welt-wachstum'
+  | 'mensch-verbindung' | 'wort-wirkung' | 'initiative-werk' | 'koerper-bewegung'
+
+export type HandwerksBereichId =
+  | 'holz' | 'metall' | 'garten' | 'elektronik' | 'bau' | 'reparieren'
+
+export type BildungsBereichId =
+  | 'sprache' | 'fremdsprachen' | 'mathematik' | 'naturwissenschaften'
+  | 'gesellschaft' | 'religion-ethik' | 'kunst' | 'musik'
+  | 'sport' | 'hauswirtschaft' | 'lernen-lernen' | 'berufsorientierung'
+
+export type Tier =
+  | 'gespuert' | 'probiert' | 'kann' | 'kann-lehren' | 'meistert' | 'gibt-weiter'
+
+export type Altersfreigabe =
+  | 'alle' | 'ab6' | 'ab8' | 'ab10' | 'ab12' | 'ab14' | 'ab16' | 'volljaehrig'
+
+export type KantenTyp = 'pflicht' | 'empfohlen' | 'synergie'
+
+export interface ExternalAnchor {
+  framework: 'esco' | 'digcomp' | 'entrecomp' | 'lifecomp' | 'greencomp' | 'hwo' | 'kmk'
+  code: string
+  level?: number  // DQR 1-8 oder Framework-Niveau
+}
+
+export interface SkillEdge {
+  to: SkillId
+  typ: KantenTyp
+  begruendung?: string
+}
+
+export interface Skill {
+  id: SkillId
+  name: string                          // kindgerecht, 1-3 Worte
+  beschreibung?: string
+  potenzialfelder: PotenzialfeldId[]    // ein bis drei Felder
+  handwerksBereich?: HandwerksBereichId
+  bildungsBereich?: BildungsBereichId
+  tier: Tier
+  dqrNiveau: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
+  altersFreigabe: Altersfreigabe
+  voraussetzungen: SkillEdge[]
+  externalAnchors?: ExternalAnchor[]
+  attestationModi: ('selbst' | 'peer' | 'meister' | 'pruefung' | 'werk')[]
+  probeAufgabe?: {
+    titel: string
+    beschreibung: string
+    zeitMinuten: number
+    materialBenoetigt: string[]
+  }
+  badgeTemplate?: {
+    name: string
+    description: string
+    criteria: string
+  }
+  innereLinie?: ('stille' | 'natur' | 'koerper' | 'selbsterkenntnis' | 'frieden' | 'rueckverbindung')[]
+}
+
+export interface SkillKette {
+  id: string
+  name: string                          // "Vom Splitter zur Bank"
+  bereich: HandwerksBereichId | BildungsBereichId
+  skillIds: SkillId[]                   // geordnete Folge
+  verzweigungen?: { ab: SkillId; aeste: { name: string; skillIds: SkillId[] }[] }[]
+  zielTier: Tier
+  werkstueck?: string                   // konkretes Werk am Ende
+}
+
+export interface DreiHand {
+  id: 'vermesser' | 'sicherheit' | 'werkstatt'
+  name: string
+  skillIds: SkillId[]                   // die Buendel-Skills
+  schwellenTier: Tier                   // Tier 2 = Sicherheits-Lizenz
+}
+
+export interface MentorSkill extends Skill {
+  mentorStufe: 1 | 2 | 3 | 4
+}
+
+export interface AttestationRef {
+  attesterDid: string                   // WoT-Identitaet
+  vcId: string                          // W3C Verifiable Credential 2.0
+  achievementId?: string
+  issuedAt: string
+  relation?: 'meister' | 'kollege' | 'kunde' | 'lehrling' | 'familie' | 'mentor'
+  visibility: 'oeffentlich' | 'kreis' | 'privat'
+}
+```
+
+---
+
+## XIII. Drei Sichten — Visualisierung
+
+Drei Sichten auf dieselben Daten:
+
+### Sicht 1 — Gesamt-Karte (Force-Directed Graph)
+
+Acht Potenzialfelder als Cluster im Raum, lose ueber Synergie-Kanten verbunden. Jeder Cluster faerbt eine Welt (Raum-Bau gelb, Stoff-Form rot, Welt-Wachstum gruen, Koerper-Bewegung blau). Klick auf Cluster zoomt in Bereich.
+
+### Sicht 2 — Bereich-Sunburst (radial)
+
+Wurzel in der Mitte (z.B. "Holz"). Aeste im ersten Ring (Schleifen, Saegen, Bohren, Hobeln, Zinken, Drechseln). Tier-Stufen im zweiten Ring. Tiefen-Anker im dritten Ring (Meister-Werke).
+
+### Sicht 3 — Skill-Kette (Bahn)
+
+Wenn ein Lernender in einem Skill ist, sieht er eine Bahn: was vor ihm liegt, was hinter ihm liegt. Duolingo-Pattern, ohne Streak-Druck.
+
+**Mobile-Anpassung:**
+- Sunburst kollabiert zu Akkordeon-Liste mit Bereich-Headern
+- Skill-Ketten bleiben als horizontale Bahn, swipebar
+- Detail-Panel als Bottom-Sheet
+
+**Detail-Panel pro Skill:**
+- Titel (kindgerecht)
+- Tier-Stufe + Symbol
+- Beschreibung in zwei Saetzen
+- Voraussetzungen (Ampel-Liste)
+- Naechste Schritte
+- Mentor-Slot ("Wer kann mir das zeigen?")
+- Verbundene Skills (Synergien)
+- Quest-Vorschlaege
+
+**Technisch:**
+- Profil-Widget (P0, Festival 2026): [beautiful-skill-tree](https://github.com/andrico1234/beautiful-skill-tree) — fertig, 20-100 Skills, Pitch-tauglich
+- Atlas-Sicht (P1+): [Cytoscape.js](https://js.cytoscape.org/) oder D3 Force-Directed — 260 Knoten, DAG-faehig
+- Sunburst (P1+): D3 Sunburst Layout
+
+---
+
+## XIV. Bridge zur WoT-Identitaet (Attestation)
+
+**Skill-XP entsteht durch:**
+1. **Selbstdeklaration** (Tier gespuert/probiert) — keine Attestation, nur eigener Eintrag
+2. **Peer-Attestation** (Tier kann) — andere Macher bestaetigen ("Ich habs gesehen")
+3. **Meister-Attestation** (Tier kann-lehren) — Mentor mit AEVO-Schein bestaetigt
+4. **Pruefung oder Wettbewerb** (Tier meistert) — formaler Nachweis
+5. **Werk-Beleg** (jede Stufe) — Foto, Video, Werkstueck mit Geo-Tag
+6. **Mentor-Wirkung** (Tier gibt-weiter) — Mit-Lerner-Attestationen
+
+Jede Attestation ist ein **W3C Verifiable Credential 2.0** mit **Open Badges 3.0**-Achievement, signiert mit der DID des Attestierenden ueber Antons Ed25519-Stack. Im Yjs-doc.attestations gespeichert. Anschluss an EUDI-Wallet ab 2026.
 
 ```json
 {
   "@context": ["https://www.w3.org/ns/credentials/v2",
                "https://purl.imsglobal.org/spec/ob/v3p0/context-3.0.3.json"],
   "type": ["VerifiableCredential", "OpenBadgeCredential"],
-  "issuer": { "id": "did:web:rln.network/macher-pfalz" },
+  "issuer": { "id": "did:web:rln.network/macher-mannheim" },
   "credentialSubject": {
     "id": "did:key:z6Mki...",
     "achievement": {
       "id": "https://rln.network/skills/wig-schweissen",
-      "name": "WIG-Schweissen (Geselle)",
+      "name": "WIG-Schweissen (kann)",
       "alignment": [{
         "targetCode": "ESCO:S6.3.2",
         "targetFramework": "ESCO"
@@ -76,293 +604,128 @@ Skill-Attestierungen sind kryptographisch signierte Verifiable Credentials. Wall
 
 ---
 
-## III. Sieben Potenzialfelder
+## XV. Wissenschaftliche Anker
 
-Aus Gardner (Multiple Intelligenzen), VIA-Charakterstaerken, OECD Learning Compass und Handwerks-Realitaet. Jedes Feld oeffnet eine Tuer in BEIDE Welten — Schule und Handwerk.
-
-| Feld | Schul-Andock | Handwerks-Andock |
+| Theorie | Wirkung | Anwendung |
 |---|---|---|
-| **1. Raum und Bau** (raeumlich-konstruktiv) | Mathe (Geometrie, Volumen), Physik (Statik, Hebel), Architektur | Tischler, Maurer, Dachdecker, Zimmerer |
-| **2. Stoff und Form** (gestalterisch-aesthetisch) | Kunst, Musik, Design | Maler, Goldschmied, Friseur, Konditor |
-| **3. System und Logik** (analytisch-systemisch) | Physik, Informatik, Chemie | Elektrotechnik, Kfz-Mechatronik, Anlagenbau, IT |
-| **4. Welt und Wachstum** (forschend-experimentell, oekologisch) | Biologie, Geographie, Naturwissenschaft | GaLaBau, Forstwirt, Landwirt, Imker, Saison-Koch |
-| **5. Mensch und Verbindung** (sozial-koordinativ) | Sozialkunde, Religion, Ethik | Erzieher, Pflege, Mentoring, Lehre |
-| **6. Wort und Wirkung** (kommunikativ-sprachlich) | Deutsch, Fremdsprachen, Rhetorik | Kundengespraech, Verkauf, Marketing, Journalismus |
-| **7. Initiative und Werk** (unternehmerisch-handelnd) | Wirtschaft, Politik, Projektmanagement | Selbstaendigkeit, Manufaktur-Gruendung, Werkstatt-Fuehrung |
-
-**Optional Querschnitt:** *Koerper und Bewegung* (koerperlich-kinaesthetisch) — laeuft durch alle Felder.
-
-**Was wir bewusst weglassen:** kein Defizit-Feld, keine Noten-Achse, kein "Was fehlt dir noch zum Standard". Jedes Feld kennt nur Stufen nach oben.
+| **Bloom Mastery Learning** (1968) | d=0.79 (Hattie 2007) | Tier-Stufen als Mastery-Schwellen |
+| **Bruner Spiralprinzip** (1960) | gleiche Themen tiefer | Mathematik kehrt wieder, Holz auch |
+| **KMK Lernfeldkonzept** | Handwerk in Lernfeldern | Potenzialfelder als Lernfelder |
+| **Ryan/Deci SDT** | Autonomie, Kompetenz, Verbundenheit | drei Pfeiler des Skill-Trees |
+| **Yu-Kai Chou Octalysis** | White Hat vs. Black Hat | keine Streaks, keine Hearts, kein FOMO |
+| **Csikszentmihalyi Flow** | Herausforderung = Faehigkeit | Skill-Tree zeigt naechsten Schritt |
+| **Vygotsky ZPD** | Lernen mit Begleiter | Mentoren-Achse traegt die Zone |
+| **Hueter-Linie** | Wuerde, Begeisterung, Subjekt-Subjekt | Sprache, Stufen, Mentoren-Haltung |
 
 ---
 
-## IV. Sechs Handwerks-Bereiche
+## XVI. Sprach-Linie — kindgerecht und klar
 
-Wir starten mit den sechs Gewerken, die Festival-affin, Hornbach-Sortiment-affin und kindgerecht sind:
+Der Tree spricht die Sprache von Potenzialentfaltung. Klar, einfach, aktiv. Ein bis drei Worte pro Skill.
 
-| Gewerk | Anzahl Skills | Kinder-Eignung ab | Potenzialfelder |
+| schwach | besser |
+|---|---|
+| Werkstueck mit Zinkenverbindung herstellen | **Zinken sticheln** |
+| Elektromechanische Komponenten verloeten | **Loeten** |
+| Gartenbauliche Massnahmen ausfuehren | **Garten anlegen** |
+| Schweisstechnik fuer Schutzgas-Anwendung | **WIG schweissen** |
+| Permakulturelle Gestaltung anwenden | **Permakultur bauen** |
+| Mathematische Geometrie-Anwendung | **Flaeche berechnen** |
+| Sportliche Mannschaftspraxis | **Mannschaft spielen** |
+
+**Drei Sprach-Ebenen je nach Adressat:**
+
+| Skill | Kind (10 Jahre) | Macher | Pitch |
 |---|---|---|---|
-| **Holzwerken** | 12 (Holz erkennen, Mass, Saegen, Bohren, Schleifen, Schrauben, Hobeln, Verleimen, Drechseln, Oberflaeche, Zinken) | 8 (Schleifen, Mass), 14 (Drechseln) | Raum/Bau + Stoff/Form |
-| **Metall: Schweissen + Schmieden** | 11 + 11 (Feilen, Saegen, Bohren, Gewinde, Loeten, Autogen, Elektroden, MAG, WIG / Feuer, Gluehfarben, Hammer, Anspitzen, Breiten, Stauchen, Verdrehen, Biegen, Lochen, Spalten, Messer) | 8 (Hammer), 16 (Schweissen) | System/Logik + Raum/Bau |
-| **Garten + Pflanzenbau** | 10 (Boden, Saen, Pikieren, Bestimmung, Giessen, Kompost, Hochbeet, Veredeln, Schnitt, Permakultur) | 6 (Boden, Saen, Giessen) | Welt/Wachstum |
-| **Elektronik + Loeten** | 8 (Stromkreis, Schaltbild, Steckbrett, Loetkolben, Bauteile loeten, Multimeter, Arduino, 230V) | 8 (Stromkreis), 12 (Loeten), 18 (230V) | System/Logik |
-| **Bauen + Renovieren** | 9 (Mauerstein, Moertel, Wand, Putz, Beton, Schalung, Bewehrung, Estrich, Daemmung) | 8 (Mauerstein), 12 (Mauern) | Raum/Bau |
-| **Reparieren + Upcycling** | 9 (Fehler-Diagnose, Schrauben, Klebe loesen, Naehen, Reifen, Kabel, Holz-Bruch, Polster, Lack) | 8 (Schrauben), 10 (Naehen) | Querschnitt |
+| Saegen | Saegen | Handsaege fuehren | Schnittfuehrung |
+| Loeten | Loeten | Bauteile loeten | Loettechnik fuer Sensorik |
+| Pflanzen | Pflanzen | Pikieren + Setzen | Pflanzen-Setzling-Prozess |
+| Mauern | Mauern | Maurerkelle fuehren | Mauerwerks-Verbund |
 
-**Drei-Stufen-Granularitaet** pro Gewerk:
-1. **Gewerk-Knoten** ("Holzwerken") — Sammelebene
-2. **Technik-Knoten** ("Saegen") — Mittel-Ebene
-3. **Werkzeug-Knoten** ("Stichsaege") — atomarer Skill mit Sicherheitsregeln, Voraussetzungen, Probe-Aufgabe, erkennbarem Ergebnis
+Der erste Name ist der Skill-Knoten. Andere Versionen wandern in `beschreibung` oder als alternative Labels.
 
 ---
 
-## V. Wurzel-Skills (Cross-Skills)
+## XVII. Andock-Punkte
 
-Liegen unter ALLEN Gewerken. Aus allen Ausbildungsordnungen + DGUV.
+### Hornbach (Handwerks-Anker)
+- **Macher-Festival 2026** (6.-9.8., Ferropolis): Skill-Tree als Festival-Begleiter
+- **Hornbach macht Schule** (HMS): aus jedem Roadtrip-Tag bleibt eine Spur
+- **Baustoff Union** (Dr. Christian Hornbach): Profi-Anschluss-Quests, 39 Niederlassungen, 500-1000 Handwerksbetriebe pro NL als Mentor-Netz
 
-1. **Mass nehmen** (Zollstock, Massband, Schieblehre, Wasserwaage, Laser)
-2. **Skizze lesen + zeichnen** (Riss, Schnitt, Aufriss, Bemassung)
-3. **Material erkennen** (Holz-Arten, Stahl-Sorten, Stein-Sorten, Kunststoffe)
-4. **Arbeitsplatz organisieren** (Vorbereiten, Aufraeumen, Werkzeug-Pflege)
-5. **Sicherheit** (PSA, gefaehrliche Stoffe, Sturzschutz, Augen-/Gehoerschutz)
-6. **Erste Hilfe** (Schnitte, Verbrennungen, Splitter)
-7. **Rechnen** (Volumen, Flaeche, Material-Bedarf, Mischungs-Verhaeltnisse)
-8. **Werkzeug-Pflege** (Schaerfen, Oelen, Lagern)
-9. **Teamwork + Auftrag annehmen** (Kunden-Gespraech, Uebergabe)
+### Bildungs-Partner
+- **KMK Bildungsstandards** — Sprache, Mathematik, Naturwissenschaften, Erste Fremdsprache
+- **BMBF BOP** (bis 31.12.2026, 989 Mio. EUR kumulativ) — Berufsorientierungs-Bruecke
+- **Talentschulen NRW** (60 Schulen + 400 Lehrerstellen) — Modellregion
+- **DOSB + Schulsport** — Sport-Bereich, neun Bewegungsfelder, Vereine als Mentoren
 
-Diese Wurzeln sind die unteren Knoten — alles andere setzt darauf auf. Sie sind auch fuer Kinder gut zugaenglich (ausser Gas-Sicherheit oder Hochspannung).
+### Kultur-Partner (Bildungs-Bereiche)
+- **Stiftung Mercator, Schoepflin, BKM, Karg, Wuebben, Vinci**
+- **Musik-Hochschulen** (17 staatliche DACH), **Kunsthochschulen** (17), **Bundesakademie Wolfenbuettel**
+- **TUSCH** (Theater + Schule), **JeKits** (Jedem Kind ein Instrument), **Jugend forscht**
 
----
-
-## VI. Voraussetzungs-Logik
-
-**Drei Kanten-Typen** zwischen Skill-Knoten:
-
-1. **Pflicht** (rot, blockiert) — gesetzlich oder sicherheits-zwingend. Beispiel: Sicherheits-Einweisung vor Maschinen-Bedienung. Quelle: JArbSchG, DGUV-Regeln.
-2. **Empfohlen** (gelb, durchlaessig) — didaktisch sinnvoll. Beispiel: Handsaege vor Tisch-Kreissaege. Quelle: Ausbildungsordnungen, IHK-Pruefungsverordnungen.
-3. **Synergie** (gruen, optional) — verkuerzt + verstaerkt. Beispiel: Loeten vor Schaltung-Aufbauen.
-
-**Alters-Tore** als zweite Schicht. Pro Skill ein Mindest-Alter, abgeleitet aus JArbSchG, DGUV-Schulregeln, Schmiede-/Werk-Kurs-Praxis. Kinder unter dem Alter sehen den Knoten — koennen den Quest aber nur mit Erwachsenen-Begleitung starten.
+### Paedagogische Anker
+- **Schulen im Aufbruch** + **FREI DAY** — natuerlicher Inhalt fuer 4h/Woche
+- **Werkstattschule Jena**, **Produktives Lernen Berlin** als Praxis-Vorbilder
+- **Akademie fuer Potentialentfaltung** — Hueter-Universum, Begleitforschungs-Bruecke
 
 ---
 
-## VII. Mentoren-Achse (parallel)
-
-20 atomare Mentor-Skills als eigene Achse neben den Fach-Skills. Im Profil als zweite Krone.
-
-**Stufe 1 — Grundlagen:** Sicherheits-Einweisung, Vormachen, Erklaeren mit einfachen Worten, Aktives Zuhoeren, Wuerde-Wahrung
-
-**Stufe 2 — Begleitung:** Beobachten, Offene Fragen stellen, Korrektur bei Gefahr, Loben am Verhalten, Reflexionsgespraech fuehren
-
-**Stufe 3 — Vertiefung:** Lernsituation gestalten, Gruppendynamik halten, Fehlerkultur leben, Motivation halten, Konflikt moderieren
-
-**Stufe 4 — Meisterschaft:** Co-Kreativitaet, Subjekt-Subjekt-Haltung, Andere Mentoren ausbilden, Quest-Design, Lebens-Begleitung
-
-**Pfad mit vier Schwellen:**
-
-| Schwelle | Voraussetzungen | Was darf man |
-|---|---|---|
-| **Mit-Lerner** | 3 abgeschlossene Quests im Gebiet | Anderen helfen die er selbst gemacht hat |
-| **Quest-Geber** | 5 Mit-Lerner-Erfahrungen + 3 Peer-Attestations + Sicherheits-Einweisung Stufe 1 | Eigene Quests anbieten |
-| **Mentor** | 20 Quest-Begleitungen + ueberwiegend positive Attestations | Offizielle Mentor-Rolle, Workshop-Leiter |
-| **Meister-Mentor** | AEVO/Meisterbrief als Credential + 50 Mentor-Attestations + 3 Mentor-zu-Mentor-Attestations | Andere zu Mentoren ausbilden, Mentor-Quests entwerfen |
-
-**Mentor-Quests zaehlen doppelt:** Quest-Geber bekommt Mentor-Skill-XP (Begleitung, Gruppendynamik, Reflexion), Lerner bekommt Fach-Skill-XP. Der Mentor waechst an seinem Lerner.
-
-**Anti-Inflation:** Attestation-Gewichtung nach EigenTrust-Vorbild. Anomalie-Erkennung (Voting-Rings, ploetzliche Spruenge) markiert verdaechtige Muster fuer manuelle Pruefung.
-
----
-
-## VIII. Datenstruktur (TypeScript-Skizze)
-
-```typescript
-export type BereichId =
-  | 'raum-bau' | 'stoff-form' | 'system-logik'
-  | 'welt-wachstum' | 'mensch-verbindung' | 'wort-wirkung' | 'initiative-werk'
-
-export type Gewerk =
-  | 'holz' | 'metall-schweissen' | 'metall-schmieden'
-  | 'garten' | 'elektronik' | 'bau' | 'reparieren'
-
-export type Tier = 'gespuert' | 'probiert' | 'kann' | 'kann-lehren' | 'meistert'
-
-export type Altersfreigabe = 'alle' | 'ab6' | 'ab8' | 'ab10' | 'ab12' | 'ab14' | 'ab16' | 'volljaehrig'
-
-export interface ExternalAnchor {
-  framework: 'esco' | 'digcomp' | 'entrecomp' | 'lifecomp' | 'greencomp' | 'hwo'
-  code: string
-  level?: number  // bei DigComp/EntreComp: 1-8 oder DQR
-}
-
-export interface SkillEdge {
-  to: SkillId
-  typ: 'pflicht' | 'empfohlen' | 'synergie'
-  begruendung?: string  // Quelle aus Ausbildungsordnung / DGUV / DIN
-}
-
-export interface AttestationRef {
-  attesterDid: string         // WoT-Identitaet
-  vcId: string                 // Verifiable Credential
-  issuedAt: string
-  achievementId?: string
-  relation?: 'meister' | 'kollege' | 'kunde' | 'lehrling' | 'familie'
-  visibility: 'oeffentlich' | 'kreis' | 'privat'
-}
-
-export interface Skill {
-  id: SkillId
-  name: string
-  beschreibung?: string
-
-  // Facetten — Mehrfach-Zugehoerigkeit (Faceted Classification)
-  bereiche: BereichId[]              // ein Skill kann mehrere Bereiche speisen
-  primaryBereich: BereichId          // visueller Heimat-Bereich
-  gewerke: Gewerk[]                  // welche Gewerke nutzen ihn
-  primaryGewerk?: Gewerk
-
-  // Strukturachsen
-  dqrNiveau: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8
-  altersFreigabe: Altersfreigabe
-
-  // Voraussetzungen
-  voraussetzungen: SkillEdge[]
-
-  // Externe Verankerung
-  externalAnchors?: ExternalAnchor[]
-
-  // Wie kann ich diesen Skill nachweisen?
-  attestationModi: ('selbst' | 'peer' | 'meister' | 'pruefung' | 'werk')[]
-
-  // Open-Badges-Template fuer Ausstellung
-  badgeTemplate?: {
-    name: string
-    description: string
-    criteria: string
-    image?: string
-  }
-
-  // Probe-Aufgabe als konkretes Werk
-  probeAufgabe?: {
-    titel: string
-    beschreibung: string
-    zeitMinuten: number
-    materialBenoetigt: string[]
-  }
-}
-
-export interface LearningPath {
-  id: string
-  bereich: BereichId
-  name: string                      // "Vom Bastler zum Geselle"
-  beschreibung: string
-  skillIds: SkillId[]               // geordnete Folge
-  empfohleneDauerWochen?: number
-  zielTier: Tier
-}
-
-export interface MentorSkill extends Skill {
-  // Mentor-Skills haben gleiche Struktur wie Fach-Skills,
-  // aber dedicated kategorisiert
-  mentorStufe: 1 | 2 | 3 | 4  // Grundlagen / Begleitung / Vertiefung / Meisterschaft
-}
-```
-
----
-
-## IX. Tree-Architektur
-
-**Eine Datenbasis, zwei Sichten:**
-
-1. **Gewerk-Sicht (Lane-Tree)** — Skills gruppiert nach `primaryGewerk`, geordnet nach DQR-Niveau. Pfad-Sicht fuer Anfaenger (Duolingo-Stil), DAG-Sicht fuer Power-User (Path-of-Exile-Stil).
-
-2. **Potenzialfeld-Sicht (Sunburst)** — Skills gruppiert nach `bereiche` als Tags. Lebenskunst-Ansicht. Das, was wir Eltern, Lehrern und Schul-Pitch zeigen.
-
-3. **Mentor-Achse** — eigene Sicht im Profil, neben den Fach-Skills.
-
-**Technisch:**
-- **Profil-Widget (P0, Festival 2026):** [beautiful-skill-tree](https://github.com/andrico1234/beautiful-skill-tree) — fertig, 20-100 Skills, Pitch-tauglich
-- **Atlas-Sicht (P1+):** [Cytoscape.js](https://js.cytoscape.org/) — 500-5000 Knoten, DAG-faehig
-
----
-
-## X. Bridge zur WoT-Identitaet
-
-**Skill-XP entsteht durch:**
-1. **Selbstdeklaration** (Stufe gespuert/probiert) — keine Attestation, nur eigener Eintrag
-2. **Peer-Attestation** (Stufe kann) — andere Macher bestaetigen ("Ich habs gesehen, du kannst es")
-3. **Meister-Attestation** (Stufe kann-lehren) — Mentor mit AEVO/Meisterbrief bestaetigt
-4. **Pruefung/Wettbewerb** (Stufe meistert) — formaler Nachweis (Geselle, Meister, Jugend-forscht-Sieg)
-5. **Werk-Beleg** (jede Stufe) — Foto, Video, Werkstueck-Eintrag mit Geo-Tag
-
-Jede Attestation ist ein **W3C Verifiable Credential 2.0**, signiert mit der DID des Attestierenden ueber Antons Ed25519-Stack. Im Yjs-doc.attestations gespeichert. Anschluss an EUDI-Wallet ab 2026 selbstverstaendlich.
-
----
-
-## XI. Implementierungs-Roadmap (4 Phasen)
+## XVIII. Implementierungs-Roadmap
 
 ### Phase 1 — Saeuberung (1-2 Pushes, jetzt)
-Altes Skill-System aus `rln/src/modules/gamification/tree.ts` ausbauen. INNERE_BEREICHE / AEUSSERE_BEREICHE raus. Strukturen vorbereiten fuer neuen Datentyp.
 
-### Phase 2 — Seed-Daten (1-2 Wochen)
-ESCO-Subset (Crafts/Trades) ueber tabiya-Dataset importieren. JRC-Frameworks (DigComp/EntreComp/LifeComp/GreenComp) aus Excel mappen. HwO-Anlage-A/B1/B2 als Top-Sortierung. Erstes JSON in `rln/src/modules/gamification/seed-skills.json` mit ~200 Skills.
+Altes 8-Bereiche-System aus `rln/src/modules/gamification/tree.ts` ausbauen. Neue Typ-Struktur (Potenzialfeld + HandwerksBereich + BildungsBereich + Tier + DreiHand + SkillKette).
 
-### Phase 3 — Tree-Komponente (2-3 Wochen)
-Profil-Widget mit beautiful-skill-tree. Drei Tabs: Gewerke / Potenzialfelder / Mentor. Detail-Panel mit Voraussetzungen, Quests, Probe-Aufgabe, Attestation-Aufruf.
+### Phase 2 — Seed-Daten (2-3 Wochen)
+
+ESCO-Subset (Crafts + Trades + Education) ueber tabiya-Dataset importieren. KMK-Bildungsstandards aus PDF mappen. HwO-Anlage-A/B1/B2 als Top-Sortierung. Erste 80-120 Skills in `rln/src/modules/gamification/seed-skills.json`.
+
+### Phase 3 — Visualisierungs-Komponenten (3-4 Wochen)
+
+Drei Sichten:
+- Sunburst-Komponente (D3 oder beautiful-skill-tree) pro Bereich
+- Force-Directed Graph (Cytoscape.js) fuer Gesamt-Karte
+- Linear-Bahn fuer Skill-Kette (eigene Komponente, Duolingo-Stil ohne Streak)
 
 ### Phase 4 — Attestation-Flow (2-3 Wochen)
-Open-Badges-3.0-JSON-LD-Template. WoT-Signatur ueber Antons Routinen. UI: "Bestaetigen lassen" auf jedem Skill-Knoten. Eingang in Profil sichtbar machen.
+
+Open-Badges-3.0-JSON-LD-Template. WoT-Signatur ueber Antons Routinen. UI: "Bestaetigen lassen" auf jedem Skill-Knoten. Mentor-Attestation als Trust-Token im Log.
+
+### Phase 5 — Drei-Haende-Sicherheits-Lizenz
+
+UI fuer Wurzel-Skills. Sicherheits-Schwelle als sichtbares Tor vor jedem Handwerks-Bereich.
+
+### Phase 6 — Mentoren-Pfad
+
+20 Mentor-Skills + vier Schwellen. Mit-Lerner-Stufe in jedem Bereich anlegen. BBBS-Onboarding-Template.
 
 ---
 
-## XII. Andock-Punkte
+## XIX. Offene Entscheidungen (mit Timo und Anton)
 
-### Hornbach (Pitch-Linie)
-- **Macher-Festival 2026** (6.-9.8., Ferropolis): Skill-Tree als Festival-Begleiter. Werkstatt → Skill-Knoten → mit-nach-Hause-Profil.
-- **Hornbach macht Schule** (HMS): aus jedem Roadtrip-Tag bleibt eine Spur. Schueler nehmen Profil mit, Lehrer hat Klassenraum-Dashboard.
-- **Baustoff Union** (Dr. Christian Hornbach): Profi-Anschluss-Quests. 39 Niederlassungen kennen 500-1000 Handwerksbetriebe namentlich — sofortiges Mentor-Netz.
-
-### HWK + BMBF
-- **BOP-Begleitwerkzeug** (Berufsorientierungsprogramm, bis 31.12.2026 verlaengert, 989 Mio. EUR kumulativ): Digitale Schicht ueber Werkstatttage.
-- **Profil AC** (BW + RP): Andock-Punkt fuer Kompetenzfeststellung.
-
-### Foerderlogik
-- **Kultur macht stark 2023-2027** ueber DVV/talentCAMPus — RLN als Buendnis-Plattform fuer 3-Partner-Antraege.
-- **Talentschulen NRW** (60 Schulen + 400 Lehrerstellen) als Modellregion.
-- **Stiftungen:** Wuebben (Plattform-Affin), Vinci (Joblinge-Naehe), Karg (Begabungs-Fokus).
-
-### Paedagogische Andocke
-- **Schulen im Aufbruch** + **FREI DAY** — natuerlicher Inhalt fuer 4h/Woche.
-- **Werkstattschule Jena**, **Produktives Lernen Berlin** als Praxisvorbilder.
-- **Wuerdekompass** (aus dem Hueter-Universum) als bestehende Brueckenkontakt.
+1. **Visualisierungs-Tool** — beautiful-skill-tree oder D3 Sunburst oder eigene Komponente?
+2. **ESCO-Import-Strategie** — alle 13.890 Skills oder Subset (Crafts + Schule)?
+3. **Mentor-Onboarding-Bruecke** — Festival-Coaches via Hornbach-Pfalz oder Lehrer aus FREI-DAY-Schulen zuerst?
+4. **Bundesland-Pilot** — Hornbach-Heimat Pfalz oder politische Sichtbarkeit NRW (Talentschulen)?
+5. **WoT-Anschluss-Reihenfolge** — Skill-Tree zuerst, dann VC-Attestation? Oder gleichzeitig?
+6. **Sport-Bereich-Implementation** — DOSB-Andock oder eigene Bahn?
 
 ---
 
-## XIII. Sprach-Linie (kein Hueter zitiert, Substanz traegt)
+## XX. Verwandte Werke
 
-Der Tree spricht die Sprache von Potenzialentfaltung — ohne den Namen zu nennen:
-
-- **"Begabung sichtbar machen"** statt "Defizit messen"
-- **"Wie waechst du?"** statt "Wo stehst du?"
-- **"Begleiter"** statt "Pruefer"
-- **"Werk + Geschichte"** statt "Note + Standard"
-- **"Gespuert / probiert / kann / kann lehren / meistert"** statt "ausreichend / gut / sehr gut"
-- **"Beleg"** (Foto, Werkstueck, Zeuge) statt "Bewertung"
-- **"Begeisterung als Schluessel"** als selbstverstaendliche Lern-Logik
-
-Wenn Hueter den Tree sieht, erkennt er sich. Wenn ein Handwerksmeister ihn sieht, sieht er seine Werkstatt. Wenn ein Lehrer ihn sieht, sieht er seine Klasse. Wenn ein Kind ihn sieht, sieht es sich selbst.
+- [recherche/01-handwerks-skill-landschaft.md](recherche/01-handwerks-skill-landschaft.md) — HwO, DGUV, Ausbildungsordnungen
+- [recherche/02-schul-potenzialmodelle.md](recherche/02-schul-potenzialmodelle.md) — Gardner, OECD, KMK
+- [recherche/03-skill-tree-frameworks.md](recherche/03-skill-tree-frameworks.md) — ESCO, DigComp, EntreComp, LifeComp, GreenComp
+- [recherche/04-bruecke-schule-macher-handwerk.md](recherche/04-bruecke-schule-macher-handwerk.md) — Anschluss-Punkte
+- [recherche/05-mentoren-welt.md](recherche/05-mentoren-welt.md) — BBBS, AEVO, Mentor-Forschung
+- [recherche/06-hornbach-baustoff-union.md](recherche/06-hornbach-baustoff-union.md) — Profi-Netz
+- *Hueter-Material*: `Vision/projekte/wir-sind-wertvoll/gerald-huether-deep-dive.md`
+- *Macher-Schule-Repo*: `lichtungooo/macher-schule` (privat)
 
 ---
 
-## XIV. Naechste Entscheidungen (fuer Timo + Anton)
+*Drei Schichten, ein Datenmodell. Rund 260 Skills, kindgerecht benannt, klar verbunden. Wurzel-Sicherheit ueber drei Haende, Tiefe ueber sechs Tier-Stufen, Verbindung ueber Mentoren-Achse und Synergie-Knoten. White-Hat-Gamification.*
 
-1. **Bereichs-Namen final?** Vorgeschlagen: Raum/Bau, Stoff/Form, System/Logik, Welt/Wachstum, Mensch/Verbindung, Wort/Wirkung, Initiative/Werk. Andere Worte moeglich.
-2. **Sieben oder acht Felder?** Mit oder ohne Querschnitt "Koerper und Bewegung".
-3. **Bundesland-Pilot?** Hornbach-Heimat Pfalz vs. politische Sichtbarkeit NRW (Talentschulen).
-4. **Erstes Mentoren-Programm?** Festival-Coaches via Hornbach-Pfalz? Oder Lehrer aus FREI-DAY-Schulen?
-5. **WoT-Anschluss-Reihenfolge:** Skill-Tree zuerst, dann VC-Attestation? Oder gleichzeitig?
-
----
-
-*Rohberichte: `recherche/01-handwerks-skill-landschaft.md` bis `recherche/06-hornbach-baustoff-union.md`.*
-*Hueter-Material: `Vision/projekte/wir-sind-wertvoll/gerald-huether-deep-dive.md`.*
-*Hornbach-Konzern-Basis: `macher/docs/analyse/hornbach-konzern.md`.*
+*Stand 2026-05-14. Bereit fuer Code-Refactor in Phase 1.*
