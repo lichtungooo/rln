@@ -37,6 +37,7 @@ import {
   BERUFSORIENTIERUNG_SKILLS, BERUFSORIENTIERUNG_HAUPTKETTE,
 } from "../gamification"
 import { SkillKettenBahn } from "./SkillKettenBahn"
+import { ConstellationView } from "./ConstellationView"
 
 interface BereichDaten {
   id: string
@@ -194,9 +195,12 @@ const BEREICHE: BereichDaten[] = [
   },
 ]
 
+type ViewMode = "bahn" | "constellation"
+
 export function SkillBahnView(_props: ModuleViewProps) {
   const [aktivId, setAktivId] = useState<string>("holz")
   const [skillId, setSkillId] = useState<string | null>(null)
+  const [viewMode, setViewMode] = useState<ViewMode>("constellation")
 
   const aktiv = BEREICHE.find((b) => b.id === aktivId) ?? BEREICHE[0]
 
@@ -208,19 +212,50 @@ export function SkillBahnView(_props: ModuleViewProps) {
   function handleSelectBereich(id: string) {
     setAktivId(id)
     setSkillId(null)
+    setViewMode("bahn")
   }
 
   return (
     <div className="h-full flex flex-col p-4 gap-4 overflow-y-auto">
-      {/* Header + Beschreibung */}
+      {/* Header + Toggle */}
       <div className="rounded-2xl p-4 bg-card">
-        <h1 className="text-xl font-bold mb-1">Skill-Bahnen</h1>
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <h1 className="text-xl font-bold">Skill-Bahnen</h1>
+          <div className="flex gap-1">
+            <button
+              onClick={() => setViewMode("constellation")}
+              className={`
+                px-3 py-1.5 rounded-md text-sm font-semibold transition-colors
+                ${viewMode === "constellation" ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted/50"}
+              `}
+            >
+              Constellation
+            </button>
+            <button
+              onClick={() => setViewMode("bahn")}
+              className={`
+                px-3 py-1.5 rounded-md text-sm font-semibold transition-colors
+                ${viewMode === "bahn" ? "bg-foreground text-background" : "text-muted-foreground hover:bg-muted/50"}
+              `}
+            >
+              Bahn
+            </button>
+          </div>
+        </div>
         <p className="text-sm text-muted-foreground">
-          Drei Schichten: Potenzialfelder, Bereiche, Skill-Ketten. Sechs Tier-Stufen — gespuert,
-          probiert, kann, kann-lehren, meistert, gibt-weiter. Klick auf einen Skill zeigt das Detail.
+          Drei Schichten: acht Potenzialfelder als Constellation, achtzehn Bereiche
+          als Hub-and-Spoke, Skill-Ketten als Bahn. Sechs Tier-Stufen — gespuert,
+          probiert, kann, kann-lehren, meistert, gibt-weiter.
         </p>
       </div>
 
+      {viewMode === "constellation" ? (
+        <ConstellationView
+          onBereichSelect={handleSelectBereich}
+          selectedBereichId={aktivId}
+        />
+      ) : (
+        <>
       {/* Bereich-Auswahl (Tabs) */}
       <div className="flex flex-wrap gap-2">
         {BEREICHE.map((b) => {
@@ -343,6 +378,8 @@ export function SkillBahnView(_props: ModuleViewProps) {
             ))}
           </div>
         </div>
+      )}
+        </>
       )}
     </div>
   )
