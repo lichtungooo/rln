@@ -63,6 +63,7 @@ import { spiegelModule } from '../modules/spiegel'
 import { wissensfeldModule } from '../modules/wissensfeld'
 import { valluetModule } from '../modules/valluet'
 import { settingsModule } from '../modules/settings'
+import { skillBahnModule } from '../modules/skill-bahn'
 import { useSpaceTheme } from '../themes/use-space-theme'
 import { SpaceSettings, type SpaceSettingsTab } from '../settings/SpaceSettings'
 import { MobileSpaceSettings } from '../settings/MobileSpaceSettings'
@@ -93,6 +94,7 @@ registerModule(spiegelModule)
 registerModule(wissensfeldModule)
 registerModule(valluetModule)
 registerModule(settingsModule)
+registerModule(skillBahnModule)
 
 const STORAGE_KEY_CONNECTOR = 'macher-connector'
 const STORAGE_KEY_GROUP = 'macher-active-group'
